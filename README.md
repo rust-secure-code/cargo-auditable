@@ -16,7 +16,7 @@ The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm n
 
 ## How it works
 
-Your Cargo.lock is embedded in your executable as `&'static str` at build time, with an added start and end markers. The code is exceedingly trivial, so I encourage to check it out.
+Your Cargo.lock is embedded in your executable as `&'static str` at build time, with an added start and end markers. The code is exceedingly trivial, so I encourage you to check it out.
 
 The "call a no-op function" requirement is a hack to keep our info from getting optimized out by rustc. It even survives LTO, but is not ergonomic. Despite Rust stabilizing `#[used]` annotation, you still need [low-level platform-specific hacks](https://github.com/rust-lang/rust/issues/47384) to preserve an unused static that comes from a library. Hopefully we'll get cooperation from the compiler if/when this functionality is uplifted in Cargo.
 
