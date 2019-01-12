@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use std::env;
 use std::io::prelude::*;
 use std::fs::File;
