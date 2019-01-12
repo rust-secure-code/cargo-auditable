@@ -9,7 +9,7 @@ The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm n
 ## Usage
 
  1. Add `auditable` as a dependency to your crate. 
- 1. Add a call to `auditable::annotate_this_executable()` to your `main()` or any other reachable location in the code. Don't worry about performance, it will be compiled to a no-op.
+ 1. Add a call to `auditable::annotate_this_executable()` to your `main()` or any other reachable location in the code. See "hello-auditable" folder for an example. Don't worry about performance, it will be compiled to a no-op.
  1. Run `rust-audit path/to/file` to recover the Cargo.lock used when compiling the executable. Feed the recovered file to [cargo-audit](https://github.com/RustSec/cargo-audit) to audit the binary for known vulnerabilities in it and its dependencies. 
 
 **NB:** `auditable` currently requires nightly Rust due to the use of [test::black_box](https://doc.rust-lang.org/1.1.0/test/fn.black_box.html).
