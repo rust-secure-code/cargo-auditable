@@ -39,23 +39,23 @@ cargo run -- ../hello-auditable/target/release/hello-auditable | cargo audit -f 
 
 ## FAQ
 
-###Doesn't this bloat my binary?
+### Doesn't this bloat my binary?
 
 Not really. A "Hello World" on x86 Linux compiles into a ~1Mb file in the best case (nightly without jemalloc, LTO enabled). Its Cargo.lock even with a couple of dependencies is < 1Kb, that's under 1/1000 of the size. The size of Cargo.lock grows linearly with the number of dependencies, so it will keep being negligible.
 
-###What about embedded platforms?
+### What about embedded platforms?
 
 Embedded platforms where you cannot spare a byte should not add anything in the executable. Instead they should record the hash of every executable in a database and associate the hash with its Cargo.lock, compiler and LLVM version, build date, etc. This would make for an excellent Cargo wrapper or plugin. Since that can be done in a 5-line shell script, writing that tool is left as an exercise to the reader.
 
-###What about embedding compiler version?
+### What about embedding compiler version?
 
 It's already there. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Also, `strings` is due for a rewrite in safe Rust.
 
-###What about keeping track of versions of statically linked C libraries?
+### What about keeping track of versions of statically linked C libraries?
 
 Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way by appending it to the existing Cargo.lock data.
 
-###What is blocking uplifting this into Cargo?
+### What is blocking uplifting this into Cargo?
 
 Two things:
  1. Figuring out a way to get rustc to cooperate and not optimize out our info without code modifications in the target crate (i.e. no more "call a no-op function" weirdness). This is much easier if we're allowed to make modifications to Cargo and the compiler.
