@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 edition = "2018"
 
+[profile.release]
+lto=true
+
 [dependencies]
 subslice = "0.2.0"
