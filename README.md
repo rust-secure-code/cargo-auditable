@@ -14,7 +14,7 @@ The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm n
 
 ## Demo
 
-Only works on **nightly** Rust for now.
+Only works on nightly Rust for now.
 
 ```bash
 # clone this repository
