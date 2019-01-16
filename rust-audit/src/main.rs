@@ -9,9 +9,11 @@ use subslice::bmh;
 fn main() {
     let argument = env::args().skip(1).next().expect("No file provided on command line");
     let mut f = File::open(&argument).expect("Could not open provided file");
-    let mut buffer = Vec::new();
-    f.read_to_end(&mut buffer).expect("Reading the file failed");
-    if is_an_executable(&buffer) {
+    let mut magic_bytes: [u8; 4] = [0,0,0,0];
+    f.read_exact(&mut magic_bytes).expect("File too small");
+    if has_executable_file_prefix(&magic_bytes) {
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer).expect("Reading the file failed");
         io::stdout().write(extract_auditable_info(&buffer)).unwrap();
     } else {
         eprintln!("'{}' does not seem to be an executable file, skipping.", &argument);
@@ -43,7 +45,7 @@ const EXECUTABLE_MAGIC_BYTES: [&[u8]; 7] = [
 ];
 
 /// Checks start of the given slice for magic bytes indicating an executable file
-fn is_an_executable(data: &[u8]) -> bool {
+fn has_executable_file_prefix(data: &[u8]) -> bool {
     for prefix in &EXECUTABLE_MAGIC_BYTES {
         if data.starts_with(prefix) {
             return true;
