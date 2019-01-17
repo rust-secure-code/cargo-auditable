@@ -10,6 +10,8 @@ fn main() {
     let argument = env::args().skip(1).next().expect("No file provided on command line");
     let mut f = File::open(&argument).expect("Could not open provided file");
     let mut buffer = Vec::new();
+    // TODO: read file in 1Mb chunks instead of reading it all at once
+    // This has no memory limit and can cause memory exhaustion
     f.read_to_end(&mut buffer).expect("Reading the file failed");
     if is_an_executable(&buffer) {
         io::stdout().write(extract_auditable_info(&buffer)).unwrap();
