@@ -8,6 +8,7 @@ use subslice::bmh;
 
 fn main() {
     let argument = env::args().skip(1).next().expect("No file provided on command line");
+    // TODO: exclude special files such as sockets, pipes and /dev/random
     let mut f = File::open(&argument).expect("Could not open provided file");
     let mut buffer = Vec::new();
     // TODO: read file in 1Mb chunks instead of reading it all at once
