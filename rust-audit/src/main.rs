@@ -4,7 +4,7 @@ use std::env;
 use std::io::prelude::*;
 use std::fs::File;
 use std::io;
-use subslice::bmh;
+use subslice::SubsliceExt;
 
 fn main() {
     let argument = env::args().skip(1).next().expect("No file provided on command line");
@@ -26,10 +26,10 @@ const START_MARKER: &[u8] = b"CARGO_AUDIT_INFO_START;v0;\n";
 const END_MARKER: &[u8] = b"\nCARGO_AUDIT_INFO_END\0";
 
 fn extract_auditable_info(executable: &[u8]) -> &[u8] {
-    let start_index = bmh::find(executable, START_MARKER)
+    let start_index = executable.find(START_MARKER)
                       .expect("No auditable information in the executable")
                       + START_MARKER.len();
-    let content_length = bmh::find(&executable[start_index..], END_MARKER)
+    let content_length = &executable[start_index..].find(END_MARKER)
                          .expect("Malformed audit information: no end marker found");
     &executable[start_index..start_index+content_length]
 }
