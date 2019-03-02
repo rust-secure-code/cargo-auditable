@@ -14,15 +14,13 @@ The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm n
 
 ## Demo
 
-Only works on nightly Rust for now.
-
 ```bash
 # clone this repository
 git clone https://github.com/Shnatsel/rust-audit.git
 cd rust-audit
 # compile a binary with Cargo.lock embedded in it
 cd hello-auditable
-cargo build --release
+cargo +nightly build --release
 # recover the Cargo.lock we've just embedded
 cd ../rust-audit
 cargo run -- ../hello-auditable/target/release/hello-auditable
