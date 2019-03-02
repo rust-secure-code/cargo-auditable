@@ -39,7 +39,7 @@ The "call a no-op function" requirement is a hack to keep our info from getting 
 
 ### Doesn't this bloat my binary?
 
-Not really. A "Hello World" on x86 Linux compiles into a ~1Mb file in the best case (nightly without jemalloc, LTO enabled). Its Cargo.lock even with a couple of dependencies is < 1Kb, that's under 1/1000 of the size. The size of Cargo.lock grows linearly with the number of dependencies, so it will keep being negligible.
+Not really. A "Hello World" on x86 Linux compiles into a ~1Mb file in the best case (recent Rust without jemalloc, LTO enabled). Its Cargo.lock even with a couple of dependencies is < 1Kb, that's under 1/1000 of the size. The size of Cargo.lock grows linearly with the number of dependencies, so it will keep being negligible.
 
 ### What about embedded platforms?
 
