@@ -61,5 +61,5 @@ Two things:
 
 **Help on these points would be greatly appreciated.**
 
-This is not blocked on getting [cargo-audit](https://github.com/RustSec/cargo-audit) an official status or anything like that, since it is already useful on its own.
+This is not blocked on getting [cargo-audit](https://github.com/RustSec/cargo-audit) an official status or anything like that, since rust-audit is already useful on its own.
 
