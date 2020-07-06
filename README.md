@@ -6,6 +6,8 @@ This works by embedding contents of Cargo.lock in the compiled executable, which
 
 The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm not sanitizing paths *at all.* Do not use in production just yet, but PRs are welcome. The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate.
 
+**RFC for a proper implementation in Cargo is now open:** https://github.com/rust-lang/rfcs/pull/2801
+
 ## Usage
 
  1. Add `auditable` as a dependency to your crate. **NB:** it currently requires nightly Rust due to the use of [test::black_box](https://doc.rust-lang.org/1.1.0/test/fn.black_box.html).
