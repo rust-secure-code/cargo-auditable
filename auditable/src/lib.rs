@@ -1,8 +1,8 @@
 #![feature(test)]
 extern crate test;
 
-static AUDITABLE_VERSION_INFO: &'static str = include_str!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated"));
-//&'static str = "CARGO_AUDIT_INFO_START;v0;stuff-here\0";
+#[link_section = ".dep-list"]
+static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated")).len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated"));
 
 /// Call this from main() or other reachable place in the code to annotate your executable
 /// with information on which library versions were used for building it.
