@@ -15,7 +15,7 @@ fn main() {
     // This has no memory limit and can cause memory exhaustion
     f.read_to_end(&mut buffer).expect("Reading the file failed");
     if is_an_executable(&buffer) {
-        io::stdout().write(extract_auditable_info(&buffer)).unwrap();
+        io::stdout().write_all(extract_auditable_info(&buffer)).unwrap();
     } else {
         eprintln!("'{}' does not seem to be an executable file, skipping.", &argument);
     }
