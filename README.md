@@ -1,18 +1,20 @@
 ## rust-audit
 
-Know exact library versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities in production, at scale, with zero bookkeeping.
+Know exact library versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities at scale, in production, with zero bookkeeping.
 
-This works by embedding contents of Cargo.lock in the compiled executable, which already contains versions and hashes of all dependencies and has good tooling around it. `auditable` crate embeds this info in executables and `rust-audit` recovers it for analysis. 
+This works by embedding contents of Cargo.lock in the compiled executable, which already contains versions and hashes of all dependencies and has good tooling around it.
 
-The implementation is a **proof of concept.** It's full of `unwrap()`s and I'm not sanitizing paths *at all.* Do not use in production just yet, but PRs are welcome. The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate.
+The implementation is currently a **proof of concept,** but I'd like to evolve it into an actually usable system and get some real-world experience with it. The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate. PRs are welcome.
 
-**RFC for a proper implementation in Cargo is now open:** https://github.com/rust-lang/rfcs/pull/2801
+RFC for a proper implementation in Cargo, for which `auditable` crate paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
 ## Usage
 
- 1. Add `auditable` as a dependency to your crate. **NB:** it currently requires nightly Rust due to the use of [test::black_box](https://doc.rust-lang.org/1.1.0/test/fn.black_box.html).
- 1. Add a call to `auditable::annotate_this_executable()` to your `main()` or any other reachable location in the code. See "hello-auditable" folder for an example. Don't worry about performance, it will be compiled to a no-op.
- 1. Run `rust-audit path/to/file` to recover the Cargo.lock used when compiling the executable. Feed the recovered file to [cargo-audit](https://github.com/RustSec/cargo-audit) to audit the binary for known vulnerabilities in it and its dependencies. 
+ 1. Add `auditable` as a dependency to your crate.
+ 1. Run `objcopy -O binary --only-section=.rust-audit-dep-list path/to/file` (or your platform equivalent) to recover the Cargo.lock used when compiling the executable.
+ 1. Feed the recovered file to [cargo-audit](https://github.com/RustSec/cargo-audit) to audit the binary for known vulnerabilities in it and its dependencies.
+
+Optional: access the version info from within the binary itself by calling `auditable::version_info()`. See "hello-auditable" folder for an example.
 
 ## Demo
 
@@ -22,10 +24,9 @@ git clone https://github.com/Shnatsel/rust-audit.git
 cd rust-audit
 # compile a binary with Cargo.lock embedded in it
 cd hello-auditable
-cargo +nightly build --release
+cargo build --release
 # recover the Cargo.lock we've just embedded
-cd ../rust-audit
-cargo run -- ../hello-auditable/target/release/hello-auditable
+objcopy -O binary --only-section=.rust-audit-dep-list target/release/hello-auditable Cargo.lock.extracted
 # audit the compiled `hello-auditable` executable for known vulnerabilities
 cargo install cargo-audit
 cargo run -- ../hello-auditable/target/release/hello-auditable | cargo audit -f /dev/stdin
@@ -33,9 +34,7 @@ cargo run -- ../hello-auditable/target/release/hello-auditable | cargo audit -f 
 
 ## How it works
 
-Your Cargo.lock is embedded in your executable as `&'static str` at build time, with an added start and end markers. The code is exceedingly trivial, so I encourage you to check it out.
-
-The "call a no-op function" requirement is a hack to keep our info from getting optimized out by rustc. It even survives LTO, but is not ergonomic. Despite Rust stabilizing `#[used]` annotation, you still need [low-level platform-specific hacks](https://github.com/rust-lang/rust/issues/47384) to preserve an unused static that comes from a library. Hopefully we'll get cooperation from the compiler if/when this functionality is uplifted in Cargo.
+Your Cargo.lock is embedded in your executable as `&'static str` at build time into a dedicated linker section. We can then recover it with `objcopy` on Linux or the appropriate tools on other operating systems (a pure-Rust extractor for all major platforms would be welcome). The code is quite trivial, so I encourage you to check it out.
 
 ## FAQ
 
@@ -57,9 +56,8 @@ Good question. I don't think they are exposed in any reasonable way right now. W
 
 ### What is blocking uplifting this into Cargo?
 
-Two things:
- 1. Figuring out a way to get rustc to cooperate and not optimize out our info without code modifications in the target crate (i.e. no more "call a no-op function" weirdness). This is much easier if we're allowed to make modifications to Cargo and the compiler.
- 1. Actually writing an RFC to make the proposal official.
+ 1. Implementing the design as a crate (this one, it's WIP) and getting some real-world experience with it
+ 1. Trying out a stable format (Cargo.lock is unstable) and seeing how that works in practice before committing to it
 
 **Help on these points would be greatly appreciated.**
 
