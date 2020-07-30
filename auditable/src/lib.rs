@@ -12,3 +12,8 @@ static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(env!("OUT_DIR"), "/Ca
 pub fn annotate_this_executable() {
     test::black_box(AUDITABLE_VERSION_INFO);
 }
+
+#[inline]
+pub fn version_info() -> &'static [u8] {
+    &AUDITABLE_VERSION_INFO
+}
