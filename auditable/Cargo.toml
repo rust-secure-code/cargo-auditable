@@ -4,7 +4,7 @@ version = "0.0.2"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "Apache-2.0/MIT"
 repository = "https://github.com/Shnatsel/rust-audit"
-description = "Audit Rust binaries for known bugs or vulnerabilities at scale, in production, with zero bookkeeping."
+description = "Audit Rust binaries for known bugs or vulnerabilities in production with zero bookkeeping."
 edition = "2018"
 build = "build.rs"
 
