@@ -27,9 +27,9 @@ cd hello-auditable
 cargo build --release
 # recover the Cargo.lock we've just embedded
 objcopy -O binary --only-section=.rust-audit-dep-list target/release/hello-auditable Cargo.lock.extracted
-# audit the compiled `hello-auditable` executable for known vulnerabilities
+# audit the extracted Cargo.lock for known vulnerabilities
 cargo install cargo-audit
-cargo run -- ../hello-auditable/target/release/hello-auditable | cargo audit -f /dev/stdin
+cargo audit -f Cargo.lock.extracted
 ```
 
 ## How it works
