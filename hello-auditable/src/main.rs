@@ -1,4 +1,4 @@
 fn main() {
     println!("Hello, world!");
-    println!("My version info is:\n{}", std::str::from_utf8(auditable::version_info()).unwrap());
+    println!("My version info is:\n{}", auditable::version_info());
 }
