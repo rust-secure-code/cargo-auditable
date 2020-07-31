@@ -13,7 +13,7 @@ fn main() {
     let dest_dir = Path::new(&out_dir);
     let mut f = File::create(dest_dir.join("Cargo.lock.annotated")).unwrap();
     let stuff_to_write = if env::var("DOCS_RS").is_ok() {
-        "Contents of your Cargo.lock will be automatically inserted here".to_owned()
+        "This variable with be set to the contents of your Cargo.lock".to_owned()
     } else {
         let cargo_lock_location = get_cargo_lock_location();
         std::fs::read_to_string(cargo_lock_location).unwrap()
