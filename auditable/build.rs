@@ -12,8 +12,12 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dir = Path::new(&out_dir);
     let mut f = File::create(dest_dir.join("Cargo.lock.annotated")).unwrap();
-    let cargo_lock_location = get_cargo_lock_location();
-    let stuff_to_write = std::fs::read_to_string(cargo_lock_location).unwrap();
+    let stuff_to_write = if env::var("DOCS_RS").is_ok() {
+        "Contents of your Cargo.lock will be automatically inserted here".to_owned()
+    } else {
+        let cargo_lock_location = get_cargo_lock_location();
+        std::fs::read_to_string(cargo_lock_location).unwrap()
+    };
     write!(&mut f, "{}", stuff_to_write).unwrap();
 }
 
@@ -44,7 +48,7 @@ fn guess_cargo_lock_location(starting_dir: &Path, traversal_limit: u16) -> Resul
     let mut new_dir = starting_dir.to_owned();
     for _ in 0..traversal_limit {
         new_dir = new_dir.join(&up);
-        let filename = dbg!(new_dir.join("Cargo.lock"));
+        let filename = new_dir.join("Cargo.lock");
         if let Ok(mut file) = File::open(new_dir.join("Cargo.lock")) {
             if let Ok(true) = is_cargo_lock_with_auditable(&mut file) {
                 return Ok(filename);
