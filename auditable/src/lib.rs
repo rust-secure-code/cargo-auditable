@@ -48,5 +48,5 @@ const fn slices_are_equal(a: &[u8], b: &[u8]) -> bool {
 #[allow(unconditional_panic)]
 #[allow(non_snake_case)]
 const fn fail_build_on_invalid_utf8_in_Cargo_toml() {
-    [()][1337];
+    [()][1337]; // because panicking in `const fn` is unstable
 }
