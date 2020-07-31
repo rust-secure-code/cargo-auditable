@@ -1,7 +1,8 @@
 #[used]
 #[link_section = ".rust-audit-dep-list"]
 static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
-    env!("OUT_DIR"), "/Cargo.lock.annotated"
+    env!("OUT_DIR"),
+    "/Cargo.lock.annotated"
 ))
 .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated"));
 
@@ -9,7 +10,7 @@ static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
 #[inline]
 pub fn version_info() -> &'static str {
     let _ = VERIFIED_UTF8; // suppress warnings about VERIFIED_UTF8 being unused
-    unsafe {std::str::from_utf8_unchecked(&AUDITABLE_VERSION_INFO)} // see below
+    unsafe { std::str::from_utf8_unchecked(&AUDITABLE_VERSION_INFO) } // see below
 }
 
 // ==== All of the below code is just validation for that `unsafe` ==== //
@@ -23,14 +24,17 @@ pub fn version_info() -> &'static str {
 // output binary as well, but better safe than sorry.
 static VERIFIED_UTF8: () = {
     let data_to_verify: &[u8] = &AUDITABLE_VERSION_INFO; // cast to unsized slice
-    let data_as_valid_string: &str = include_str!(concat!(env!("OUT_DIR"),"/Cargo.lock.annotated"));
-    if ! slices_are_equal(data_to_verify, data_as_valid_string.as_bytes()) {
+    let data_as_valid_string: &str =
+        include_str!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated"));
+    if !slices_are_equal(data_to_verify, data_as_valid_string.as_bytes()) {
         fail_build_on_invalid_utf8_in_Cargo_toml();
     }
 };
 
 const fn slices_are_equal(a: &[u8], b: &[u8]) -> bool {
-    if a.len() != b.len() { return false };
+    if a.len() != b.len() {
+        return false;
+    };
     let mut i = 0;
     while i < a.len() {
         if a[i] != b[i] {
