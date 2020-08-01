@@ -14,6 +14,12 @@ pub struct Dependency {
     version: String
 }
 
+impl RawVersionInfo {
+    fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
+        Ok(Self::from(cargo_lock::lockfile::Lockfile::from_str(toml)?))
+    }
+}
+
 impl From<cargo_lock::dependency::Dependency> for Dependency {
     fn from(source: cargo_lock::dependency::Dependency) -> Self {
         Self {
