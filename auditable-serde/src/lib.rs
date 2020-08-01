@@ -1,22 +1,34 @@
 use cargo_lock;
 use std::{str::FromStr, convert::TryInto, error::Error};
+use serde::{Deserialize, Serialize};
+use serde_json;
+#[derive(Serialize, Deserialize)]
 pub struct RawVersionInfo {
     packages: Vec<Package>
 }
+#[derive(Serialize, Deserialize)]
 pub struct Package {
     name: String,
     version: String,
     checksum: String,
     dependencies: Vec<Dependency>
 }
+#[derive(Serialize, Deserialize)]
 pub struct Dependency {
     name: String,
     version: String
 }
 
 impl RawVersionInfo {
-    fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
+    pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
         Ok(Self::from(cargo_lock::lockfile::Lockfile::from_str(toml)?))
+    }
+}
+
+impl FromStr for RawVersionInfo {
+    type Err = serde_json::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_str(s)
     }
 }
 
