@@ -1,10 +1,7 @@
-use std::str::FromStr;
+use cargo_lock;
+use std::{str::FromStr, convert::TryInto, error::Error};
 use serde::{Deserialize, Serialize};
 use serde_json;
-#[cfg(feature = "toml")]
-use cargo_lock;
-#[cfg(feature = "toml")]
-use std::{convert::TryInto, error::Error};
 #[derive(Serialize, Deserialize)]
 pub struct RawVersionInfo {
     packages: Vec<Package>
@@ -32,6 +29,12 @@ pub struct Dependency {
     version: String
 }
 
+impl RawVersionInfo {
+    pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
+        Ok(Self::from(cargo_lock::lockfile::Lockfile::from_str(toml)?))
+    }
+}
+
 impl FromStr for RawVersionInfo {
     type Err = serde_json::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -39,14 +42,6 @@ impl FromStr for RawVersionInfo {
     }
 }
 
-#[cfg(feature = "toml")]
-impl RawVersionInfo {
-    pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
-        Ok(Self::from(cargo_lock::lockfile::Lockfile::from_str(toml)?))
-    }
-}
-
-#[cfg(feature = "toml")]
 impl From<cargo_lock::dependency::Dependency> for Dependency {
     fn from(source: cargo_lock::dependency::Dependency) -> Self {
         Self {
@@ -56,7 +51,7 @@ impl From<cargo_lock::dependency::Dependency> for Dependency {
         }
     }
 }
-#[cfg(feature = "toml")]
+
 impl From<cargo_lock::package::Package> for Package {
     fn from(source: cargo_lock::package::Package) -> Self {
         Self {
@@ -71,7 +66,7 @@ impl From<cargo_lock::package::Package> for Package {
         }
     }
 }
-#[cfg(feature = "toml")]
+
 impl From<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     fn from(source: cargo_lock::lockfile::Lockfile) -> Self {
         Self {
@@ -80,7 +75,7 @@ impl From<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     }
     
 }
-#[cfg(feature = "toml")]
+
 impl TryInto<cargo_lock::dependency::Dependency> for Dependency {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::dependency::Dependency, Self::Error> {
@@ -91,7 +86,7 @@ impl TryInto<cargo_lock::dependency::Dependency> for Dependency {
         })
     }
 }
-#[cfg(feature = "toml")]
+
 impl TryInto<cargo_lock::package::Package> for Package {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::package::Package, Self::Error> {
@@ -108,7 +103,7 @@ impl TryInto<cargo_lock::package::Package> for Package {
         })
     }
 }
-#[cfg(feature = "toml")]
+
 impl TryInto<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
@@ -130,7 +125,6 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
 // A slightly saner version would be this:
 // self.dependencies.into_iter().map(|x| x.try_into()?).collect()
 // but it also doesn't compile. Hence this mess:
-#[cfg(feature = "toml")]
 fn vec_try_into<A: TryInto<B>, B, E: Error + std::convert::From<<A as std::convert::TryInto<B>>::Error>>(source: Vec<A>) -> Result<Vec<B>, E>  {
         let mut result = Vec::with_capacity(source.len());
         for dep in source {
