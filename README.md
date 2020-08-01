@@ -11,7 +11,8 @@ RFC for a proper implementation in Cargo, for which `auditable` crate paves the 
 ## Usage
 
  1. Add `auditable` as a dependency to your crate.
- 1. Run `objcopy -O binary --only-section=.rust-audit-dep-list path/to/file` (or your platform equivalent) to recover the Cargo.lock used when compiling the executable.
+ 1. Compile your crate.
+ 1. Run `objcopy -O binary --only-section=.rust-audit-dep-list path/to/file` (or your platform equivalent) to recover the Cargo.lock used when compiling the executable from the compiled binary.
  1. Feed the recovered file to [cargo-audit](https://github.com/RustSec/cargo-audit) to audit the binary for known vulnerabilities in it and its dependencies.
 
 Optional: access the version info from within the binary itself by calling `auditable::version_info()`. See "hello-auditable" folder for an example.
