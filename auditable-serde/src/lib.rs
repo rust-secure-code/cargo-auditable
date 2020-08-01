@@ -10,7 +10,7 @@ pub struct RawVersionInfo {
 pub struct Package {
     name: String,
     version: String,
-    checksum: String,
+    checksum: Option<String>,
     dependencies: Vec<Dependency>
 }
 #[derive(Serialize, Deserialize)]
@@ -49,8 +49,8 @@ impl From<cargo_lock::package::Package> for Package {
             name: source.name.as_str().to_owned(),
             version: format!("{}", source.version),
             checksum: match source.checksum {
-                Some(value) => format!("{}", value),
-                None => String::new(), // TODO: consider failing?
+                Some(value) => Some(format!("{}", value)),
+                None => None
             },
             dependencies: source.dependencies.into_iter().map(|d| d.into()).collect()
         }
@@ -83,7 +83,10 @@ impl TryInto<cargo_lock::package::Package> for Package {
         Ok(cargo_lock::package::Package {
             name: cargo_lock::package::name::Name::from_str(&self.name)?,
             version: cargo_lock::package::Version::parse(&self.version)?,
-            checksum: Some(cargo_lock::package::checksum::Checksum::from_str(&self.checksum)?),
+            checksum: match self.checksum {
+                Some(value ) => Some(cargo_lock::package::checksum::Checksum::from_str(&value)?),
+                None => None
+            },
             dependencies: vec_try_into::<Dependency, cargo_lock::dependency::Dependency, Self::Error>(self.dependencies)?,
             replace: None,
             source: None,
