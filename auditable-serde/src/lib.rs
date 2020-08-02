@@ -53,7 +53,7 @@ impl From<cargo_lock::dependency::Dependency> for Dependency {
         Self {
             // TODO: get non-copying conversion from Name to String implemented upstream
             name: source.name.as_str().to_owned(),
-            version: format!("{}", source.version)
+            version: source.version.to_string()
         }
     }
 }
@@ -63,9 +63,9 @@ impl From<cargo_lock::package::Package> for Package {
         Self {
             // TODO: get non-copying conversion from Name to String implemented upstream
             name: source.name.as_str().to_owned(),
-            version: format!("{}", source.version),
+            version: source.version.to_string(),
             checksum: match source.checksum {
-                Some(value) => Some(format!("{}", value)),
+                Some(value) => Some(value.to_string()),
                 None => None
             },
             dependencies: source.dependencies.into_iter().map(|d| d.into()).collect()
