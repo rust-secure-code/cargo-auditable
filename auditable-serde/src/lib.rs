@@ -2,11 +2,15 @@ use cargo_lock;
 use std::{str::FromStr, convert::TryInto, error::Error};
 use serde::{Deserialize, Serialize};
 use serde_json;
+
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
     packages: Vec<Package>
 }
+
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Package {
     #[serde(rename = "n")]
     name: String,
@@ -21,7 +25,9 @@ pub struct Package {
     #[serde(rename = "d")]
     dependencies: Vec<Dependency>
 }
+
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Dependency {
     #[serde(rename = "n")]
     name: String,
