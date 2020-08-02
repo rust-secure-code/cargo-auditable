@@ -3,13 +3,13 @@ use std::{str::FromStr, convert::TryInto};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
     packages: Vec<Package>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Package {
     #[serde(rename = "n")]
@@ -26,7 +26,7 @@ pub struct Package {
     dependencies: Vec<Dependency>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Dependency {
     #[serde(rename = "n")]
@@ -130,8 +130,22 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
 
 #[cfg(test)]
 mod tests {
+    use std::{convert::TryInto, path::PathBuf};
+    use super::RawVersionInfo;
+
+    fn load_our_own_cargo_lock() -> String {
+        let crate_root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        let cargo_lock_location = crate_root_dir.join("Cargo.lock");
+        let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
+        cargo_lock_contents
+    }
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn lockfile_struct_conversion_roundtrip() {
+        let cargo_lock_contents = load_our_own_cargo_lock();
+        let version_info_struct = RawVersionInfo::from_toml(&cargo_lock_contents).expect("Failed to convert from TOML to JSON");
+        let lockfile_struct: cargo_lock::lockfile::Lockfile = (&version_info_struct).try_into().unwrap();
+        let roundtripped_version_info_struct: RawVersionInfo = (&lockfile_struct).into();
+        assert_eq!(version_info_struct, roundtripped_version_info_struct);
     }
 }

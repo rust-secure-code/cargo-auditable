@@ -62,7 +62,14 @@ fn guess_cargo_lock_location(starting_dir: &Path, traversal_limit: u16) -> Resul
     Err(())
 }
 
-/// Don't call directly, use `is_toplevel_cargo_lock()` instead
+fn is_cargo_lock_with_auditable(file: &mut File) -> io::Result<bool> {
+    let res = is_really_cargo_lock_with_auditable(file);
+    // rewind file after we've read from it so that it can be used later
+    file.seek(SeekFrom::Start(0)).unwrap();
+    res
+}
+
+/// Don't call directly, use `is_cargo_lock_with_auditable()` instead
 fn is_really_cargo_lock_with_auditable(file: &mut File) -> io::Result<bool> {
     let mut reader = BufReader::new(file);
     let mut line = String::new();
@@ -73,13 +80,6 @@ fn is_really_cargo_lock_with_auditable(file: &mut File) -> io::Result<bool> {
         }
     }
     Ok(false)
-}
-
-fn is_cargo_lock_with_auditable(file: &mut File) -> io::Result<bool> {
-    let res = is_really_cargo_lock_with_auditable(file);
-    // rewind file after we've read from it so that it can be used later
-    file.seek(SeekFrom::Start(0)).unwrap();
-    res
 }
 
 fn we_are_on_docs_rs() -> bool {
