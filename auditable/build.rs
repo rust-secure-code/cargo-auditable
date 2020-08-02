@@ -14,10 +14,10 @@ const DIRECTORY_TRAVERSAL_LIMIT: u16 = 20;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dir = Path::new(&out_dir);
-    let f = File::create(dest_dir.join("Cargo.lock.annotated")).unwrap();
+    let f = File::create(dest_dir.join("dependency-list.json.gz")).unwrap();
     let mut writer = std::io::BufWriter::new(f);
     if we_are_on_docs_rs() {
-        write!(&mut writer, "This variable with be set to the contents of your Cargo.lock").unwrap();
+        write!(&mut writer, "This variable with be set to the compressed list of dependencies in JSON format").unwrap();
     } else {
         let cargo_lock_location = get_cargo_lock_location();
         let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
