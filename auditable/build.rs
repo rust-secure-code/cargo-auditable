@@ -7,6 +7,7 @@ use std::{
 };
 use auditable_serde::RawVersionInfo;
 use serde_json;
+use miniz_oxide::deflate;
 
 const DIRECTORY_TRAVERSAL_LIMIT: u16 = 20;
 
@@ -21,7 +22,9 @@ fn main() {
         let cargo_lock_location = get_cargo_lock_location();
         let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
         let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).expect("Failed to parse Cargo.lock");
-        serde_json::to_writer(writer, &version_info).unwrap();
+        let json = serde_json::to_string(&version_info).unwrap();
+        let compressed_json = deflate::compress_to_vec(json.as_bytes(), 7);
+        writer.write_all(&compressed_json).unwrap();
     };
 }
 
