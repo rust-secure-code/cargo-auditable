@@ -4,6 +4,6 @@ fn main() {
     println!("Hello, world!");
     // Actually use the data to work around a bug in rustc:
     // https://github.com/rust-lang/rust/issues/47384
-    // on nightly `test::black_box` works better than `println!`
+    // On nightly you can use `test::black_box` instead of `println!`
     println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
 }
