@@ -1,13 +1,37 @@
 use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
 use auditable_serde::RawVersionInfo;
 
-#[used]
-#[link_section = ".rust-audit-dep-list"]
-static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
-    env!("OUT_DIR"),
-    "/dependency-list.json.gz"
-))
-.len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+// FIXME: breaks on cross-compilation from windows to unix or vice versa
+// because all Cargo `cfg`s are for the target platform, not host.
+// Other things I've tried: https://github.com/Shnatsel/rust-audit/issues/15
+
+#[cfg(not(target_family = "windows"))]
+#[macro_export]
+macro_rules! inject_dependency_list {
+    () => {
+        #[used]
+        #[link_section = ".rust-audit-dep-list"]
+        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
+            env!("OUT_DIR"), "/",
+            "dependency-list.json.gz"
+        ))
+        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+    };
+}
+
+#[cfg(target_family = "windows")]
+#[macro_export]
+macro_rules! inject_dependency_list {
+    () => {
+        #[used]
+        #[link_section = ".rust-audit-dep-list"]
+        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
+            env!("OUT_DIR"), "\\",
+            "dependency-list.json.gz"
+        ))
+        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+    };
+}
 
 /// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
 pub fn collect_dependency_list() {
