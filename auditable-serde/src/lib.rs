@@ -1,5 +1,5 @@
 use cargo_lock;
-use std::{str::FromStr, convert::TryInto, error::Error};
+use std::{str::FromStr, convert::TryInto};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -80,7 +80,7 @@ impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     
 }
 
-impl TryInto<cargo_lock::dependency::Dependency> for Dependency {
+impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::dependency::Dependency, Self::Error> {
         Ok(cargo_lock::dependency::Dependency {
@@ -91,50 +91,42 @@ impl TryInto<cargo_lock::dependency::Dependency> for Dependency {
     }
 }
 
-impl TryInto<cargo_lock::package::Package> for Package {
+impl TryInto<cargo_lock::package::Package> for &Package {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::package::Package, Self::Error> {
         Ok(cargo_lock::package::Package {
             name: cargo_lock::package::name::Name::from_str(&self.name)?,
             version: cargo_lock::package::Version::parse(&self.version)?,
-            checksum: match self.checksum {
+            checksum: match &self.checksum {
                 Some(value ) => Some(cargo_lock::package::checksum::Checksum::from_str(&value)?),
                 None => None
             },
-            dependencies: vec_try_into::<Dependency, cargo_lock::dependency::Dependency, Self::Error>(self.dependencies)?,
+            dependencies: {
+                let result: Result<Vec<_>, _> = self.dependencies.iter().map(|x| x.try_into().map_err(|e| e)).collect();
+                result?
+            },
             replace: None,
             source: None,
         })
     }
 }
 
-impl TryInto<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
+impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
         Ok(cargo_lock::lockfile::Lockfile {
             version: cargo_lock::lockfile::version::ResolveVersion::V2,
             // The rant from conversion code from Package also applies here
-            packages: vec_try_into::<Package, cargo_lock::package::Package, Self::Error>(self.packages)?,
+            packages: {
+                let result: Result<Vec<_>, _> = self.packages.iter().map(|x| x.try_into().map_err(|e| e)).collect();
+                result?
+            },
             root: None,
             metadata: std::collections::BTreeMap::new(),
             patch: cargo_lock::patch::Patch {unused: Vec::new()},
         })
     }
     
-}
-
-// Surprisingly, TryInto on Vec requires the element to implement TryFrom:
-// https://doc.rust-lang.org/std/vec/struct.Vec.html#impl-TryInto%3CU%3E
-// But we cannot implement TryFrom due to orphan rules.
-// A slightly saner version would be this:
-// self.dependencies.into_iter().map(|x| x.try_into()?).collect()
-// but it also doesn't compile. Hence this mess:
-fn vec_try_into<A: TryInto<B>, B, E: Error + std::convert::From<<A as std::convert::TryInto<B>>::Error>>(source: Vec<A>) -> Result<Vec<B>, E>  {
-        let mut result = Vec::with_capacity(source.len());
-        for dep in source {
-            result.push(dep.try_into()?);
-        }
-        Ok(result)
 }
 
 #[cfg(test)]
