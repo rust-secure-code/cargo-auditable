@@ -1,4 +1,4 @@
-auditable::inject_dependency_list!(COMPRESSED_DEPENDENCY_LIST);
+static COMPRESSED_DEPENDENCY_LIST: &[u8] = auditable::inject_dependency_list!();
 
 fn main() {
     println!("Hello, world!");
