@@ -27,7 +27,7 @@ static VERIFIED_UTF8: () = {
     let data_as_valid_string: &str =
         include_str!(concat!(env!("OUT_DIR"), "/Cargo.lock.annotated"));
     if !slices_are_equal(data_to_verify, data_as_valid_string.as_bytes()) {
-        fail_build_on_invalid_utf8_in_Cargo_toml();
+        dependency_file_generated_by_build_rs_was_modified_while_I_was_reading_it();
     }
 };
 
@@ -46,6 +46,7 @@ const fn slices_are_equal(a: &[u8], b: &[u8]) -> bool {
 }
 
 #[allow(unconditional_panic)]
+#[allow(non_snake_case)]
 const fn dependency_file_generated_by_build_rs_was_modified_while_I_was_reading_it() {
     [()][1337]; // because panicking in `const fn` is unstable
 }

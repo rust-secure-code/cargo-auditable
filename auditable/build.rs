@@ -5,25 +5,29 @@ use std::{
     io::{BufRead, BufReader, Seek, SeekFrom, Write},
     path::{Path, PathBuf, MAIN_SEPARATOR},
 };
+use auditable_serde::RawVersionInfo;
+use serde_json;
 
 const DIRECTORY_TRAVERSAL_LIMIT: u16 = 20;
 
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dir = Path::new(&out_dir);
-    let mut f = File::create(dest_dir.join("Cargo.lock.annotated")).unwrap();
-    let stuff_to_write = if env::var("DOCS_RS").is_ok() {
-        "This variable with be set to the contents of your Cargo.lock".to_owned()
+    let f = File::create(dest_dir.join("Cargo.lock.annotated")).unwrap();
+    let mut writer = std::io::BufWriter::new(f);
+    if we_are_on_docs_rs() {
+        write!(&mut writer, "This variable with be set to the contents of your Cargo.lock").unwrap();
     } else {
         let cargo_lock_location = get_cargo_lock_location();
-        std::fs::read_to_string(cargo_lock_location).unwrap()
+        let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
+        let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).expect("Failed to parse Cargo.lock");
+        serde_json::to_writer(writer, &version_info).unwrap();
     };
-    write!(&mut f, "{}", stuff_to_write).unwrap();
 }
 
 fn get_cargo_lock_location() -> PathBuf {
     if let Ok(user_input) = env::var("RUST_AUDIT_CARGO_LOCK_PATH") {
-        PathBuf::from(user_input) // TODO: sanity check?
+        PathBuf::from(user_input)
     } else if let Ok(path) = guess_cargo_lock_location(
         Path::new(&env::var("OUT_DIR").unwrap()),
         DIRECTORY_TRAVERSAL_LIMIT,
@@ -76,4 +80,13 @@ fn is_cargo_lock_with_auditable(file: &mut File) -> io::Result<bool> {
     // rewind file after we've read from it so that it can be used later
     file.seek(SeekFrom::Start(0)).unwrap();
     res
+}
+
+fn we_are_on_docs_rs() -> bool {
+    if let Ok(value) = env::var("DOCS_RS") {
+        if &value == "1" {
+            return true
+        }
+    }
+    false
 }
