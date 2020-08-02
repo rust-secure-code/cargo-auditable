@@ -1,10 +1,6 @@
 use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
 use auditable_serde::RawVersionInfo;
 
-// FIXME: breaks on cross-compilation from windows to unix or vice versa
-// because all Cargo `cfg`s are for the target platform, not host.
-// Other things I've tried: https://github.com/Shnatsel/rust-audit/issues/15
-
 /// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary.
 /// In order to work around a bug in rustc you also have to pass an identifier into this macro and then use it,
 /// for example:
@@ -15,44 +11,15 @@ use auditable_serde::RawVersionInfo;
 ///    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
 ///}
 ///```
-#[cfg(not(target_family = "windows"))]
 #[macro_export]
 macro_rules! inject_dependency_list {
     () => ({
         #[used]
         #[link_section = ".rust-audit-dep-list"]
-        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
-            env!("OUT_DIR"), "/",
-            "dependency-list.json.gz"
-        ))
-        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.zlib"));
+        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"))
+        .len()] = *include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"));
         &AUDITABLE_VERSION_INFO
     });
-}
-
-/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary.
-/// In order to work around a bug in rustc you also have to pass an identifier into this macro and then use it,
-/// for example:
-/// ```rust
-///static COMPRESSED_DEPENDENCY_LIST: &[u8] = auditable::inject_dependency_list!();
-///
-///fn main() {
-///    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
-///}
-///```
-#[cfg(target_family = "windows")]
-#[macro_export]
-macro_rules! inject_dependency_list {
-    ($l:ident) => {
-        #[used]
-        #[link_section = ".rust-audit-dep-list"]
-        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
-            env!("OUT_DIR"), "\\",
-            "dependency-list.json.zlib"
-        ))
-        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.zlib"));
-        static $l: &[u8] = &AUDITABLE_VERSION_INFO;
-    };
 }
 
 /// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
@@ -61,7 +28,9 @@ pub fn collect_dependency_list() {
     let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     let compressed_json = miniz_oxide::deflate::compress_to_vec_zlib(json.as_bytes(), 7);
-    write_dependency_info(&compressed_json);
+    let output_file_path = output_file_path();
+    write_dependency_info(&compressed_json, &output_file_path);
+    export_dependency_file_path(&output_file_path);
 }
 
 fn load_cargo_lock() -> String {
@@ -71,10 +40,18 @@ fn load_cargo_lock() -> String {
     cargo_lock_contents
 }
 
-fn write_dependency_info(data: &[u8]) {
+fn output_file_path() -> std::path::PathBuf {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dir = Path::new(&out_dir);
-    let f = File::create(dest_dir.join("dependency-list.json.zlib")).unwrap();
+    dest_dir.join("dependency-list.json.zlib")
+}
+
+fn write_dependency_info(data: &[u8], path: &Path) {
+    let f = File::create(path).unwrap();
     let mut writer = std::io::BufWriter::new(f);
     writer.write_all(data).unwrap();
+}
+
+fn export_dependency_file_path(path: &Path) {
+    println!("cargo:rustc-env=RUST_AUDIT_DEPENDENCY_FILE_LOCATION={}", path.display());
 }
