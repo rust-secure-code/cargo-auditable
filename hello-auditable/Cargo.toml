@@ -3,8 +3,12 @@ name = "hello-auditable"
 version = "0.1.0"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
+auditable = {path = "../auditable"}
+
+[build-dependencies]
 auditable = {path = "../auditable"}
 
 [profile.release]

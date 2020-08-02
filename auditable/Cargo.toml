@@ -6,14 +6,8 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/Shnatsel/rust-audit"
 description = "Audit Rust binaries for known bugs or vulnerabilities in production with zero bookkeeping."
 edition = "2018"
-build = "build.rs"
 
 [dependencies]
 auditable-serde = {path = "../auditable-serde"}
 miniz_oxide = "0.4.0"
 serde_json = "1.0.57"
-
-[build-dependencies]
-auditable-serde = {path = "../auditable-serde"}
-serde_json = "1.0.57"
-miniz_oxide = "0.4.0"

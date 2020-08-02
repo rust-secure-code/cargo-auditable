@@ -12,26 +12,20 @@ pub struct RawVersionInfo {
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Package {
-    #[serde(rename = "n")]
     name: String,
-    #[serde(rename = "v")]
     version: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "c")]
     checksum: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    #[serde(rename = "d")]
     dependencies: Vec<Dependency>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Dependency {
-    #[serde(rename = "n")]
     name: String,
-    #[serde(rename = "v")]
     version: String,
 }
 

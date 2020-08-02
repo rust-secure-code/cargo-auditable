@@ -9,7 +9,7 @@ use auditable_serde::RawVersionInfo;
 #[cfg(not(target_family = "windows"))]
 #[macro_export]
 macro_rules! inject_dependency_list {
-    () => {
+    ($l:ident) => {
         #[used]
         #[link_section = ".rust-audit-dep-list"]
         static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
@@ -17,21 +17,7 @@ macro_rules! inject_dependency_list {
             "dependency-list.json.gz"
         ))
         .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
-    };
-}
-
-/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary
-#[cfg(target_family = "windows")]
-#[macro_export]
-macro_rules! inject_dependency_list {
-    () => {
-        #[used]
-        #[link_section = ".rust-audit-dep-list"]
-        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
-            env!("OUT_DIR"), "\\",
-            "dependency-list.json.gz"
-        ))
-        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+        static $l: &[u8] = &AUDITABLE_VERSION_INFO;
     };
 }
 
@@ -40,7 +26,7 @@ pub fn collect_dependency_list() {
     let cargo_lock_contents = load_cargo_lock();
     let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
-    let compressed_json = miniz_oxide::deflate::compress_to_vec(json.as_bytes(), 7);
+    let compressed_json = miniz_oxide::deflate::compress_to_vec_zlib(json.as_bytes(), 7);
     write_dependency_info(&compressed_json);
 }
 
