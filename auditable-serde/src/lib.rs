@@ -37,7 +37,7 @@ pub struct Dependency {
 
 impl RawVersionInfo {
     pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
-        Ok(Self::from(cargo_lock::lockfile::Lockfile::from_str(toml)?))
+        Ok(Self::from(&cargo_lock::lockfile::Lockfile::from_str(toml)?))
     }
 }
 
@@ -48,35 +48,33 @@ impl FromStr for RawVersionInfo {
     }
 }
 
-impl From<cargo_lock::dependency::Dependency> for Dependency {
-    fn from(source: cargo_lock::dependency::Dependency) -> Self {
+impl From<&cargo_lock::dependency::Dependency> for Dependency {
+    fn from(source: &cargo_lock::dependency::Dependency) -> Self {
         Self {
-            // TODO: get non-copying conversion from Name to String implemented upstream
             name: source.name.as_str().to_owned(),
             version: source.version.to_string()
         }
     }
 }
 
-impl From<cargo_lock::package::Package> for Package {
-    fn from(source: cargo_lock::package::Package) -> Self {
+impl From<&cargo_lock::package::Package> for Package {
+    fn from(source: &cargo_lock::package::Package) -> Self {
         Self {
-            // TODO: get non-copying conversion from Name to String implemented upstream
             name: source.name.as_str().to_owned(),
             version: source.version.to_string(),
-            checksum: match source.checksum {
+            checksum: match &source.checksum {
                 Some(value) => Some(value.to_string()),
                 None => None
             },
-            dependencies: source.dependencies.into_iter().map(|d| d.into()).collect()
+            dependencies: source.dependencies.iter().map(|d| d.into()).collect()
         }
     }
 }
 
-impl From<cargo_lock::lockfile::Lockfile> for RawVersionInfo {
-    fn from(source: cargo_lock::lockfile::Lockfile) -> Self {
+impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
+    fn from(source: &cargo_lock::lockfile::Lockfile) -> Self {
         Self {
-            packages: source.packages.into_iter().map(|p| p.into()).collect()
+            packages: source.packages.iter().map(|p| p.into()).collect()
         }
     }
     
