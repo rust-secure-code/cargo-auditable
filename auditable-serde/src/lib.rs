@@ -1,7 +1,8 @@
-use cargo_lock;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{convert::TryInto, str::FromStr};
+#[cfg(feature = "toml")]
+use cargo_lock;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -29,12 +30,6 @@ pub struct Dependency {
     version: String,
 }
 
-impl RawVersionInfo {
-    pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
-        Ok(Self::from(&cargo_lock::lockfile::Lockfile::from_str(toml)?))
-    }
-}
-
 impl FromStr for RawVersionInfo {
     type Err = serde_json::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -42,6 +37,14 @@ impl FromStr for RawVersionInfo {
     }
 }
 
+#[cfg(feature = "toml")]
+impl RawVersionInfo {
+    pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
+        Ok(Self::from(&cargo_lock::lockfile::Lockfile::from_str(toml)?))
+    }
+}
+
+#[cfg(feature = "toml")]
 impl From<&cargo_lock::dependency::Dependency> for Dependency {
     fn from(source: &cargo_lock::dependency::Dependency) -> Self {
         Self {
@@ -51,6 +54,7 @@ impl From<&cargo_lock::dependency::Dependency> for Dependency {
     }
 }
 
+#[cfg(feature = "toml")]
 impl From<&cargo_lock::package::Package> for Package {
     fn from(source: &cargo_lock::package::Package) -> Self {
         Self {
@@ -65,6 +69,7 @@ impl From<&cargo_lock::package::Package> for Package {
     }
 }
 
+#[cfg(feature = "toml")]
 impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     fn from(source: &cargo_lock::lockfile::Lockfile) -> Self {
         Self {
@@ -73,6 +78,7 @@ impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     }
 }
 
+#[cfg(feature = "toml")]
 impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::dependency::Dependency, Self::Error> {
@@ -84,6 +90,7 @@ impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
     }
 }
 
+#[cfg(feature = "toml")]
 impl TryInto<cargo_lock::package::Package> for &Package {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::package::Package, Self::Error> {
@@ -105,6 +112,7 @@ impl TryInto<cargo_lock::package::Package> for &Package {
     }
 }
 
+#[cfg(feature = "toml")]
 impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
     type Error = cargo_lock::error::Error;
     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
@@ -127,6 +135,7 @@ mod tests {
     use super::RawVersionInfo;
     use std::{convert::TryInto, path::PathBuf};
 
+    #[cfg(feature = "toml")]
     fn load_our_own_cargo_lock() -> String {
         let crate_root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         let cargo_lock_location = crate_root_dir.join("Cargo.lock");
@@ -135,6 +144,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "toml")]
     fn lockfile_struct_conversion_roundtrip() {
         let cargo_lock_contents = load_our_own_cargo_lock();
         let version_info_struct = RawVersionInfo::from_toml(&cargo_lock_contents)
