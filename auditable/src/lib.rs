@@ -48,5 +48,5 @@ const fn slices_are_equal(a: &[u8], b: &[u8]) -> bool {
 #[allow(unconditional_panic)]
 #[allow(non_snake_case)]
 const fn dependency_file_generated_by_build_rs_was_modified_while_I_was_reading_it() {
-    [()][1337]; // because panicking in `const fn` is unstable
+    [()][0xBAD_C0DE]; // because panicking in `const fn` is unstable
 }
