@@ -25,7 +25,7 @@ macro_rules! inject_dependency_list {
             env!("OUT_DIR"), "/",
             "dependency-list.json.gz"
         ))
-        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.zlib"));
         &AUDITABLE_VERSION_INFO
     });
 }
@@ -48,9 +48,9 @@ macro_rules! inject_dependency_list {
         #[link_section = ".rust-audit-dep-list"]
         static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
             env!("OUT_DIR"), "\\",
-            "dependency-list.json.gz"
+            "dependency-list.json.zlib"
         ))
-        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.zlib"));
         static $l: &[u8] = &AUDITABLE_VERSION_INFO;
     };
 }
@@ -74,7 +74,7 @@ fn load_cargo_lock() -> String {
 fn write_dependency_info(data: &[u8]) {
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_dir = Path::new(&out_dir);
-    let f = File::create(dest_dir.join("dependency-list.json.gz")).unwrap();
+    let f = File::create(dest_dir.join("dependency-list.json.zlib")).unwrap();
     let mut writer = std::io::BufWriter::new(f);
     writer.write_all(data).unwrap();
 }
