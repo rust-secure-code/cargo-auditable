@@ -1,7 +1,7 @@
 use auditable_serde::RawVersionInfo;
 use cargo_lock::Lockfile;
-use std::str::FromStr;
 use std::convert::TryInto;
+use std::str::FromStr;
 
 fn main() {
     let path = std::env::args().skip(1).next().expect("No file specified");
@@ -12,5 +12,4 @@ fn main() {
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
     std::io::Write::write_all(&mut stdout, lockfile_toml.as_bytes()).unwrap();
-    
 }

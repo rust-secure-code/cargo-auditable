@@ -1,12 +1,12 @@
 use cargo_lock;
-use std::{str::FromStr, convert::TryInto};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::{convert::TryInto, str::FromStr};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
-    packages: Vec<Package>
+    packages: Vec<Package>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -23,7 +23,7 @@ pub struct Package {
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[serde(rename = "d")]
-    dependencies: Vec<Dependency>
+    dependencies: Vec<Dependency>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -32,7 +32,7 @@ pub struct Dependency {
     #[serde(rename = "n")]
     name: String,
     #[serde(rename = "v")]
-    version: String
+    version: String,
 }
 
 impl RawVersionInfo {
@@ -52,7 +52,7 @@ impl From<&cargo_lock::dependency::Dependency> for Dependency {
     fn from(source: &cargo_lock::dependency::Dependency) -> Self {
         Self {
             name: source.name.as_str().to_owned(),
-            version: source.version.to_string()
+            version: source.version.to_string(),
         }
     }
 }
@@ -64,9 +64,9 @@ impl From<&cargo_lock::package::Package> for Package {
             version: source.version.to_string(),
             checksum: match &source.checksum {
                 Some(value) => Some(value.to_string()),
-                None => None
+                None => None,
             },
-            dependencies: source.dependencies.iter().map(|d| d.into()).collect()
+            dependencies: source.dependencies.iter().map(|d| d.into()).collect(),
         }
     }
 }
@@ -74,10 +74,9 @@ impl From<&cargo_lock::package::Package> for Package {
 impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
     fn from(source: &cargo_lock::lockfile::Lockfile) -> Self {
         Self {
-            packages: source.packages.iter().map(|p| p.into()).collect()
+            packages: source.packages.iter().map(|p| p.into()).collect(),
         }
     }
-    
 }
 
 impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
@@ -86,7 +85,7 @@ impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
         Ok(cargo_lock::dependency::Dependency {
             name: cargo_lock::package::name::Name::from_str(&self.name)?,
             version: cargo_lock::package::Version::parse(&self.version)?,
-            source: None
+            source: None,
         })
     }
 }
@@ -98,11 +97,12 @@ impl TryInto<cargo_lock::package::Package> for &Package {
             name: cargo_lock::package::name::Name::from_str(&self.name)?,
             version: cargo_lock::package::Version::parse(&self.version)?,
             checksum: match &self.checksum {
-                Some(value ) => Some(cargo_lock::package::checksum::Checksum::from_str(&value)?),
-                None => None
+                Some(value) => Some(cargo_lock::package::checksum::Checksum::from_str(&value)?),
+                None => None,
             },
             dependencies: {
-                let result: Result<Vec<_>, _> = self.dependencies.iter().map(|x| x.try_into().map_err(|e| e)).collect();
+                let result: Result<Vec<_>, _> =
+                    self.dependencies.iter().map(TryInto::try_into).collect();
                 result?
             },
             replace: None,
@@ -117,21 +117,21 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
         Ok(cargo_lock::lockfile::Lockfile {
             version: cargo_lock::lockfile::version::ResolveVersion::V2,
             packages: {
-                let result: Result<Vec<_>, _> = self.packages.iter().map(|x| x.try_into().map_err(|e| e)).collect();
+                let result: Result<Vec<_>, _> =
+                    self.packages.iter().map(TryInto::try_into).collect();
                 result?
             },
             root: None,
             metadata: std::collections::BTreeMap::new(),
-            patch: cargo_lock::patch::Patch {unused: Vec::new()},
+            patch: cargo_lock::patch::Patch { unused: Vec::new() },
         })
     }
-    
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{convert::TryInto, path::PathBuf};
     use super::RawVersionInfo;
+    use std::{convert::TryInto, path::PathBuf};
 
     fn load_our_own_cargo_lock() -> String {
         let crate_root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -143,8 +143,10 @@ mod tests {
     #[test]
     fn lockfile_struct_conversion_roundtrip() {
         let cargo_lock_contents = load_our_own_cargo_lock();
-        let version_info_struct = RawVersionInfo::from_toml(&cargo_lock_contents).expect("Failed to convert from TOML to JSON");
-        let lockfile_struct: cargo_lock::lockfile::Lockfile = (&version_info_struct).try_into().unwrap();
+        let version_info_struct = RawVersionInfo::from_toml(&cargo_lock_contents)
+            .expect("Failed to convert from TOML to JSON");
+        let lockfile_struct: cargo_lock::lockfile::Lockfile =
+            (&version_info_struct).try_into().unwrap();
         let roundtripped_version_info_struct: RawVersionInfo = (&lockfile_struct).into();
         assert_eq!(version_info_struct, roundtripped_version_info_struct);
     }
