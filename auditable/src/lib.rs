@@ -5,6 +5,7 @@ use auditable_serde::RawVersionInfo;
 // because all Cargo `cfg`s are for the target platform, not host.
 // Other things I've tried: https://github.com/Shnatsel/rust-audit/issues/15
 
+/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary
 #[cfg(not(target_family = "windows"))]
 #[macro_export]
 macro_rules! inject_dependency_list {
@@ -19,6 +20,7 @@ macro_rules! inject_dependency_list {
     };
 }
 
+/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary
 #[cfg(target_family = "windows")]
 #[macro_export]
 macro_rules! inject_dependency_list {
