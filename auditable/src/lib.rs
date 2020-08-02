@@ -5,7 +5,16 @@ use auditable_serde::RawVersionInfo;
 // because all Cargo `cfg`s are for the target platform, not host.
 // Other things I've tried: https://github.com/Shnatsel/rust-audit/issues/15
 
-/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary
+/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary.
+/// In order to work around a bug in rustc you also have to pass an identifier into this macro and then use it,
+/// for example:
+/// ```rust
+///auditable::inject_dependency_list!(COMPRESSED_DEPENDENCY_LIST);
+///
+///fn main() {
+///    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
+///}
+///```
 #[cfg(not(target_family = "windows"))]
 #[macro_export]
 macro_rules! inject_dependency_list {
@@ -14,6 +23,31 @@ macro_rules! inject_dependency_list {
         #[link_section = ".rust-audit-dep-list"]
         static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
             env!("OUT_DIR"), "/",
+            "dependency-list.json.gz"
+        ))
+        .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
+        static $l: &[u8] = &AUDITABLE_VERSION_INFO;
+    };
+}
+
+/// Put this in your `main.rs` or `lib.rs` to inject dependency info into a dedicated linker section of your binary.
+/// In order to work around a bug in rustc you also have to pass an identifier into this macro and then use it,
+/// for example:
+/// ```rust
+///auditable::inject_dependency_list!(COMPRESSED_DEPENDENCY_LIST);
+///
+///fn main() {
+///    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
+///}
+///```
+#[cfg(target_family = "windows")]
+#[macro_export]
+macro_rules! inject_dependency_list {
+    ($l:ident) => {
+        #[used]
+        #[link_section = ".rust-audit-dep-list"]
+        static AUDITABLE_VERSION_INFO: [u8; include_bytes!(concat!(
+            env!("OUT_DIR"), "\\",
             "dependency-list.json.gz"
         ))
         .len()] = *include_bytes!(concat!(env!("OUT_DIR"), "/dependency-list.json.gz"));
