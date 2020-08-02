@@ -116,7 +116,6 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
         Ok(cargo_lock::lockfile::Lockfile {
             version: cargo_lock::lockfile::version::ResolveVersion::V2,
-            // The rant from conversion code from Package also applies here
             packages: {
                 let result: Result<Vec<_>, _> = self.packages.iter().map(|x| x.try_into().map_err(|e| e)).collect();
                 result?
