@@ -3,13 +3,13 @@ use std::{str::FromStr, convert::TryInto};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
     packages: Vec<Package>
 }
 
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Package {
     #[serde(rename = "n")]
@@ -26,7 +26,7 @@ pub struct Package {
     dependencies: Vec<Dependency>
 }
 
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Dependency {
     #[serde(rename = "n")]
