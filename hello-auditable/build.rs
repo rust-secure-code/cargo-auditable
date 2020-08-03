@@ -1,3 +1,3 @@
 fn main() {
-    auditable::collect_dependency_list();
+    auditable::build_time::collect_dependency_list();
 }

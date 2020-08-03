@@ -7,7 +7,11 @@ repository = "https://github.com/Shnatsel/rust-audit"
 description = "Audit Rust binaries for known bugs or vulnerabilities in production with zero bookkeeping."
 edition = "2018"
 
+[features]
+default = []
+build_time = ["auditable-serde", "miniz_oxide", "serde_json"]
+
 [dependencies]
-auditable-serde = {path = "../auditable-serde"}
-miniz_oxide = "0.4.0"
-serde_json = "1.0.57"
+auditable-serde = {path = "../auditable-serde", optional = true}
+miniz_oxide = {version = "0.4.0", optional = true}
+serde_json = {version =  "1.0.57", optional = true}
