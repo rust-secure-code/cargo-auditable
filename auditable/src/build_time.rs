@@ -34,5 +34,8 @@ fn write_dependency_info(data: &[u8], path: &Path) {
 }
 
 fn export_dependency_file_path(path: &Path) {
+    // Required because there's no cross-platform way to use `include_bytes!`
+    // on a file from the build dir other than this. I've tried lots of them.
+    // See https://github.com/rust-lang/rust/issues/75075
     println!("cargo:rustc-env=RUST_AUDIT_DEPENDENCY_FILE_LOCATION={}", path.display());
 }
