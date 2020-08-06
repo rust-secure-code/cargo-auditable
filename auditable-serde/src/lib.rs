@@ -1,16 +1,17 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use serde_json;
 use std::{convert::TryInto, str::FromStr};
 #[cfg(feature = "toml")]
 use cargo_lock;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
+    #[serde(serialize_with = "sort_and_serialize_vec")]
     packages: Vec<Package>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Package {
     name: String,
@@ -20,14 +21,26 @@ pub struct Package {
     checksum: Option<String>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(serialize_with = "sort_and_serialize_vec")]
     dependencies: Vec<Dependency>,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Dependency {
     name: String,
     version: String,
+}
+
+fn sort_and_serialize_vec<S, T>(data: &Vec<T>, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer, T: Serialize + Ord + Clone {
+    let mut seq = serializer.serialize_seq(Some(data.len()))?;
+    let mut data = data.clone();
+    // we do not care about reordering equal elements since they should be indistinguishable
+    data.sort_unstable();
+    for e in data {
+        seq.serialize_element(&e)?;
+    }
+    seq.end()
 }
 
 impl FromStr for RawVersionInfo {
