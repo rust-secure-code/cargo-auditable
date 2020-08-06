@@ -4,7 +4,7 @@ use std::{convert::TryInto, str::FromStr};
 #[cfg(feature = "toml")]
 use cargo_lock;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct RawVersionInfo {
     #[serde(serialize_with = "sort_and_serialize_vec")]
