@@ -5,14 +5,13 @@ use std::{convert::TryInto, str::FromStr};
 use cargo_lock;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[serde(deny_unknown_fields)]
+//TODO: add #[serde(deny_unknown_fields)] once the format is finalized
 pub struct RawVersionInfo {
     #[serde(serialize_with = "sort_and_serialize_vec")]
     packages: Vec<Package>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[serde(deny_unknown_fields)]
 pub struct Package {
     name: String,
     version: String,
@@ -26,7 +25,6 @@ pub struct Package {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[serde(deny_unknown_fields)]
 pub struct Dependency {
     name: String,
     version: String,
