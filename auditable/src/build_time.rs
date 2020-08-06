@@ -8,7 +8,7 @@ pub fn collect_dependency_list() {
     let cargo_lock_contents = load_cargo_lock();
     let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
-    let compressed_json = miniz_oxide::deflate::compress_to_vec_zlib(json.as_bytes(), 7);
+    let compressed_json = miniz_oxide::deflate::compress_to_vec_zlib(json.as_bytes(), choose_compression_level());
     let output_file_path = output_file_path();
     write_dependency_info(&compressed_json, &output_file_path);
     export_dependency_file_path(&output_file_path);
@@ -38,4 +38,13 @@ fn export_dependency_file_path(path: &Path) {
     // on a file from the build dir other than this. I've tried lots of them.
     // See https://github.com/rust-lang/rust/issues/75075
     println!("cargo:rustc-env=RUST_AUDIT_DEPENDENCY_FILE_LOCATION={}", path.display());
+}
+
+fn choose_compression_level() -> u8 {
+    let build_profile = env::var("PROFILE").unwrap();
+    match build_profile.as_str() {
+        "debug" => 1,
+        "release" => 7, // not 9 because this also affects speed of incremental builds
+        _ => panic!("Unknown build profile: {}", &build_profile)
+    }
 }
