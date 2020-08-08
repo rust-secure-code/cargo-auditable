@@ -73,7 +73,7 @@ fn enabled_features() -> Vec<String> {
     // so we have to reconsruct it by calling cargo-metadata and filtering features
     // that we know exist against the mangled list of *enabled* features from env variables
     let enabled_uppercase_features = enabled_uppercase_features();
-    let dry_run_metadata = metadata_command().exec().unwrap();
+    let dry_run_metadata = metadata_command().no_deps().exec().unwrap();
     for package in dry_run_metadata.packages {
         // FIXME: There's no easy way to detect which package we're building, so for now
         // we just enable everything we've seen in the workspace and hope that this works
