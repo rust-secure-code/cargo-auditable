@@ -89,7 +89,9 @@ fn enabled_features() -> Vec<String> {
 
 fn enabled_uppercase_features() -> HashSet<String> {
     let mut features = HashSet::new();
-    for (var_name, _value) in env::vars().filter(|(name, _value)| name.len() > "CARGO_FEATURE_".len() && name.starts_with("CARGO_FEATURE_")) {
+    for (var_name, _value) in env::vars().filter(|(name, _value)| {
+        name.len() > "CARGO_FEATURE_".len() && name.starts_with("CARGO_FEATURE_")
+    }) {
         features.insert(var_name.trim_start_matches("CARGO_FEATURE_").to_owned());
     }
     features
