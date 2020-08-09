@@ -8,8 +8,7 @@ use cargo_metadata::{Metadata,MetadataCommand};
 
 /// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
 pub fn collect_dependency_list() {
-    let cargo_lock_contents = load_cargo_lock();
-    let version_info = RawVersionInfo::from_toml(&cargo_lock_contents).unwrap();
+    let version_info = RawVersionInfo::from(get_metadata());
     let json = serde_json::to_string(&version_info).unwrap();
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), choose_compression_level());
     let output_file_path = output_file_path();

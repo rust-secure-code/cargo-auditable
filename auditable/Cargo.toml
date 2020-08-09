@@ -12,7 +12,7 @@ default = []
 build_time = ["auditable-serde", "miniz_oxide", "serde_json"]
 
 [dependencies]
-auditable-serde = {path = "../auditable-serde", optional = true}
+auditable-serde = {path = "../auditable-serde", features = ["from_metadata"], optional = true}
 miniz_oxide = {version = "0.4.0", optional = true}
 serde_json = {version =  "1.0.57", optional = true}
 cargo_metadata = "0.11" 
