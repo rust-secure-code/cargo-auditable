@@ -4,7 +4,7 @@ use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
 use std::collections::HashSet;
 use auditable_serde::RawVersionInfo;
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use cargo_metadata::{Metadata,MetadataCommand};
+use cargo_metadata::{Metadata, MetadataCommand};
 
 /// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
 pub fn collect_dependency_list() {
@@ -14,13 +14,6 @@ pub fn collect_dependency_list() {
     let output_file_path = output_file_path();
     write_dependency_info(&compressed_json, &output_file_path);
     export_dependency_file_path(&output_file_path);
-}
-
-fn load_cargo_lock() -> String {
-    let crate_root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let cargo_lock_location = crate_root_dir.join("Cargo.lock");
-    let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
-    cargo_lock_contents
 }
 
 fn output_file_path() -> std::path::PathBuf {
