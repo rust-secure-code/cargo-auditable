@@ -54,6 +54,7 @@ fn metadata_command() -> MetadataCommand {
     let mut cmd = MetadataCommand::new();
     let cargo_toml_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
     cmd.manifest_path(cargo_toml_path);
+    cmd.other_options(vec!["--filter-platform=".to_owned() + &env::var("TARGET").unwrap()]);
     cmd
 }
 
