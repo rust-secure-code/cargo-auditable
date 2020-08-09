@@ -45,7 +45,16 @@ fn choose_compression_level() -> u8 {
 }
 
 fn get_metadata() -> Metadata {
-    metadata_command().features(cargo_metadata::CargoOpt::SomeFeatures(enabled_features())).exec().unwrap()
+    let mut metadata_command = metadata_command();
+    let mut features = enabled_features();
+    // feature "default" is explicitly passed to build scripts but there is no "all" feature
+    if let Some(index) = features.iter().position(|x| x.as_str() == "default") {
+        features.remove(index);
+    } else {
+        metadata_command.features(cargo_metadata::CargoOpt::NoDefaultFeatures);
+    }
+    metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(features));
+    metadata_command.exec().unwrap()
 }
 
 fn metadata_command() -> MetadataCommand {
