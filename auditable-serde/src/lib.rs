@@ -63,17 +63,6 @@ fn is_default<T: Default + PartialEq> (value: &T) -> bool {
     value == &default_value
 }
 
-// fn sort_and_serialize_vec<S, T>(data: &Vec<T>, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer, T: Serialize + Ord + Clone {
-//     let mut seq = serializer.serialize_seq(Some(data.len()))?;
-//     let mut data = data.clone();
-//     // we do not care about reordering equal elements since they should be indistinguishable
-//     data.sort();
-//     for e in data {
-//         seq.serialize_element(&e)?;
-//     }
-//     seq.end()
-// }
-
 impl FromStr for VersionInfo {
     type Err = serde_json::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -137,17 +126,6 @@ impl From<&cargo_metadata::Metadata> for VersionInfo {
             }
             std::mem::swap(&mut next_step_queue, &mut current_queue);
         }
-        // for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
-        //     for dep in node.deps.iter() {
-        //         let entry = id_to_dep_kinds.entry(&dep.pkg.repr).or_insert(Vec::new());
-        //         entry.extend_from_slice(dep.dep_kinds.as_slice());
-        //     }
-        // }
-        // // Now that we've aggregated dependency kindes from the entire tree,
-        // // merge them and convert to our own representation
-        // let mut id_to_dep_kinds: HashMap<&str, PrivateDepKind> = id_to_dep_kinds.into_iter().map(|(k, v)| {
-        //     (k, strongest_dep_kind(v.as_slice()))
-        // }).collect();
 
         let metadata_package_dep_kind = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
@@ -226,23 +204,6 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
         "local".to_owned()
     }
 }
-
-// #[cfg(feature = "from_metadata")]
-// fn strongest_dependency_kind(deps: &[cargo_metadata::DepKindInfo]) -> DependencyKind {
-//     if deps.len() == 0 {
-//         // for compatibility with Rust earlier than 1.41
-//         DependencyKind::Runtime
-//     } else {
-//         let mut strongest_kind = DependencyKind::Development;
-//         for dep in deps {
-//             let kind = DependencyKind::try_from(&dep.kind).unwrap_or(DependencyKind::Runtime);
-//             if kind as u8 > strongest_kind as u8 {
-//                 strongest_kind = kind;
-//             }
-//         }
-//         strongest_kind
-//     }
-// }
 
 // #[cfg(feature = "toml")]
 // impl VersionInfo {
