@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use serde_json;
 use std::{convert::{TryFrom, TryInto}, str::FromStr};
-use std::{error::Error, cmp::Ordering::*, fmt::Display, collections::HashMap};
+use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 #[cfg(feature = "toml")]
 use cargo_lock;
 #[cfg(feature = "from_metadata")]
@@ -9,7 +9,6 @@ use cargo_metadata;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 //TODO: add #[serde(deny_unknown_fields)] once the format is finalized
-//TODO: sort to enable reproducible builds
 pub struct RawVersionInfo {
     packages: Vec<Package>,
 }
@@ -21,36 +20,40 @@ pub struct Package {
     source: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
-    kind: DependencyKinds,
+    kind: DependencyKind,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     dependencies: Vec<usize>,
 }
-
+// The fields are ordered from weakest to strongers so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub struct DependencyKinds {
-    build: bool,
-    runtime: bool,
+pub enum DependencyKind {
+    Build,
+    Runtime,
 }
 
-impl Default for DependencyKinds {
+impl Default for DependencyKind {
     fn default() -> Self {
-        DependencyKinds {
-            build: false,
-            runtime: true,
-        }
+        DependencyKind::Runtime
     }
 }
 
-impl From<&PrivateDepKinds> for DependencyKinds {
-    fn from(priv_kinds: &PrivateDepKinds) -> Self {
-        let mut result = DependencyKinds { build: false, runtime: false };
-        result.runtime = priv_kinds.runtime;
-        result.build = priv_kinds.build;
-        if priv_kinds.unknown {
-            result.runtime = true; // Fallback for rustc 1.40 and earlier; also a solid default
+// The fields are ordered from weakest to strongers so that casting to integer would make sense
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+pub enum PrivateDepKind {
+    Development,
+    Build,
+    Runtime,
+}
+
+impl From<PrivateDepKind> for DependencyKind {
+    fn from(priv_kind: PrivateDepKind) -> Self {
+        match priv_kind {
+            // TODO: use TryFrom? Not that anyone cares, this code is private
+            PrivateDepKind::Development => panic!("Cannot convert development dependency to serializable format"),
+            PrivateDepKind::Build => DependencyKind::Build,
+            PrivateDepKind::Runtime => DependencyKind::Runtime,
         }
-        result
     }
 }
 
@@ -77,39 +80,20 @@ impl FromStr for RawVersionInfo {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-struct PrivateDepKinds {
-    dev: bool,
-    build: bool,
-    runtime: bool,
-    unknown: bool,
-}
-
-// impl Default for PrivateDepKinds {
-//     fn default() -> Self {
-//         PrivateDepKinds { dev: false, build: false, runtime: false, unknown: false}
-//     }
-// }
-
-impl From<&[cargo_metadata::DepKindInfo]> for PrivateDepKinds {
-    fn from(deps: &[cargo_metadata::DepKindInfo]) -> Self {
-        let mut result = PrivateDepKinds { dev: false, build: false, runtime: false, unknown: false };
-        if deps.len() == 0 {
-            // for compatibility with Rust earlier than 1.41
-            result.unknown = true;
-            result
-        } else {
-            for dep in deps {
-                match dep.kind {
-                    cargo_metadata::DependencyKind::Normal => result.runtime = true,
-                    cargo_metadata::DependencyKind::Build => result.build = true,
-                    cargo_metadata::DependencyKind::Development => result.dev = true,
-                    _ => result.unknown = true,
-                }
-            }
-            result
+impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
+    fn from(kind: &cargo_metadata::DependencyKind) -> Self {
+        match kind {
+            cargo_metadata::DependencyKind::Normal => PrivateDepKind::Runtime,
+            cargo_metadata::DependencyKind::Development => PrivateDepKind::Development,
+            cargo_metadata::DependencyKind::Build => PrivateDepKind::Build,
+            _ => panic!("Unknown dependency kind") // TODO: implement TryFrom instead?
         }
     }
+}
+
+fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
+    deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
+    .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
 }
 
 #[cfg(feature = "from_metadata")]
@@ -134,27 +118,24 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
         }
         // Now that we've aggregated dependency kindes from the entire tree,
         // merge them and convert to our own representation
-        let id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = id_to_dep_kinds.into_iter().map(|(k, v)| {
-            (k, PrivateDepKinds::from(v.as_slice()))
+        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKind> = id_to_dep_kinds.into_iter().map(|(k, v)| {
+            (k, strongest_dep_kind(v.as_slice()))
         }).collect();
+        // Root package is not in dependencies, add it manually
+        id_to_dep_kinds.insert(
+            metadata.resolve.as_ref().unwrap().root.as_ref().unwrap().repr.as_str(),
+            PrivateDepKind::Runtime
+        );
 
         let metadata_package_dep_kinds = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
-            let package_dep_kinds = id_to_dep_kinds.get(package_id).unwrap_or(
-                // Nothing depends on the toplevel package, so there's no build dep kind for it.
-                // We default to all known dependency kinds being enabled for it.
-                &PrivateDepKinds { dev: true, build: true, runtime: true, unknown: false }
-            );
+            let package_dep_kinds = id_to_dep_kinds[package_id];
             package_dep_kinds
-        };
-
-        let dev_only_dependency_kind = PrivateDepKinds {
-            dev: true, build: false, runtime: false, unknown: false
         };
 
         // Remove dev-only dependencies from the package list and collect them to Vec
         let mut packages: Vec<&cargo_metadata::Package> = id_to_package.values().filter(|p| {
-            metadata_package_dep_kinds(p) != &dev_only_dependency_kind
+            metadata_package_dep_kinds(p) != PrivateDepKind::Development
         }).map(|x| *x).collect();
 
         // This function is the simplest place to introduce sorting, since
@@ -203,7 +184,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
                     let dep_id = dep.repr.as_str();
-                    if id_to_dep_kinds[dep_id] != dev_only_dependency_kind {
+                    if id_to_dep_kinds[dep_id] != PrivateDepKind::Development {
                         package.dependencies.push(id_to_index[dep_id]);
                     }
                 }
