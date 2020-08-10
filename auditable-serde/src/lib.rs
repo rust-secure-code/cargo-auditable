@@ -121,14 +121,22 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
             id_to_package.insert(&p.id.repr, p);
         }
 
-        // Walk the dependency tree and resolve dependency kinds for each package
-        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = HashMap::new();
+        // Walk the dependency tree and resolve dependency kinds for each package.
+        // We need this because there may be several different paths to the same package
+        // and we need to aggregate dependency types across all of them
+        let mut id_to_dep_kinds: HashMap<&str, Vec<cargo_metadata::DepKindInfo>> = HashMap::new();
         // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
         for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
             for dep in node.deps.iter() {
-                id_to_dep_kinds.insert(&dep.pkg.repr, PrivateDepKinds::from(dep.dep_kinds.as_slice()));
+                let entry = id_to_dep_kinds.entry(&dep.pkg.repr).or_insert(Vec::new());
+                entry.extend_from_slice(dep.dep_kinds.as_slice());
             }
         }
+        // Now that we've aggregated dependency kindes from the entire tree,
+        // merge them and convert to our own representation
+        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = id_to_dep_kinds.into_iter().map(|(k, v)| {
+            (k, PrivateDepKinds::from(v.as_slice()))
+        }).collect();
 
         let metadata_package_dep_kinds = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
@@ -140,18 +148,20 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
             package_dep_kinds
         };
 
+        let dev_only_dependency_kind = PrivateDepKinds {
+            dev: true, build: false, runtime: false, unknown: false
+        };
+
         // Remove dev-only dependencies from the package list and collect them to Vec
         let mut packages: Vec<&cargo_metadata::Package> = id_to_package.values().filter(|p| {
-            metadata_package_dep_kinds(p) != &PrivateDepKinds {
-                dev: true, build: false, runtime: false, unknown: false
-            }
+            metadata_package_dep_kinds(p) != &dev_only_dependency_kind
         }).map(|x| *x).collect();
 
         // This function is the simplest place to introduce sorting, since
         // it contains enough data to distinguish between equal-looking packages
         // and provide a stable sorting that might not be possible
         // using the data from RawVersionInfo struct alone.
-
+        //
         // We use sort_unstable here because there is no point in
         // not reordering equal elements, since they're supplied by
         // in arbitratry order by cargo-metadata anyway
@@ -166,12 +176,16 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
             // IDs are unique so comparing them should be sufficient
             a.id.repr.cmp(&b.id.repr)
         });
+
+        // Build a mapping from package ID to the index of that package in the Vec
+        // because auditable representation doesn't store IDs
         let mut id_to_index = HashMap::new();
         for (index, package) in packages.iter().enumerate() {
-            // This can be further optimized via mem::take() to avoid cloning, but eh
-            id_to_index.insert(package.id.repr.clone(), index);
+            id_to_index.insert(package.id.repr.as_str(), index);
         };
-        let packages: Vec<Package> = packages.into_iter().map(|p| {
+        
+        // Convert packages from cargo-metadata representation to our representation
+        let mut packages: Vec<Package> = packages.into_iter().map(|p| {
             Package {
                 name: p.name.to_owned(),
                 version: p.version.to_string(), // TODO: use a struct
@@ -180,7 +194,23 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
                 dependencies: Vec::new()
             }
         }).collect();
-        // TODO: encode dependencies
+
+        // Fill in dependency info
+        for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
+            let package_id = node.id.repr.as_str();
+            if id_to_index.contains_key(package_id) { // dev-dependencies are not included
+                let package : &mut Package = &mut packages[id_to_index[package_id]];
+                for dep in node.dependencies.iter() {
+                    // omit package if it is a development-only dependency
+                    let dep_id = dep.repr.as_str();
+                    if id_to_dep_kinds[dep_id] != dev_only_dependency_kind {
+                        package.dependencies.push(id_to_index[dep_id]);
+                    }
+                }
+                // .sort_unstable() is fine because they're all integers
+                package.dependencies.sort_unstable();
+            }
+        }
         RawVersionInfo {packages}
     }
 }
