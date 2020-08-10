@@ -134,7 +134,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
         }
         // Now that we've aggregated dependency kindes from the entire tree,
         // merge them and convert to our own representation
-        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = id_to_dep_kinds.into_iter().map(|(k, v)| {
+        let id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = id_to_dep_kinds.into_iter().map(|(k, v)| {
             (k, PrivateDepKinds::from(v.as_slice()))
         }).collect();
 
