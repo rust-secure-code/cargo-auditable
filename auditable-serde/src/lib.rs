@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use serde_json;
 use std::{convert::{TryFrom, TryInto}, str::FromStr};
-use std::{error::Error, cmp::Ordering::*, fmt::Display};
+use std::{error::Error, cmp::Ordering::*, fmt::Display, collections::HashMap};
 #[cfg(feature = "toml")]
 use cargo_lock;
 #[cfg(feature = "from_metadata")]
@@ -21,46 +21,36 @@ pub struct Package {
     source: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
-    kind: DependencyKind,
+    kind: DependencyKinds,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     dependencies: Vec<usize>,
 }
 
-// The fields are ordered from weakest to strongers so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub enum DependencyKind {
-    Development, //TODO: do we want to include these?
-    Build,
-    Runtime,
+pub struct DependencyKinds {
+    build: bool,
+    runtime: bool,
 }
 
-impl Default for DependencyKind {
+impl Default for DependencyKinds {
     fn default() -> Self {
-        DependencyKind::Runtime
-    }
-}
-
-#[derive(Debug)]
-pub struct UnknownDependencyKind;
-impl Error for UnknownDependencyKind {}
-impl Display for UnknownDependencyKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Unknown dependency kind")
-    }
-}
-
-#[cfg(feature = "from_metadata")]
-impl TryFrom<&cargo_metadata::DependencyKind> for DependencyKind {
-    type Error = UnknownDependencyKind;
-    fn try_from(value: &cargo_metadata::DependencyKind) -> Result<Self, Self::Error> {
-        match value {
-            cargo_metadata::DependencyKind::Normal => Ok(DependencyKind::Runtime),
-            cargo_metadata::DependencyKind::Development => Ok(DependencyKind::Development),
-            cargo_metadata::DependencyKind::Build => Ok(DependencyKind::Build),
-            // we assume build deps by default, useful for Rust 1.40 and earlier
-            cargo_metadata::DependencyKind::Unknown => Err(UnknownDependencyKind),
+        DependencyKinds {
+            build: false,
+            runtime: true,
         }
+    }
+}
+
+impl From<&PrivateDepKinds> for DependencyKinds {
+    fn from(priv_kinds: &PrivateDepKinds) -> Self {
+        let mut result = DependencyKinds { build: false, runtime: false };
+        result.runtime = priv_kinds.runtime;
+        result.build = priv_kinds.build;
+        if priv_kinds.unknown {
+            result.runtime = true; // Fallback for rustc 1.40 and earlier; also a solid default
+        }
+        result
     }
 }
 
@@ -87,21 +77,84 @@ impl FromStr for RawVersionInfo {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+struct PrivateDepKinds {
+    dev: bool,
+    build: bool,
+    runtime: bool,
+    unknown: bool,
+}
+
+// impl Default for PrivateDepKinds {
+//     fn default() -> Self {
+//         PrivateDepKinds { dev: false, build: false, runtime: false, unknown: false}
+//     }
+// }
+
+impl From<&[cargo_metadata::DepKindInfo]> for PrivateDepKinds {
+    fn from(deps: &[cargo_metadata::DepKindInfo]) -> Self {
+        let mut result = PrivateDepKinds { dev: false, build: false, runtime: false, unknown: false };
+        if deps.len() == 0 {
+            // for compatibility with Rust earlier than 1.41
+            result.unknown = true;
+            result
+        } else {
+            for dep in deps {
+                match dep.kind {
+                    cargo_metadata::DependencyKind::Normal => result.runtime = true,
+                    cargo_metadata::DependencyKind::Build => result.build = true,
+                    cargo_metadata::DependencyKind::Development => result.dev = true,
+                    _ => result.unknown = true,
+                }
+            }
+            result
+        }
+    }
+}
+
 #[cfg(feature = "from_metadata")]
-impl From<cargo_metadata::Metadata> for RawVersionInfo {
-    fn from(mut metadata: cargo_metadata::Metadata) -> Self {
-        // This is the simplest place to introduce sorting, since
+impl From<&cargo_metadata::Metadata> for RawVersionInfo {
+    fn from(metadata: &cargo_metadata::Metadata) -> Self {
+        // Build a map of unique ID of each dependency to the dependency data
+        let mut id_to_package: HashMap<&str, &cargo_metadata::Package> = HashMap::new();
+        for p in metadata.packages.iter() {
+            id_to_package.insert(&p.id.repr, p);
+        }
+
+        // Walk the dependency tree and resolve dependency kinds for each package
+        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKinds> = HashMap::new();
+        // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
+        for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
+            for dep in node.deps.iter() {
+                id_to_dep_kinds.insert(&dep.pkg.repr, PrivateDepKinds::from(dep.dep_kinds.as_slice()));
+            }
+        }
+
+        let metadata_package_dep_kinds = |p: &cargo_metadata::Package| {
+            let package_id = p.id.repr.as_str();
+            let package_dep_kinds = id_to_dep_kinds.get(package_id).unwrap();
+            package_dep_kinds
+        };
+
+        // Remove dev-only dependencies from the package list and collect them to Vec
+        let mut packages: Vec<&cargo_metadata::Package> = id_to_package.values().filter(|p| {
+            metadata_package_dep_kinds(p) != &PrivateDepKinds {
+                dev: true, build: false, runtime: false, unknown: false
+            }
+        }).map(|x| *x).collect();
+
+        // This function is the simplest place to introduce sorting, since
         // it contains enough data to distinguish between equal-looking packages
         // and provide a stable sorting that might not be possible
-        // with the data from RawVersionInfo struct alone.
+        // using the data from RawVersionInfo struct alone.
 
         // We use sort_unstable here because there is no point in
         // not reordering equal elements, since they're supplied by
         // in arbitratry order by cargo-metadata anyway
         // and the order even varies between executions.
-        metadata.packages.sort_unstable_by(|a, b| {
+        packages.sort_unstable_by(|a, b| {
             // This is a workaround for Package not implementing Ord.
-            // Deriving it in cargo_metadata would be more reliable.
+            // Deriving it in cargo_metadata might be more reliable?
             let names_order = a.name.cmp(&b.name);
             if names_order != Equal {return names_order;}
             let versions_order = a.name.cmp(&b.name);
@@ -109,17 +162,17 @@ impl From<cargo_metadata::Metadata> for RawVersionInfo {
             // IDs are unique so comparing them should be sufficient
             a.id.repr.cmp(&b.id.repr)
         });
-        let mut id_to_index = std::collections::HashMap::new();
-        for (index, package) in metadata.packages.iter().enumerate() {
+        let mut id_to_index = HashMap::new();
+        for (index, package) in packages.iter().enumerate() {
             // This can be further optimized via mem::take() to avoid cloning, but eh
             id_to_index.insert(package.id.repr.clone(), index);
         };
-        let packages: Vec<Package> = metadata.packages.into_iter().map(|p| {
+        let packages: Vec<Package> = packages.into_iter().map(|p| {
             Package {
-                name: p.name,
+                name: p.name.to_owned(),
                 version: p.version.to_string(), // TODO: use a struct
-                source: metadata_source_to_source_string(&p.source),
-                kind: DependencyKind::default(), // will be overwritten later
+                source: source_to_source_string(&p.source),
+                kind: metadata_package_dep_kinds(&p).into(),
                 dependencies: Vec::new()
             }
         }).collect();
@@ -129,7 +182,7 @@ impl From<cargo_metadata::Metadata> for RawVersionInfo {
 }
 
 #[cfg(feature = "from_metadata")]
-fn metadata_source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
+fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
     if let Some(source) = s {
         source.repr.as_str().split('+').next().unwrap_or("").to_owned()
     } else {
@@ -137,22 +190,22 @@ fn metadata_source_to_source_string(s: &Option<cargo_metadata::Source>) -> Strin
     }
 }
 
-#[cfg(feature = "from_metadata")]
-fn strongest_dependency_kind(deps: &[cargo_metadata::DepKindInfo]) -> DependencyKind {
-    if deps.len() == 0 {
-        // for compatibility with Rust earlier than 1.41
-        DependencyKind::Runtime
-    } else {
-        let mut strongest_kind = DependencyKind::Development;
-        for dep in deps {
-            let kind = DependencyKind::try_from(&dep.kind).unwrap_or(DependencyKind::Runtime);
-            if kind as u8 > strongest_kind as u8 {
-                strongest_kind = kind;
-            }
-        }
-        strongest_kind
-    }
-}
+// #[cfg(feature = "from_metadata")]
+// fn strongest_dependency_kind(deps: &[cargo_metadata::DepKindInfo]) -> DependencyKind {
+//     if deps.len() == 0 {
+//         // for compatibility with Rust earlier than 1.41
+//         DependencyKind::Runtime
+//     } else {
+//         let mut strongest_kind = DependencyKind::Development;
+//         for dep in deps {
+//             let kind = DependencyKind::try_from(&dep.kind).unwrap_or(DependencyKind::Runtime);
+//             if kind as u8 > strongest_kind as u8 {
+//                 strongest_kind = kind;
+//             }
+//         }
+//         strongest_kind
+//     }
+// }
 
 // #[cfg(feature = "toml")]
 // impl RawVersionInfo {
