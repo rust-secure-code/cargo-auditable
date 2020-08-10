@@ -9,7 +9,7 @@ build = "build.rs"
 auditable = {path = "../auditable"}
 
 [build-dependencies]
-auditable = {path = "../auditable", features = ["build_time"]}
+auditable-build = {path = "../auditable-build"}
 
 [profile.release]
 lto = true

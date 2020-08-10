@@ -1,4 +1,4 @@
-#![cfg(feature = "build_time")]
+#![forbid(unsafe_code)]
 
 use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
 use std::collections::HashSet;
