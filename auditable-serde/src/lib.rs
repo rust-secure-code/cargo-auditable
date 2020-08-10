@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use serde_json;
 use std::{convert::{TryFrom, TryInto}, str::FromStr};
 use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
+use semver::Version;
 #[cfg(feature = "toml")]
 use cargo_lock;
 #[cfg(feature = "from_metadata")]
@@ -16,7 +17,7 @@ pub struct RawVersionInfo {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
     name: String,
-    version: String, //TODO: parse to a struct
+    version: Version,
     source: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
@@ -188,7 +189,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
         let mut packages: Vec<Package> = packages.into_iter().map(|p| {
             Package {
                 name: p.name.to_owned(),
-                version: p.version.to_string(), // TODO: use a struct
+                version: p.version.clone(),
                 source: source_to_source_string(&p.source),
                 kind: metadata_package_dep_kind(&p).into(),
                 dependencies: Vec::new()
