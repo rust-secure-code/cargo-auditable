@@ -132,7 +132,11 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
 
         let metadata_package_dep_kinds = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
-            let package_dep_kinds = id_to_dep_kinds.get(package_id).unwrap();
+            let package_dep_kinds = id_to_dep_kinds.get(package_id).unwrap_or(
+                // Nothing depends on the toplevel package, so there's no build dep kind for it.
+                // We default to all known dependency kinds being enabled for it.
+                &PrivateDepKinds { dev: true, build: true, runtime: true, unknown: false }
+            );
             package_dep_kinds
         };
 
