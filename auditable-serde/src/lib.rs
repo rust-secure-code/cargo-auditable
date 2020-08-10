@@ -26,7 +26,7 @@ pub struct Package {
     #[serde(skip_serializing_if = "is_default")]
     dependencies: Vec<usize>,
 }
-// The fields are ordered from weakest to strongers so that casting to integer would make sense
+// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DependencyKind {
     Build,
@@ -39,7 +39,7 @@ impl Default for DependencyKind {
     }
 }
 
-// The fields are ordered from weakest to strongers so that casting to integer would make sense
+// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum PrivateDepKind {
     Development,
@@ -81,6 +81,7 @@ impl FromStr for VersionInfo {
     }
 }
 
+#[cfg(feature = "from_metadata")]
 impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
     fn from(kind: &cargo_metadata::DependencyKind) -> Self {
         match kind {
@@ -92,6 +93,7 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
     }
 }
 
+#[cfg(feature = "from_metadata")]
 fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
     deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
     .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41

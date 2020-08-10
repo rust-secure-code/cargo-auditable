@@ -15,6 +15,6 @@ toml = ["cargo-lock"]
 [dependencies]
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = "1.0.57"
-semver = "0.10"
+semver = { version = "0.10", features = ["serde"] }
 cargo_metadata = { version = "0.11", optional = true }
 cargo-lock = { version = "4.0.1", default-features = false, optional = true }
