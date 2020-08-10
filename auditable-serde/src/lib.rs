@@ -99,44 +99,63 @@ fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
 #[cfg(feature = "from_metadata")]
 impl From<&cargo_metadata::Metadata> for RawVersionInfo {
     fn from(metadata: &cargo_metadata::Metadata) -> Self {
-        // Build a map of unique ID of each dependency to the dependency data
-        let mut id_to_package: HashMap<&str, &cargo_metadata::Package> = HashMap::new();
-        for p in metadata.packages.iter() {
-            id_to_package.insert(&p.id.repr, p);
-        }
+        // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
+        let toplevel_crate_id = metadata.resolve.as_ref().unwrap().root.as_ref().unwrap().repr.as_str();
 
         // Walk the dependency tree and resolve dependency kinds for each package.
         // We need this because there may be several different paths to the same package
-        // and we need to aggregate dependency types across all of them
-        let mut id_to_dep_kinds: HashMap<&str, Vec<cargo_metadata::DepKindInfo>> = HashMap::new();
-        // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
-        for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
-            for dep in node.deps.iter() {
-                let entry = id_to_dep_kinds.entry(&dep.pkg.repr).or_insert(Vec::new());
-                entry.extend_from_slice(dep.dep_kinds.as_slice());
+        // and we need to aggregate dependency types across all of them.
+        // Moreover, `cargo metadata` doesn't propagate dependency information:
+        // A runtime dependency of a build dependency of your package should be recorded
+        // as *build* dependency, but Cargo flags it as a runtime dependency.
+        // Hoo boy, here I go hand-rolling BFS again!
+        let nodes = &metadata.resolve.as_ref().unwrap().nodes;
+        let id_to_node: HashMap<&str, &cargo_metadata::Node> = nodes.iter().map(|n| (n.id.repr.as_str(), n)).collect();
+        let mut id_to_dep_kind: HashMap<&str, PrivateDepKind> = HashMap::new();
+        id_to_dep_kind.insert(toplevel_crate_id, PrivateDepKind::Runtime);
+        let mut current_queue: Vec<&cargo_metadata::Node> = vec![id_to_node[toplevel_crate_id]];
+        let mut next_step_queue: Vec<&cargo_metadata::Node> = Vec::new();
+        while current_queue.len() > 0 {
+            for parent in current_queue.drain(..) {
+                let parent_dep_kind = id_to_dep_kind[parent.id.repr.as_str()];
+                for child in &parent.deps {
+                    let child_id = child.pkg.repr.as_str();
+                    let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
+                    let dep_kind = min(dep_kind, parent_dep_kind);
+                    let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
+                    if dep_kind_on_previous_visit == None || &dep_kind > dep_kind_on_previous_visit.unwrap() {
+                        // if we haven't visited this node in dependency graph yet
+                        // or if we've visited it with a weaker dependency type,
+                        // records its new dependency type and add it to the queue to visit its dependencies
+                        id_to_dep_kind.insert(child_id, dep_kind);
+                        next_step_queue.push(id_to_node[child_id]);
+                    }
+                }
             }
+            std::mem::swap(&mut next_step_queue, &mut current_queue);
         }
-        // Now that we've aggregated dependency kindes from the entire tree,
-        // merge them and convert to our own representation
-        let mut id_to_dep_kinds: HashMap<&str, PrivateDepKind> = id_to_dep_kinds.into_iter().map(|(k, v)| {
-            (k, strongest_dep_kind(v.as_slice()))
-        }).collect();
-        // Root package is not in dependencies, add it manually
-        id_to_dep_kinds.insert(
-            metadata.resolve.as_ref().unwrap().root.as_ref().unwrap().repr.as_str(),
-            PrivateDepKind::Runtime
-        );
+        // for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
+        //     for dep in node.deps.iter() {
+        //         let entry = id_to_dep_kinds.entry(&dep.pkg.repr).or_insert(Vec::new());
+        //         entry.extend_from_slice(dep.dep_kinds.as_slice());
+        //     }
+        // }
+        // // Now that we've aggregated dependency kindes from the entire tree,
+        // // merge them and convert to our own representation
+        // let mut id_to_dep_kinds: HashMap<&str, PrivateDepKind> = id_to_dep_kinds.into_iter().map(|(k, v)| {
+        //     (k, strongest_dep_kind(v.as_slice()))
+        // }).collect();
 
-        let metadata_package_dep_kinds = |p: &cargo_metadata::Package| {
+        let metadata_package_dep_kind = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
-            let package_dep_kinds = id_to_dep_kinds[package_id];
+            let package_dep_kinds = id_to_dep_kind[package_id];
             package_dep_kinds
         };
 
         // Remove dev-only dependencies from the package list and collect them to Vec
-        let mut packages: Vec<&cargo_metadata::Package> = id_to_package.values().filter(|p| {
-            metadata_package_dep_kinds(p) != PrivateDepKind::Development
-        }).map(|x| *x).collect();
+        let mut packages: Vec<&cargo_metadata::Package> = metadata.packages.iter().filter(|p| {
+            metadata_package_dep_kind(p) != PrivateDepKind::Development
+        }).collect();
 
         // This function is the simplest place to introduce sorting, since
         // it contains enough data to distinguish between equal-looking packages
@@ -159,7 +178,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
         });
 
         // Build a mapping from package ID to the index of that package in the Vec
-        // because auditable representation doesn't store IDs
+        // because serializable representation doesn't store IDs
         let mut id_to_index = HashMap::new();
         for (index, package) in packages.iter().enumerate() {
             id_to_index.insert(package.id.repr.as_str(), index);
@@ -171,7 +190,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
                 name: p.name.to_owned(),
                 version: p.version.to_string(), // TODO: use a struct
                 source: source_to_source_string(&p.source),
-                kind: metadata_package_dep_kinds(&p).into(),
+                kind: metadata_package_dep_kind(&p).into(),
                 dependencies: Vec::new()
             }
         }).collect();
@@ -184,7 +203,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
                     let dep_id = dep.repr.as_str();
-                    if id_to_dep_kinds[dep_id] != PrivateDepKind::Development {
+                    if id_to_dep_kind[dep_id] != PrivateDepKind::Development {
                         package.dependencies.push(id_to_index[dep_id]);
                     }
                 }
