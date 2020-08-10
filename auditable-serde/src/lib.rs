@@ -10,7 +10,7 @@ use cargo_metadata;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 //TODO: add #[serde(deny_unknown_fields)] once the format is finalized
-pub struct RawVersionInfo {
+pub struct VersionInfo {
     packages: Vec<Package>,
 }
 
@@ -74,7 +74,7 @@ fn is_default<T: Default + PartialEq> (value: &T) -> bool {
 //     seq.end()
 // }
 
-impl FromStr for RawVersionInfo {
+impl FromStr for VersionInfo {
     type Err = serde_json::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         serde_json::from_str(s)
@@ -98,7 +98,7 @@ fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
 }
 
 #[cfg(feature = "from_metadata")]
-impl From<&cargo_metadata::Metadata> for RawVersionInfo {
+impl From<&cargo_metadata::Metadata> for VersionInfo {
     fn from(metadata: &cargo_metadata::Metadata) -> Self {
         // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
         let toplevel_crate_id = metadata.resolve.as_ref().unwrap().root.as_ref().unwrap().repr.as_str();
@@ -161,7 +161,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
         // This function is the simplest place to introduce sorting, since
         // it contains enough data to distinguish between equal-looking packages
         // and provide a stable sorting that might not be possible
-        // using the data from RawVersionInfo struct alone.
+        // using the data from VersionInfo struct alone.
         //
         // We use sort_unstable here because there is no point in
         // not reordering equal elements, since they're supplied by
@@ -212,7 +212,7 @@ impl From<&cargo_metadata::Metadata> for RawVersionInfo {
                 package.dependencies.sort_unstable();
             }
         }
-        RawVersionInfo {packages}
+        VersionInfo {packages}
     }
 }
 
@@ -243,7 +243,7 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 // }
 
 // #[cfg(feature = "toml")]
-// impl RawVersionInfo {
+// impl VersionInfo {
 //     pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
 //         Ok(Self::from(&cargo_lock::lockfile::Lockfile::from_str(toml)?))
 //     }
@@ -275,7 +275,7 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 // }
 
 // #[cfg(feature = "toml")]
-// impl From<&cargo_lock::lockfile::Lockfile> for RawVersionInfo {
+// impl From<&cargo_lock::lockfile::Lockfile> for VersionInfo {
 //     fn from(source: &cargo_lock::lockfile::Lockfile) -> Self {
 //         Self {
 //             packages: source.packages.iter().map(|p| p.into()).collect(),
@@ -318,7 +318,7 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 // }
 
 // #[cfg(feature = "toml")]
-// impl TryInto<cargo_lock::lockfile::Lockfile> for &RawVersionInfo {
+// impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
 //     type Error = cargo_lock::error::Error;
 //     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
 //         Ok(cargo_lock::lockfile::Lockfile {
@@ -337,7 +337,7 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 
 // #[cfg(test)]
 // mod tests {
-//     use super::RawVersionInfo;
+//     use super::VersionInfo;
 //     use std::{convert::TryInto, path::PathBuf};
 
 //     #[cfg(feature = "toml")]
@@ -352,11 +352,11 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 //     #[cfg(feature = "toml")]
 //     fn lockfile_struct_conversion_roundtrip() {
 //         let cargo_lock_contents = load_our_own_cargo_lock();
-//         let version_info_struct = RawVersionInfo::from_toml(&cargo_lock_contents)
+//         let version_info_struct = VersionInfo::from_toml(&cargo_lock_contents)
 //             .expect("Failed to convert from TOML to JSON");
 //         let lockfile_struct: cargo_lock::lockfile::Lockfile =
 //             (&version_info_struct).try_into().unwrap();
-//         let roundtripped_version_info_struct: RawVersionInfo = (&lockfile_struct).into();
+//         let roundtripped_version_info_struct: VersionInfo = (&lockfile_struct).into();
 //         assert_eq!(version_info_struct, roundtripped_version_info_struct);
 //     }
 // }
