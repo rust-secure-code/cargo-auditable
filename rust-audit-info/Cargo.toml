@@ -1,0 +1,12 @@
+[package]
+name = "rust-audit-info"
+version = "0.1.0"
+authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+auditable-extract = {path = "../auditable-extract"}
+miniz_oxide = {git = "https://github.com/Frommi/miniz_oxide.git"}
+pico-args = "0.3.3"
