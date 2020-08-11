@@ -283,28 +283,25 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::VersionInfo;
-//     use std::{convert::TryInto, path::PathBuf};
+#[cfg(test)]
+mod tests {
+    use super::VersionInfo;
+    use std::{convert::TryInto, path::PathBuf};
 
-//     #[cfg(feature = "toml")]
-//     fn load_our_own_cargo_lock() -> String {
-//         let crate_root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-//         let cargo_lock_location = crate_root_dir.join("Cargo.lock");
-//         let cargo_lock_contents = std::fs::read_to_string(cargo_lock_location).unwrap();
-//         cargo_lock_contents
-//     }
+    #[cfg(feature = "from_metadata")]
+    fn load_own_metadata() -> cargo_metadata::Metadata {
+        let mut cmd = cargo_metadata::MetadataCommand::new();
+        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
+        cmd.manifest_path(cargo_toml_path);
+        cmd.exec().unwrap()
+    }
 
-//     #[test]
-//     #[cfg(feature = "toml")]
-//     fn lockfile_struct_conversion_roundtrip() {
-//         let cargo_lock_contents = load_our_own_cargo_lock();
-//         let version_info_struct = VersionInfo::from_toml(&cargo_lock_contents)
-//             .expect("Failed to convert from TOML to JSON");
-//         let lockfile_struct: cargo_lock::lockfile::Lockfile =
-//             (&version_info_struct).try_into().unwrap();
-//         let roundtripped_version_info_struct: VersionInfo = (&lockfile_struct).into();
-//         assert_eq!(version_info_struct, roundtripped_version_info_struct);
-//     }
-// }
+    #[test]
+    #[cfg(feature = "toml")]
+    #[cfg(feature = "from_metadata")]
+    fn to_toml() {
+        let metadata = load_own_metadata();
+        let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
+        let _lockfile_struct: cargo_lock::lockfile::Lockfile = (&version_info_struct).try_into().unwrap();
+    }
+}
