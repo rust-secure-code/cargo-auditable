@@ -1,14 +1,14 @@
 #![forbid(unsafe_code)]
 
 use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
-use std::collections::HashSet;
+use std::{convert::TryFrom, collections::HashSet};
 use auditable_serde::VersionInfo;
 use miniz_oxide::deflate::compress_to_vec_zlib;
 use cargo_metadata::{Metadata, MetadataCommand};
 
 /// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
 pub fn collect_dependency_list() {
-    let version_info = VersionInfo::from(&get_metadata());
+    let version_info = VersionInfo::try_from(&get_metadata()).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), choose_compression_level());
     let output_file_path = output_file_path();

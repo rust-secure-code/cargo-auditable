@@ -83,16 +83,36 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
 }
 
 #[cfg(feature = "from_metadata")]
-fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
-    deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
-    .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum InsufficientMetadata {
+    NoDeps,
+    VirtualWorkspace,
 }
 
 #[cfg(feature = "from_metadata")]
-impl From<&cargo_metadata::Metadata> for VersionInfo {
-    fn from(metadata: &cargo_metadata::Metadata) -> Self {
+impl Display for InsufficientMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InsufficientMetadata::NoDeps => {
+                write!(f, "Missing dependency information! Did you call cargo metadata with --no-deps flag?")
+            }
+            InsufficientMetadata::VirtualWorkspace => {
+                write!(f, "Missing root crate! Is this a virtual workspace?")
+            }
+        }
+    }
+}
+
+#[cfg(feature = "from_metadata")]
+impl Error for InsufficientMetadata {}
+
+#[cfg(feature = "from_metadata")]
+impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
+    type Error = InsufficientMetadata;
+    fn try_from(metadata: &cargo_metadata::Metadata) -> Result<Self, Self::Error> {
         // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
-        let toplevel_crate_id = metadata.resolve.as_ref().unwrap().root.as_ref().unwrap().repr.as_str();
+        let toplevel_crate_id = metadata.resolve.as_ref().ok_or(InsufficientMetadata::NoDeps)?
+        .root.as_ref().ok_or(InsufficientMetadata::VirtualWorkspace)?.repr.as_str();
 
         // Walk the dependency tree and resolve dependency kinds for each package.
         // We need this because there may be several different paths to the same package
@@ -192,8 +212,14 @@ impl From<&cargo_metadata::Metadata> for VersionInfo {
                 package.dependencies.sort_unstable();
             }
         }
-        VersionInfo {packages}
+        Ok(VersionInfo {packages})
     }
+}
+
+#[cfg(feature = "from_metadata")]
+fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
+    deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
+    .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
 }
 
 #[cfg(feature = "from_metadata")]
