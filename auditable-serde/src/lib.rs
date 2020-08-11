@@ -1,10 +1,12 @@
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
+use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{convert::{TryFrom, TryInto}, str::FromStr};
+use std::{convert::TryFrom, str::FromStr};
 use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 use semver::Version;
 #[cfg(feature = "toml")]
 use cargo_lock;
+#[cfg(feature = "toml")]
+use std::convert::TryInto;
 #[cfg(feature = "from_metadata")]
 use cargo_metadata;
 
@@ -234,57 +236,52 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
     }
 }
 
-// #[cfg(feature = "toml")]
-// impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
-//     type Error = cargo_lock::error::Error;
-//     fn try_into(self) -> Result<cargo_lock::dependency::Dependency, Self::Error> {
-//         Ok(cargo_lock::dependency::Dependency {
-//             name: cargo_lock::package::name::Name::from_str(&self.name)?,
-//             version: cargo_lock::package::Version::parse(&self.version)?,
-//             source: None,
-//         })
-//     }
-// }
+#[cfg(feature = "toml")]
+impl TryInto<cargo_lock::Dependency> for &Package {
+    type Error = cargo_lock::error::Error;
+    fn try_into(self) -> Result<cargo_lock::Dependency, Self::Error> {
+        Ok(cargo_lock::Dependency {
+            name: cargo_lock::package::name::Name::from_str(&self.name)?,
+            // to_string() is used to work around incompatible semver crate versions
+            version: cargo_lock::package::Version::parse(&self.version.to_string())?,
+            source: Option::None,
+        })
+    }
+}
 
-// #[cfg(feature = "toml")]
-// impl TryInto<cargo_lock::package::Package> for &Package {
-//     type Error = cargo_lock::error::Error;
-//     fn try_into(self) -> Result<cargo_lock::package::Package, Self::Error> {
-//         Ok(cargo_lock::package::Package {
-//             name: cargo_lock::package::name::Name::from_str(&self.name)?,
-//             version: cargo_lock::package::Version::parse(&self.version)?,
-//             checksum: match &self.checksum {
-//                 Some(value) => Some(cargo_lock::package::checksum::Checksum::from_str(&value)?),
-//                 None => None,
-//             },
-//             dependencies: {
-//                 let result: Result<Vec<_>, _> =
-//                     self.dependencies.iter().map(TryInto::try_into).collect();
-//                 result?
-//             },
-//             replace: None,
-//             source: None,
-//         })
-//     }
-// }
-
-// #[cfg(feature = "toml")]
-// impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
-//     type Error = cargo_lock::error::Error;
-//     fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
-//         Ok(cargo_lock::lockfile::Lockfile {
-//             version: cargo_lock::lockfile::version::ResolveVersion::V2,
-//             packages: {
-//                 let result: Result<Vec<_>, _> =
-//                     self.packages.iter().map(TryInto::try_into).collect();
-//                 result?
-//             },
-//             root: None,
-//             metadata: std::collections::BTreeMap::new(),
-//             patch: cargo_lock::patch::Patch { unused: Vec::new() },
-//         })
-//     }
-// }
+#[cfg(feature = "toml")]
+impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
+    type Error = cargo_lock::error::Error;
+    fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
+        let mut packages: Vec<cargo_lock::Package> = Vec::new();
+        for pkg in self.packages.iter() {
+            packages.push(cargo_lock::package::Package {
+                name: cargo_lock::package::name::Name::from_str(&pkg.name)?,
+                // to_string() is used to work around incompatible semver crate versions
+                version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
+                checksum: Option::None,
+                dependencies: {
+                    let result: Result<Vec<_>, _> = pkg.dependencies.iter().map(|i| {
+                        self.packages.get(*i).ok_or(cargo_lock::error::Error::new(
+                            cargo_lock::error::ErrorKind::Parse,
+                            &format!("There is no dependency with index {} in the input JSON", i))
+                        )?.try_into()
+                    }).collect();
+                    result?
+                },
+                replace: None,
+                source: None,
+            })
+        }
+        Ok(cargo_lock::lockfile::Lockfile {
+            version: cargo_lock::lockfile::version::ResolveVersion::V2,
+            packages: packages,
+            root: None,
+            metadata: std::collections::BTreeMap::new(),
+            patch: cargo_lock::patch::Patch { unused: Vec::new() },
+        })
+    }
+}
 
 // #[cfg(test)]
 // mod tests {
