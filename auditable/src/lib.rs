@@ -10,29 +10,13 @@
 ///    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
 ///}
 ///```
-#[cfg(not(test))]
 #[macro_export]
 macro_rules! inject_dependency_list {
     () => ({
         #[used]
         #[link_section = ".rust-audit-dep-list"]
-        #[cfg(not(test))]
         static AUDITABLE_VERSION_INFO: [u8; include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"))
         .len()] = *include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"));
-        #[cfg(test)]
-        static AUDITABLE_VERSION_INFO: [u8; 35] = *b"Dependency information will be here";
-        &AUDITABLE_VERSION_INFO
-    });
-}
-
-// build.rs is not run during test execution, so substitute a dummy value
-#[cfg(test)]
-#[macro_export]
-macro_rules! inject_dependency_list {
-    () => ({
-        #[used]
-        #[link_section = ".rust-audit-dep-list"]
-        static AUDITABLE_VERSION_INFO: [u8; 35] = *b"Dependency information will be here";
         &AUDITABLE_VERSION_INFO
     });
 }
