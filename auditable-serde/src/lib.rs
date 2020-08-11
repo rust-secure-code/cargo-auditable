@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{convert::TryFrom, str::FromStr};
-use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 use semver::Version;
 #[cfg(feature = "toml")]
 use cargo_lock;
@@ -9,6 +8,8 @@ use cargo_lock;
 use std::convert::TryInto;
 #[cfg(feature = "from_metadata")]
 use cargo_metadata;
+#[cfg(feature = "from_metadata")]
+use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 //TODO: add #[serde(deny_unknown_fields)] once the format is finalized
