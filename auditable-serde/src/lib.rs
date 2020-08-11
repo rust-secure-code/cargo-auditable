@@ -232,47 +232,6 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 }
 
 // #[cfg(feature = "toml")]
-// impl VersionInfo {
-//     pub fn from_toml(toml: &str) -> Result<Self, cargo_lock::error::Error> {
-//         Ok(Self::from(&cargo_lock::lockfile::Lockfile::from_str(toml)?))
-//     }
-// }
-
-// #[cfg(feature = "toml")]
-// impl From<&cargo_lock::dependency::Dependency> for Dependency {
-//     fn from(source: &cargo_lock::dependency::Dependency) -> Self {
-//         Self {
-//             name: source.name.as_str().to_owned(),
-//             version: source.version.to_string(),
-//         }
-//     }
-// }
-
-// #[cfg(feature = "toml")]
-// impl From<&cargo_lock::package::Package> for Package {
-//     fn from(source: &cargo_lock::package::Package) -> Self {
-//         Self {
-//             name: source.name.as_str().to_owned(),
-//             version: source.version.to_string(),
-//             checksum: match &source.checksum {
-//                 Some(value) => Some(value.to_string()),
-//                 None => None,
-//             },
-//             dependencies: source.dependencies.iter().map(|d| d.into()).collect(),
-//         }
-//     }
-// }
-
-// #[cfg(feature = "toml")]
-// impl From<&cargo_lock::lockfile::Lockfile> for VersionInfo {
-//     fn from(source: &cargo_lock::lockfile::Lockfile) -> Self {
-//         Self {
-//             packages: source.packages.iter().map(|p| p.into()).collect(),
-//         }
-//     }
-// }
-
-// #[cfg(feature = "toml")]
 // impl TryInto<cargo_lock::dependency::Dependency> for &Dependency {
 //     type Error = cargo_lock::error::Error;
 //     fn try_into(self) -> Result<cargo_lock::dependency::Dependency, Self::Error> {
