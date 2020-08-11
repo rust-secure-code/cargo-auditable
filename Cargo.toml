@@ -5,5 +5,6 @@ members = [
     "auditable-build",
     "auditable-extract",
     "auditable-serde",
-    "rust-audit-info"
+    "rust-audit-info",
+    "hello-auditable"
 ]
