@@ -149,13 +149,16 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
 
         let metadata_package_dep_kind = |p: &cargo_metadata::Package| {
             let package_id = p.id.repr.as_str();
-            let package_dep_kinds = id_to_dep_kind[package_id];
-            package_dep_kinds
+            id_to_dep_kind.get(package_id)
         };
 
         // Remove dev-only dependencies from the package list and collect them to Vec
         let mut packages: Vec<&cargo_metadata::Package> = metadata.packages.iter().filter(|p| {
-            metadata_package_dep_kind(p) != PrivateDepKind::Development
+            let dep_kind = metadata_package_dep_kind(p);
+            // Dependencies that are present in the workspace but not used by the current root crate
+            // will not be in the map we've built by traversing the root crate's dependencies.
+            // In this case they will not be in the map at all. We skip them, along with dev-dependencies.
+            dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
         }).collect();
 
         // This function is the simplest place to introduce sorting, since
@@ -191,7 +194,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
                 source: source_to_source_string(&p.source),
-                kind: metadata_package_dep_kind(&p).into(),
+                kind: (*metadata_package_dep_kind(&p).unwrap()).into(),
                 dependencies: Vec::new()
             }
         }).collect();
