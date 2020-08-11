@@ -21,4 +21,4 @@ cargo-lock = { version = "4.0.1", default-features = false, optional = true }
 
 [[example]]
 name = "json-to-toml"
-features = "toml"
+required-features = ["toml"]
