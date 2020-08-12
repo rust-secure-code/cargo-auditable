@@ -14,7 +14,7 @@
 macro_rules! inject_dependency_list {
     () => ({
         #[used]
-        #[link_section = ".rust-audit-dep-list"]
+        #[link_section = ".rust-deps-v0"]
         static AUDITABLE_VERSION_INFO: [u8; include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"))
         .len()] = *include_bytes!(env!("RUST_AUDIT_DEPENDENCY_FILE_LOCATION"));
         &AUDITABLE_VERSION_INFO
