@@ -100,10 +100,10 @@ impl Display for InsufficientMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InsufficientMetadata::NoDeps => {
-                write!(f, "Missing dependency information! Did you call cargo metadata with --no-deps flag?")
+                write!(f, "Missing dependency information! Please call 'cargo metadata' without '--no-deps' flag.")
             }
             InsufficientMetadata::VirtualWorkspace => {
-                write!(f, "Missing root crate! Is this a virtual workspace?")
+                write!(f, "Missing root crate! Please call this from a package directory, not workspace root.")
             }
         }
     }
