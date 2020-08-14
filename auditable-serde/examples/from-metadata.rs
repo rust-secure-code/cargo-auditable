@@ -14,11 +14,17 @@ fn get_metadata() -> Result<Metadata, cargo_metadata::Error> {
     metadata_command.exec()
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn do_work() -> Result<(), Box<dyn Error>> {
     let stdout = std::io::stdout();
     let stdout = stdout.lock();
     let metadata = get_metadata()?;
     let version_info = VersionInfo::try_from(&metadata)?;
     serde_json::to_writer(stdout, &version_info)?;
     Ok(())
+}
+
+fn main() {
+    if let Err(error) = do_work() {
+        println!("{}", error);
+    }
 }
