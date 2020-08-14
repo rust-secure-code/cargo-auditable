@@ -28,6 +28,9 @@ pub struct Package {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     dependencies: Vec<usize>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_default")]
+    features: Vec<String>,
 }
 // The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
@@ -197,15 +200,17 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 version: p.version.clone(),
                 source: source_to_source_string(&p.source),
                 kind: (*metadata_package_dep_kind(&p).unwrap()).into(),
-                dependencies: Vec::new()
+                dependencies: Vec::new(),
+                features: Vec::new(),
             }
         }).collect();
 
-        // Fill in dependency info
+        // Fill in dependency info and features from resolved dependency graph
         for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
             let package_id = node.id.repr.as_str();
             if id_to_index.contains_key(package_id) { // dev-dependencies are not included
                 let package : &mut Package = &mut packages[id_to_index[package_id]];
+                // Dependencies
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
                     let dep_id = dep.repr.as_str();
@@ -215,6 +220,9 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 }
                 // .sort_unstable() is fine because they're all integers
                 package.dependencies.sort_unstable();
+                // Features
+                package.features = node.features.clone();
+                package.features.sort_unstable(); // same for strings
             }
         }
         Ok(VersionInfo {packages})
