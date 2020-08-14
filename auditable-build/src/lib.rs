@@ -75,15 +75,15 @@ fn enabled_features() -> Vec<String> {
     // so we have to reconsruct it by calling cargo-metadata and filtering features
     // that we know exist against the mangled list of *enabled* features from env variables
     let enabled_uppercase_features = enabled_uppercase_features();
-    let dry_run_metadata = metadata_command().no_deps().exec().unwrap();
-    for package in dry_run_metadata.packages {
-        // FIXME: There's no easy way to detect which package we're building, so for now
-        // we just enable everything we've seen in the workspace and hope that this works
-        for (feature, _implied_features) in package.features {
-            let mangled_feature = feature.to_ascii_uppercase().replace("-", "_");
-            if enabled_uppercase_features.contains(&mangled_feature) {
-                result.push(feature);
-            }
+    let dry_run_metadata = metadata_command().exec().unwrap();
+    // we can simply unwrap here because resolve is only missing if called with --no-deps
+    // and root package is only missing in a virtual workspace, from which you can't run a build script
+    let root_package_id = dry_run_metadata.resolve.unwrap().root.unwrap();
+    let root_package = dry_run_metadata.packages.iter().filter(|p| p.id == root_package_id).next().unwrap();
+    for (feature, _implied_features) in root_package.features.iter() {
+        let mangled_feature = feature.to_ascii_uppercase().replace("-", "_");
+        if enabled_uppercase_features.contains(&mangled_feature) {
+            result.push(feature.clone());
         }
     }
     result
