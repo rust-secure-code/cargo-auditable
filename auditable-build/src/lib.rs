@@ -76,7 +76,7 @@ fn enabled_features() -> Vec<String> {
     // that we know exist against the mangled list of *enabled* features from env variables
     let enabled_uppercase_features = enabled_uppercase_features();
     let dry_run_metadata = metadata_command().exec().unwrap();
-    // we can simply unwrap here because resolve is only missing if called with --no-deps
+    // we can safely unwrap here because resolve is only missing if called with --no-deps,
     // and root package is only missing in a virtual workspace, from which you can't run a build script
     let root_package_id = dry_run_metadata.resolve.unwrap().root.unwrap();
     let root_package = dry_run_metadata.packages.iter().filter(|p| p.id == root_package_id).next().unwrap();
