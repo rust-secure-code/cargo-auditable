@@ -113,7 +113,6 @@ impl Error for InsufficientMetadata {}
 impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
     type Error = InsufficientMetadata;
     fn try_from(metadata: &cargo_metadata::Metadata) -> Result<Self, Self::Error> {
-        // TODO: check that Resolve field is populated instead of unwrap(); this is the case for `--no-deps`
         let toplevel_crate_id = metadata.resolve.as_ref().ok_or(InsufficientMetadata::NoDeps)?
         .root.as_ref().ok_or(InsufficientMetadata::VirtualWorkspace)?.repr.as_str();
 
