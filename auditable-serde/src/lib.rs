@@ -9,7 +9,7 @@ use std::convert::TryInto;
 #[cfg(feature = "from_metadata")]
 use cargo_metadata;
 #[cfg(feature = "from_metadata")]
-use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::{Debug, Display}, collections::HashMap};
+use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 //TODO: add #[serde(deny_unknown_fields)] once the format is finalized
@@ -89,7 +89,7 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
 }
 
 #[cfg(feature = "from_metadata")]
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum InsufficientMetadata {
     NoDeps,
     VirtualWorkspace,
@@ -100,18 +100,12 @@ impl Display for InsufficientMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InsufficientMetadata::NoDeps => {
-                write!(f, "Missing dependency information! Please call 'cargo metadata' without '--no-deps' flag.")
+                write!(f, "Missing dependency information! Did you call cargo metadata with --no-deps flag?")
             }
             InsufficientMetadata::VirtualWorkspace => {
-                write!(f, "Missing root crate! Please call this from a package directory, not workspace root.")
+                write!(f, "Missing root crate! Is this a virtual workspace?")
             }
         }
-    }
-}
-
-impl Debug for InsufficientMetadata {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}", &self)
     }
 }
 
