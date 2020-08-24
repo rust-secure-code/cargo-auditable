@@ -88,7 +88,7 @@ Embedded platforms where you cannot spare a byte should not add anything in the 
 
 ### Does this impact reproducible builds?
 
-The data format is designed not to disrupt reproducible builds. It contains no timestamps, and the generated JSON is sorted to make sure it is identical between compilations.
+The data format is designed not to disrupt reproducible builds. It contains no timestamps, and the generated JSON is sorted to make sure it is identical between compilations. If anything, this *helps* with reproducible builds, since you know all the versions for a given binary now.
 
 ### Is there any tooling to consume this data?
 
