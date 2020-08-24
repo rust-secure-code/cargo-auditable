@@ -96,7 +96,7 @@ It is interoperable with existing tooling that consumes Cargo.lock via the JSON-
 
 ### What is the data format, exactly?
 
-It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, these Rust data structures map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in the `.rust-deps-v0` linker section.
+It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, [these Rust data structures](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/src/lib.rs#L14) map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in the `.rust-deps-v0` linker section.
 
 ### Does this disclose any sensitive information?
 
