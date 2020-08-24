@@ -10,16 +10,21 @@ The end goal is to get Cargo itself to encode this information in binaries inste
 
 ## Demo
 
+Clone this repository:
 ```bash
-# clone this repository
 git clone https://github.com/Shnatsel/rust-audit.git
 cd rust-audit
-# compile the tooling and a sample binary with dependency tree embedded
+```
+Compile the tooling and a sample binary with dependency tree embedded:
+```bash
 cargo build --release
-# recover the dependency tree we've just embedded
-# Note: pure-Rust extractor is Linux-only for now. Support for other platforms is WIP.
+```
+Recover the dependency tree we've just embedded. (Note: pure-Rust extractor is Linux-only for now. Support for other platforms is WIP.)
+```bash
 target/release/rust-audit-info target/release/hello-auditable
-# Or use pre-existing platform-specific tooling for data extraction, e.g. on Linux:
+```
+Or use pre-existing platform-specific tooling for data extraction. E.g. on Linux:
+```bash
 objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
 ```
 
