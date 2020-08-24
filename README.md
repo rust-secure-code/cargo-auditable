@@ -1,8 +1,10 @@
 ## rust-audit
 
-Know exact library versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities in production, at scale, with zero bookkeeping. This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
+Know the exact crate versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities in production, at scale, with zero bookkeeping.
 
-The implementation has gotten to the point where it's time to get some real-world experience with it, but the format is not yet stable. Linux, Windows and Mac OS are currently supported.
+This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
+
+The implementation has gotten to the point where it's time to get some real-world experience with it, but the **data format is not yet stable.** Linux, Windows and Mac OS are currently supported.
 
 The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate. RFC for a proper implementation in Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
@@ -21,7 +23,7 @@ target/release/rust-audit-info target/release/hello-auditable
 objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
 ```
 
-You can also audit the recovered dependency tree for known vulnerabilities using `cargo-audit`:
+You can also audit the recovered dependency tree for known vulnerabilities using `cargo audit`:
 ```bash
 (cd auditable-serde && cargo build --release --features "toml" --example json-to-toml)
 cargo install cargo-audit
@@ -78,7 +80,7 @@ Not really. A "Hello World" on x86 Linux compiles into a ~1Mb file in the best c
 
 Embedded platforms where you cannot spare a byte should not add anything in the executable. Instead they should record the hash of every executable in a database and associate the hash with its Cargo.lock, compiler and LLVM version, build date, etc. This would make for an excellent Cargo wrapper or plugin. Since that can be done in a 5-line shell script, writing that tool is left as an exercise to the reader.
 
-### What about recording compiler version?
+### What about recording the compiler version?
 
 It's already there. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in safe Rust.
 
@@ -86,18 +88,17 @@ It's already there. Run `strings your_executable | grep 'rustc version'` to see 
 
 The data format is designed not to disrupt reproducible builds. It contains no timestamps, and the generated JSON is sorted to make sure it is identical between compilations.
 
-### What about keeping track of versions of statically linked C libraries?
-
-Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way later.
-
 ### Is there any tooling to consume this data?
 
 It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you.
 
+### What about keeping track of versions of statically linked C libraries?
+
+Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way later.
+
 ### What is blocking uplifting this into Cargo?
 
  1. Getting some real-world experience with this before committing to a stable data format
- 1. The rustc bug that makes this non-ergonomic is also an issue: https://github.com/rust-lang/rust/issues/47384
+ 1. https://github.com/rust-lang/rust/issues/47384
 
 **Help on these points would be greatly appreciated.**
-
