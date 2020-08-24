@@ -37,7 +37,7 @@ target/release/rust-audit-info target/release/hello-auditable > dependency-tree.
 target/release/examples/json-to-toml dependency-tree.json | cargo audit -f -
 ```
 
-## Make your crate auditable
+## How to make your crate auditable
 
 Add the following to your `Cargo.toml`:
 
@@ -51,14 +51,14 @@ auditable = "0.1"
 auditable-build = "0.1"
 ```
 
-Create a build.rs file next to `Cargo.toml` with the following contents:
+Create a `build.rs` file next to `Cargo.toml` with the following contents:
 ```rust
 fn main() {
     auditable_build::collect_dependency_list();
 }
 ```
 
-Add the following to your `main.rs` (or any other file for that matter):
+Add the following to the beginning your `main.rs` (or any other file):
 
 ```rust
 static COMPRESSED_DEPENDENCY_LIST: &[u8] = auditable::inject_dependency_list!();
