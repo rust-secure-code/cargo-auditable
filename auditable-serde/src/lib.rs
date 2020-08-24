@@ -36,7 +36,7 @@ pub struct Package {
     /// The feature "default" will also be recorded unless `--no-default-features` is used.
     features: Vec<String>,
 }
-// The fields are ordered from weakest to strongest so that casting to integer would make sense
+/// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DependencyKind {
     Build,
@@ -49,7 +49,7 @@ impl Default for DependencyKind {
     }
 }
 
-// The fields are ordered from weakest to strongest so that casting to integer would make sense
+/// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum PrivateDepKind {
     Development,
