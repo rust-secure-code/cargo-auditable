@@ -94,9 +94,21 @@ The data format is designed not to disrupt reproducible builds. It contains no t
 
 It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you.
 
+### What is the data format, exactly?
+
+It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, these Rust data structures map to JSON one-to-one and are extensively commented.
+
+### Does this disclose any sensitive information?
+
+All URLs and file paths are redacted, but the crate names, feature names and versions are recorded as-is. At present panic messages already disclose all this info and more, except feature names. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
+
+So the list of enabled features is the only newly disclosed information.
+
 ### What about recording the compiler version?
 
 It's already there. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in safe Rust.
+
+In theory we could duplicate it in the JSON for ease of access, but this can be added later in a backwards-compatible fashion.
 
 ### What about keeping track of versions of statically linked C libraries?
 
