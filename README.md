@@ -72,7 +72,7 @@ Put the following in some reachable location in the code, e.g. in `fn main()`:
     println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
 ```
 
-Now you can `cargo build` and the dependency data will be embedded in the final binary automatically. You can verify that the data is actually embedded using the steps from [the demo](#Demo).
+Now you can `cargo build` and the dependency data will be embedded in the final binary automatically. You can verify that the data is actually embedded using the extraction steps from [the demo](#Demo).
 
 See the [auditable "Hello, world!"](https://github.com/Shnatsel/rust-audit/tree/master/hello-auditable) project for an example of how it all fits together.
 
