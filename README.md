@@ -19,8 +19,9 @@ Compile the tooling and a sample binary with dependency tree embedded:
 ```bash
 cargo build --release
 ```
-Recover the dependency tree we've just embedded. (Note: pure-Rust extractor is Linux-only for now. Support for other platforms is WIP.)
+Recover the dependency tree we've just embedded.
 ```bash
+# Note: pure-Rust extractor is Linux-only for now. Support for other platforms is WIP.
 target/release/rust-audit-info target/release/hello-auditable
 ```
 Or use pre-existing platform-specific tooling for data extraction. E.g. on Linux:
