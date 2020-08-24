@@ -9,7 +9,6 @@ use std::{error::Error, fs::File, io::BufReader};
 fn main() -> Result<(), Box<dyn Error>> {
     // TODO: use pico-args
     let input = std::env::args().nth(1).unwrap();
-    //let output = std::env::args().nth(2).unwrap();
     // Copy the compressed data and drop the full binary we've read to reduce peak memory usage
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
