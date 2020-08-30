@@ -7,5 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-binfarce = { path = "../../binfarce" }
+binfarce = {git = "https://github.com/Shnatsel/binfarce.git"}
 miniz_oxide = {git = "https://github.com/Frommi/miniz_oxide.git"}
