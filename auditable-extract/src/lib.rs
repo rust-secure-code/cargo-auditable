@@ -25,6 +25,6 @@ pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Option<&'a [u8]> {
             let section = parsed.section_with_name("rdep-v0")?;
             data.get(section.range().ok()?)
         }
-        _ => todo!(),
+        _ => None
     }
 }
