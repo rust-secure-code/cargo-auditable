@@ -19,6 +19,11 @@ pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Option<&'a [u8]> {
             let parsed = binfarce::macho::parse(data).ok()?;
             let section = parsed.section_with_name("__TEXT", "rust-deps-v0")?;
             data.get(section.range().ok()?)
+        },
+        Format::PE => {
+            let parsed = binfarce::pe::parse(data).ok()?;
+            let section = parsed.section_with_name("rdep-v0")?;
+            data.get(section.range().ok()?)
         }
         _ => todo!(),
     }
