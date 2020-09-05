@@ -7,6 +7,9 @@ repository = "https://github.com/Shnatsel/rust-audit"
 description = "Serialize/deserialize data encoded by `auditable` crate"
 edition = "2018"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = []
 from_metadata = ["cargo_metadata"]
