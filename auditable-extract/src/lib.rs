@@ -22,7 +22,7 @@ pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Option<&'a [u8]> {
         },
         Format::PE => {
             let parsed = binfarce::pe::parse(data).ok()?;
-            let section = parsed.section_with_name("rdep-v0")?;
+            let section = parsed.section_with_name("rdep-v0").ok()??;
             data.get(section.range().ok()?)
         }
         _ => None
