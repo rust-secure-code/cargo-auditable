@@ -121,4 +121,4 @@ Good question. I don't think they are exposed in any reasonable way right now. W
  1. Getting some real-world experience with this before committing to a stable data format
  1. https://github.com/rust-lang/rust/issues/47384
 
-**Help on these points would be greatly appreciated.**
+Help on these points would be greatly appreciated.
