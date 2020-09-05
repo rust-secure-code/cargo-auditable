@@ -102,9 +102,9 @@ It is not yet stabilized, so we do not have extensive docs or a JSON schema. How
 
 ### Does this disclose any sensitive information?
 
-All URLs and file paths are redacted, but the crate names, feature names and versions are recorded as-is. At present panic messages already disclose all this info and more, except feature names. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
+**TL;DR:** The list of enabled features is the only newly disclosed information.
 
-So the list of enabled features is the only newly disclosed information.
+All URLs and file paths are redacted, but the crate names, feature names and versions are recorded as-is. At present panic messages already disclose all this info and more, except feature names. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
 
 ### What about recording the compiler version?
 
