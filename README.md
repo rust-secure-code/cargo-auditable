@@ -21,13 +21,13 @@ cargo build --release
 ```
 Recover the dependency tree we've just embedded.
 ```bash
-# Note: pure-Rust extractor is Linux-only for now. Support for other platforms is WIP.
 target/release/rust-audit-info target/release/hello-auditable
 ```
-Or use pre-existing platform-specific tooling for data extraction. E.g. on Linux:
+Or you can use pre-existing platform-specific tooling for data extraction. E.g. on Linux:
 ```bash
 objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
 ```
+But [don't run these C tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the safe-Rust `rust-audit-info` tool whenever possible.
 
 You can also audit the recovered dependency tree for known vulnerabilities using `cargo audit`:
 ```bash
