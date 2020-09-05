@@ -3,39 +3,28 @@
 use binfarce;
 use binfarce::Format;
 
-pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<Option<&'a [u8]>, Error> {
+pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<&'a [u8], Error> {
     match binfarce::detect_format(data) {
         Format::Elf32{byte_order} => {
             let section = binfarce::elf32::parse(data, byte_order)?
-                .section_with_name(".rust-deps-v0")?;
-            match section {
-                Some(section) => Ok(Some(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)),
-                None => Ok(None),
-            }
+                .section_with_name(".rust-deps-v0")?.ok_or(Error::NoAuditData)?;
+            Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::Elf64{byte_order} => {
             let section = binfarce::elf64::parse(data, byte_order)?
-                .section_with_name(".rust-deps-v0")?;
-                match section {
-                    Some(section) => Ok(Some(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)),
-                    None => Ok(None),
-                }
+                .section_with_name(".rust-deps-v0")?.ok_or(Error::NoAuditData)?;
+            Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::Macho => {
             let parsed = binfarce::macho::parse(data)?;
             let section = parsed.section_with_name("__TEXT", "rust-deps-v0")?;
-            match section {
-                Some(section) => Ok(Some(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)),
-                None => Ok(None),
-            }
+            let section = section.ok_or(Error::NoAuditData)?;
+            Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::PE => {
             let parsed = binfarce::pe::parse(data)?;
-            let section = parsed.section_with_name("rdep-v0")?;
-            match section {
-                Some(section) => Ok(Some(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)),
-                None => Ok(None),
-            }
+            let section = parsed.section_with_name("rdep-v0")?.ok_or(Error::NoAuditData)?;
+            Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
         _ => Err(Error::NotAnExecutable)
     }
@@ -48,6 +37,8 @@ pub enum Error {
     UnexpectedEof,
     MalformedFile,
 }
+
+impl std::error::Error for Error {}
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
