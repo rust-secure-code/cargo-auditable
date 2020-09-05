@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut f = BufReader::new(f);
         let mut input_binary = Vec::new();
         f.read_to_end(&mut input_binary)?;
-        let compressed_audit_data = raw_auditable_data(&input_binary).ok_or("No audit data found in the supplied binary")?;
+        let compressed_audit_data = raw_auditable_data(&input_binary)?;
         compressed_audit_data.to_owned()
     };
     let decompressed_data = decompress_to_vec_zlib_with_limit(&compressed_audit_data, 1024 * 1024 * 128)
