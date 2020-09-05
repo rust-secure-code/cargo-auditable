@@ -37,7 +37,7 @@ target/release/rust-audit-info target/release/hello-auditable > dependency-tree.
 target/release/examples/json-to-toml dependency-tree.json | cargo audit -f -
 ```
 
-You can also use the `auditable-extract` crate to write your own tools that consume this info.
+The `auditable-extract` crate allows your own tools to easily consume this info.
 
 ## How to make your crate auditable
 
