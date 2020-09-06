@@ -1,5 +1,10 @@
 #![forbid(unsafe_code)]
 
+//! This is a companion crate to [`auditable`](https://docs.rs/auditable/) to be used as a build dependency.
+//!
+//! This crate is responsible for collecting the dependecy data. It exists as a separate crate purely for technical reasons.
+//! Please refer to [`auditable`](https://docs.rs/auditable/) crate for documentation.
+
 use std::{env, path::{Path, PathBuf}, fs::File, io::Write};
 use std::{convert::TryFrom, collections::HashSet};
 use auditable_serde::VersionInfo;
