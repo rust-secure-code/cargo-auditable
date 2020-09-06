@@ -8,9 +8,9 @@
 //! 
 //! ## Usage
 //!
-//! The following snippet demonstrates full extraction pipeline, including decompressing
-//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) crate and JSON parsing
-//! via [`auditable-serde`](http://docs.rs/auditable-serde/)) crate:
+//! The following snippet demonstrates full extraction pipeline, including decompression
+//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and JSON parsing
+//! via [`auditable-serde`](http://docs.rs/auditable-serde/):
 //!
 //! ```rust,ignore
 //! use std::io::{Read, BufReader};
