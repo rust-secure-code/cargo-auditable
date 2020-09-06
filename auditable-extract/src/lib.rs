@@ -9,7 +9,7 @@
 //! ## Usage
 //!
 //! The following snippet demonstrates full extraction pipeline, including decompression
-//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and JSON parsing
+//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and optional JSON parsing
 //! via [`auditable-serde`](http://docs.rs/auditable-serde/):
 //!
 //! ```rust,ignore
