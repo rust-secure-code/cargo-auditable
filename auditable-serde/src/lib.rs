@@ -7,7 +7,9 @@
 //! and implements the serialization/deserialization routines via `serde`.
 //! It also provides optional conversions from `cargo metadata` and to `Cargo.lock` formats.
 //! 
-//! ## Usage
+//! The `VersionInfo` struct is where all the magic happens, see the docs on it for more info.
+//! 
+//! ## Basic usage
 //!
 //! The following snippet demonstrates full extraction pipeline, including
 //! platform-specific executable handling via
