@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 auditable-extract = {path = "../auditable-extract"}
 miniz_oxide = "0.4.1"
-pico-args = "0.3.3"
+#pico-args = "0.3.3"
