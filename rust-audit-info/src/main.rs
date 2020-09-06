@@ -9,9 +9,17 @@ use std::{error::Error, fs::File, io::BufReader};
 const INPUT_FILE_LENGTH_LIMIT: u64 = (1024 + 512) * 1024 * 1024; // 1.5Gib
 const DECOMPRESSED_AUDIT_DATA_SIZE_LIMIT: usize = 1024 * 1024 * 64; // 64Mib
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
+    if let Err(e) = do_work() {
+        eprintln!("{}", e);
+        std::process::exit(1);
+    }
+}
+
+fn do_work() -> Result<(), Box<dyn Error>> {
     // TODO: use pico-args
-    let input = std::env::args().nth(1).unwrap();
+    let input = std::env::args().nth(1)
+        .ok_or("Usage: rust-audit-info FILE")?;
 
     // Copy the compressed data and drop the full binary we've read to reduce peak memory usage
     let compressed_audit_data: Vec<u8> = {
