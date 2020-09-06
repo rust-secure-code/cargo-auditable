@@ -12,29 +12,29 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
-    packages: Vec<Package>,
+    pub packages: Vec<Package>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
-    name: String,
-    version: semver::Version,
+    pub name: String,
+    pub version: semver::Version,
     /// Currently "git", "local" or "registry". Designed to be extensible with other revision control systems, etc.
     /// May be extended in the future to record a specific revision, e.g. git-sha1+90ac1a1e8b072e0d595c63db39875b371397173d
-    source: String,
+    pub source: String,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     /// "build" or "runtime". If it's both a build and a runtime dependency, "runtime" is recorded.
-    kind: DependencyKind,
+    pub kind: DependencyKind,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     /// Packages are stored in a JSON array. Here we refer to each package by its index in the array.
-    dependencies: Vec<usize>,
+    pub dependencies: Vec<usize>,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     /// List of features, identical to the way `cargo metadata` presents them.
     /// The feature "default" will also be recorded unless `--no-default-features` is used.
-    features: Vec<String>,
+    pub features: Vec<String>,
 }
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[allow(non_camel_case_types)]
