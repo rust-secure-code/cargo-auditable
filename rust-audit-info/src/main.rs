@@ -6,7 +6,8 @@ use std::io::Read;
 use std::io::Write;
 use std::{error::Error, fs::File, io::BufReader};
 
-const DECOMPRESSED_AUDIT_DATA_SIZE_LIMIT: usize = 1024 * 1024 * 64;
+const INPUT_FILE_LENGTH_LIMIT: u64 = (1024 + 512) * 1024 * 1024; // 1.5Gib
+const DECOMPRESSED_AUDIT_DATA_SIZE_LIMIT: usize = 1024 * 1024 * 64; // 64Mib
 
 fn main() -> Result<(), Box<dyn Error>> {
     // TODO: use pico-args
@@ -15,7 +16,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Copy the compressed data and drop the full binary we've read to reduce peak memory usage
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
-        let mut f = BufReader::new(f);
+        let f = BufReader::new(f);
+        let mut f = f.take(INPUT_FILE_LENGTH_LIMIT); //TODO: nice error message
         let mut input_binary = Vec::new();
         f.read_to_end(&mut input_binary)?;
         let compressed_audit_data = raw_auditable_data(&input_binary)?;
