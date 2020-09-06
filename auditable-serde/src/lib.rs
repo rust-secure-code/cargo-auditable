@@ -42,11 +42,13 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{convert::TryFrom, str::FromStr};
+use std::str::FromStr;
 #[cfg(feature = "toml")]
 use cargo_lock;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
+#[cfg(feature = "from_metadata")]
+use std::convert::TryFrom;
 #[cfg(feature = "from_metadata")]
 use cargo_metadata;
 #[cfg(feature = "from_metadata")]
@@ -116,6 +118,7 @@ impl Default for DependencyKind {
 }
 
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
+#[cfg(feature = "from_metadata")]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 enum PrivateDepKind {
     Development,
@@ -123,6 +126,7 @@ enum PrivateDepKind {
     Runtime,
 }
 
+#[cfg(feature = "from_metadata")]
 impl From<PrivateDepKind> for DependencyKind {
     fn from(priv_kind: PrivateDepKind) -> Self {
         match priv_kind {
