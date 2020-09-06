@@ -5,6 +5,7 @@ authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Shnatsel/rust-audit"
 description = "Serialize/deserialize data encoded by `auditable` crate"
+categories = ["encoding"]
 edition = "2018"
 
 [package.metadata.docs.rs]

@@ -5,6 +5,7 @@ authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Shnatsel/rust-audit"
 description = "Command-line tool to extract the dependency trees embedded in binaries by `auditable` crate."
+categories = ["command-line-utilities", "encoding"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
