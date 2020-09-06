@@ -1,6 +1,6 @@
 [package]
 name = "auditable"
-version = "0.0.3"
+version = "0.1.0-rc0"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/Shnatsel/rust-audit"
