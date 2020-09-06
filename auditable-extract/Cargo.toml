@@ -8,4 +8,3 @@ edition = "2018"
 
 [dependencies]
 binfarce = {git = "https://github.com/Shnatsel/binfarce.git" }
-miniz_oxide = {git = "https://github.com/Frommi/miniz_oxide.git"} 
