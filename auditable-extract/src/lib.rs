@@ -1,8 +1,47 @@
 #![forbid(unsafe_code)]
 
+//! Extracts the dependency tree information embedded in executables by the
+//! [`auditable`](http://docs.rs/auditable/) crate.
+//!
+//! This crate handles all binary format parsing for you and is designed to be resilient to malicious input.
+//! It is 100% safe Rust (including dependencies) and does not perform any heap allocations.
+//! 
+//! ## Usage
+//!
+//! The following snippet demonstrates full extraction pipeline, including decompressing
+//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) crate and JSON parsing
+//! via [`auditable-serde`](http://docs.rs/auditable-serde/)) crate:
+//!
+//! ```rust,ignore
+//! use std::io::{Read, BufReader};
+//! use std::{error::Error, fs::File, str::FromStr};
+//!
+//! fn main() -> Result<(), Box<dyn Error>> {
+//!     // Read the input
+//!     let f = File::open("target/release/hello-auditable")?;
+//!     let mut f = BufReader::new(f);
+//!     let mut input_binary = Vec::new();
+//!     f.read_to_end(&mut input_binary)?;
+//!     // Extract the compressed audit data
+//!     let compressed_audit_data = auditable_extract::raw_auditable_data(&input_binary)?;
+//!     // Decompress it with your Zlib implementation of choice. We recommend miniz_oxide
+//!     use miniz_oxide::inflate::decompress_to_vec_zlib;
+//!     let decompressed_data = decompress_to_vec_zlib(&compressed_audit_data)
+//!         .map_err(|_| "Failed to decompress audit data")?;
+//!     let decompressed_data = String::from_utf8(decompressed_data)?;
+//!     println!("{}", decompressed_data);
+//!     // Parse the audit data to Rust data structures
+//!     let dependency_tree = auditable_serde::VersionInfo::from_str(&decompressed_data);
+//!     Ok(())
+//! }
+//! ```
+
 use binfarce;
 use binfarce::Format;
 
+/// Extracts the Zlib-compressed dependency info from an executable.
+///
+/// This function does not allocate any memory on the heap and can be safely given untrusted input.
 pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<&'a [u8], Error> {
     match binfarce::detect_format(data) {
         Format::Elf32{byte_order} => {
