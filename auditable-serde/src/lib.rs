@@ -1,3 +1,43 @@
+#![forbid(unsafe_code)]
+
+//! Parses and serializes the JSON dependency tree embedded in executables by the
+//! [`auditable`](http://docs.rs/auditable/) crate.
+//!
+//! This crate defines the data structures that a serialized to/from JSON
+//! and implements the serialization/deserialization routines via `serde`.
+//! It also provides optional conversions from `cargo metadata` and to `Cargo.lock` formats.
+//! 
+//! ## Usage
+//!
+//! The following snippet demonstrates full extraction pipeline, including
+//! platform-specific executable handling via
+//! [`auditable-extract`](http://docs.rs/auditable-serde/) and decompression
+//! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/):
+//!
+//! ```rust,ignore
+//! use std::io::{Read, BufReader};
+//! use std::{error::Error, fs::File, str::FromStr};
+//!
+//! fn main() -> Result<(), Box<dyn Error>> {
+//!     // Read the input
+//!     let f = File::open("target/release/hello-auditable")?;
+//!     let mut f = BufReader::new(f);
+//!     let mut input_binary = Vec::new();
+//!     f.read_to_end(&mut input_binary)?;
+//!     // Extract the compressed audit data
+//!     let compressed_audit_data = auditable_extract::raw_auditable_data(&input_binary)?;
+//!     // Decompress it with your Zlib implementation of choice. We recommend miniz_oxide
+//!     use miniz_oxide::inflate::decompress_to_vec_zlib;
+//!     let decompressed_data = decompress_to_vec_zlib(&compressed_audit_data)
+//!         .map_err(|_| "Failed to decompress audit data")?;
+//!     let decompressed_data = String::from_utf8(decompressed_data)?;
+//!     println!("{}", decompressed_data);
+//!     // Parse the audit data to Rust data structures
+//!     let dependency_tree = auditable_serde::VersionInfo::from_str(&decompressed_data);
+//!     Ok(())
+//! }
+//! ```
+
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::{convert::TryFrom, str::FromStr};
@@ -10,30 +50,53 @@ use cargo_metadata;
 #[cfg(feature = "from_metadata")]
 use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 
+/// Dependency tree embedded in the binary.
+///
+/// Implements `Serialize` and `Deserialize` traits from `serde`, so you can use
+/// [all the usual methods from serde-json](https://docs.rs/serde_json/1.0.57/serde_json/#functions)
+/// to read and write it. `from_str()` that parses JSON is also implemented for your convenience.
+///
+/// ## Optional features
+///
+/// If the `toml` feature is enabled, a conversion into the [`cargo_lock::Lockfile`](https://docs.rs/cargo-lock/)
+/// struct is possible via the `TryInto` trait. This can be useful if you need to interoperate with tooling
+/// that consumes the `Cargo.lock` file format. An example demonstrating it can be found
+/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/json-to-toml.rs).
+///
+/// If the `from_metadata` feature is enabled, a conversion from 
+/// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
+/// is possible via the `TryFrom` trait. This is what `auditable` crate uses internally.
+/// An example demonstrating it can be found
+/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs)
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
 }
 
+/// A single package in the dependency tree
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
+    /// Crate name specified in the `name` field in Cargo.toml file. Examples: "libc", "rand"
     pub name: String,
     pub version: semver::Version,
     /// Currently "git", "local" or "registry". Designed to be extensible with other revision control systems, etc.
-    /// May be extended in the future to record a specific revision, e.g. git-sha1+90ac1a1e8b072e0d595c63db39875b371397173d
+    ///
+    /// May be extended in the future to record a specific revision, e.g. `git-sha1+90ac1a1e8b072e0d595c63db39875b371397173d`
     pub source: String,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_default")]
     /// "build" or "runtime". If it's both a build and a runtime dependency, "runtime" is recorded.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_default")]
     pub kind: DependencyKind,
+    /// Packages are stored in an ordered array both in the `VersionInfo` struct and in JSON.
+    /// Here we refer to each package by its index in the array.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
-    /// Packages are stored in a JSON array. Here we refer to each package by its index in the array.
     pub dependencies: Vec<usize>,
+    /// List of features, identical to the way `cargo metadata` presents them.
+    ///
+    /// The feature "default" will also be recorded unless `--no-default-features` is used.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
-    /// List of features, identical to the way `cargo metadata` presents them.
-    /// The feature "default" will also be recorded unless `--no-default-features` is used.
     pub features: Vec<String>,
 }
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
@@ -52,7 +115,7 @@ impl Default for DependencyKind {
 
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub enum PrivateDepKind {
+enum PrivateDepKind {
     Development,
     Build,
     Runtime,
@@ -93,6 +156,8 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
     }
 }
 
+/// Error returned by the conversion from 
+/// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
 #[cfg(feature = "from_metadata")]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum InsufficientMetadata {
