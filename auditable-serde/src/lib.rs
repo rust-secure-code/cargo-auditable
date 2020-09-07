@@ -75,16 +75,16 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 ///
 /// ## Optional features
 ///
+/// If the `from_metadata` feature is enabled, a conversion from 
+/// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
+/// is possible via the `TryFrom` trait. This is what `auditable` crate uses internally.
+/// This is the preferred way to construct this structure. An example demonstrating it can be found
+/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs).
+///
 /// If the `toml` feature is enabled, a conversion into the [`cargo_lock::Lockfile`](https://docs.rs/cargo-lock/)
 /// struct is possible via the `TryInto` trait. This can be useful if you need to interoperate with tooling
 /// that consumes the `Cargo.lock` file format. An example demonstrating it can be found
 /// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/json-to-toml.rs).
-///
-/// If the `from_metadata` feature is enabled, a conversion from 
-/// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
-/// is possible via the `TryFrom` trait. This is what `auditable` crate uses internally.
-/// An example demonstrating it can be found
-/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs)
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
