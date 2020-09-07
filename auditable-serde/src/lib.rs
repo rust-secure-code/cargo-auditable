@@ -58,7 +58,20 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 ///
 /// Implements `Serialize` and `Deserialize` traits from `serde`, so you can use
 /// [all the usual methods from serde-json](https://docs.rs/serde_json/1.0.57/serde_json/#functions)
-/// to read and write it. `from_str()` that parses JSON is also implemented for your convenience.
+/// to read and write it.
+///
+/// `from_str()` that parses JSON is also implemented for your convenience:
+/// ```rust
+/// use auditable_serde::VersionInfo;
+/// use std::str::FromStr;
+/// let json_str = r#"{"packages":[{
+///     "name":"adler",
+///     "version":"0.2.3",
+///     "source":"registry"
+/// }]}"#;
+/// let info = VersionInfo::from_str(json_str).unwrap();
+/// assert_eq!(&info.packages[0].name, "adler");
+/// ```
 ///
 /// ## Optional features
 ///
