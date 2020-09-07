@@ -77,8 +77,8 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 ///
 /// If the `from_metadata` feature is enabled, a conversion from 
 /// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
-/// is possible via the `TryFrom` trait. This is what `auditable` crate uses internally.
-/// This is the preferred way to construct this structure. An example demonstrating it can be found
+/// is possible via the `TryFrom` trait. This is the preferred way to construct this structure.
+/// An example demonstrating that can be found
 /// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs).
 ///
 /// If the `toml` feature is enabled, a conversion into the [`cargo_lock::Lockfile`](https://docs.rs/cargo-lock/)
