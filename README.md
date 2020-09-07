@@ -27,7 +27,7 @@ Or you can use pre-existing platform-specific tooling for data extraction. E.g. 
 ```bash
 objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
 ```
-But [don't run these C tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the safe-Rust `rust-audit-info` tool whenever possible.
+But [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the safe-Rust `rust-audit-info` tool whenever possible.
 
 You can also audit the recovered dependency tree for known vulnerabilities using `cargo audit`:
 ```bash
