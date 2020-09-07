@@ -47,7 +47,7 @@ use std::str::FromStr;
 use cargo_lock;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-#[cfg(feature = "from_metadata")]
+#[cfg(any(feature = "from_metadata",feature = "toml"))]
 use std::convert::TryFrom;
 #[cfg(feature = "from_metadata")]
 use cargo_metadata;
@@ -82,7 +82,7 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 /// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs).
 ///
 /// If the `toml` feature is enabled, a conversion into the [`cargo_lock::Lockfile`](https://docs.rs/cargo-lock/)
-/// struct is possible via the `TryInto` trait. This can be useful if you need to interoperate with tooling
+/// struct is possible via the `TryFrom` trait. This can be useful if you need to interoperate with tooling
 /// that consumes the `Cargo.lock` file format. An example demonstrating it can be found
 /// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/json-to-toml.rs).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -334,24 +334,24 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 }
 
 #[cfg(feature = "toml")]
-impl TryInto<cargo_lock::Dependency> for &Package {
+impl TryFrom <&Package> for cargo_lock::Dependency {
     type Error = cargo_lock::error::Error;
-    fn try_into(self) -> Result<cargo_lock::Dependency, Self::Error> {
+    fn try_from(input: &Package) -> Result<Self, Self::Error> {
         Ok(cargo_lock::Dependency {
-            name: cargo_lock::package::name::Name::from_str(&self.name)?,
+            name: cargo_lock::package::name::Name::from_str(&input.name)?,
             // to_string() is used to work around incompatible semver crate versions
-            version: cargo_lock::package::Version::parse(&self.version.to_string())?,
+            version: cargo_lock::package::Version::parse(&input.version.to_string())?,
             source: Option::None,
         })
     }
 }
 
 #[cfg(feature = "toml")]
-impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
+impl TryFrom<&VersionInfo> for cargo_lock::lockfile::Lockfile {
     type Error = cargo_lock::error::Error;
-    fn try_into(self) -> Result<cargo_lock::lockfile::Lockfile, Self::Error> {
+    fn try_from(input: &VersionInfo) -> Result<Self, Self::Error> {
         let mut packages: Vec<cargo_lock::Package> = Vec::new();
-        for pkg in self.packages.iter() {
+        for pkg in input.packages.iter() {
             packages.push(cargo_lock::package::Package {
                 name: cargo_lock::package::name::Name::from_str(&pkg.name)?,
                 // to_string() is used to work around incompatible semver crate versions
@@ -359,7 +359,7 @@ impl TryInto<cargo_lock::lockfile::Lockfile> for &VersionInfo {
                 checksum: Option::None,
                 dependencies: {
                     let result: Result<Vec<_>, _> = pkg.dependencies.iter().map(|i| {
-                        self.packages.get(*i).ok_or(cargo_lock::error::Error::new(
+                        input.packages.get(*i).ok_or(cargo_lock::error::Error::new(
                             cargo_lock::error::ErrorKind::Parse,
                             &format!("There is no dependency with index {} in the input JSON", i))
                         )?.try_into()
