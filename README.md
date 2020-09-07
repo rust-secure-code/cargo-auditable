@@ -23,12 +23,6 @@ Recover the dependency tree we've just embedded.
 ```bash
 target/release/rust-audit-info target/release/hello-auditable
 ```
-Or you can use pre-existing platform-specific tooling for data extraction. E.g. on Linux:
-```bash
-objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
-```
-But [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the safe-Rust `rust-audit-info` tool whenever possible.
-
 You can also audit the recovered dependency tree for known vulnerabilities using `cargo audit`:
 ```bash
 (cd auditable-serde && cargo build --release --features "toml" --example json-to-toml)
@@ -94,11 +88,19 @@ The data format is designed not to disrupt reproducible builds. It contains no t
 
 ### Is there any tooling to consume this data?
 
-It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you.
+It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
 
 ### What is the data format, exactly?
 
 It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, [these Rust data structures](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/src/lib.rs#L14) map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in a linker section with a name that [varies by platform](https://github.com/Shnatsel/rust-audit/blob/master/auditable/src/lib.rs).
+
+### Can I read this data using a tool written in a different language?
+
+Yes. The data format is designed for interoperability with alternative implementations. You can also use pre-existing platform-specific tools or libraries for data extraction. E.g. on Linux:
+```bash
+objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
+```
+However, [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the `auditable-extract` crate or the `rust-audit-info` command-line tool if possible - they are written in 100% safe Rust, so they will not have such vulnerabilities.
 
 ### Does this disclose any sensitive information?
 
