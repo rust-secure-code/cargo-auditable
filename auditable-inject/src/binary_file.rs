@@ -12,13 +12,13 @@ use crate::format_guess::{FormatDescription, guess_format};
 
 pub fn create_metadata_file(
     format: &FormatDescription,
-    compressed: &[u8],
+    contents: &[u8],
     symbol_name: &str,
 ) -> Vec<u8> {
     let mut file = create_object_file(format);
     let section = file.add_section(
         file.segment_name(StandardSegment::Data).to_vec(),
-        b".rustc".to_vec(),
+        b".dep-v0".to_vec(),
         SectionKind::ReadOnlyData,
     );
     match file.format() {
@@ -28,14 +28,14 @@ pub fn create_metadata_file(
         }
         _ => {}
     };
-    let offset = file.append_section_data(section, &compressed, 1);
+    let offset = file.append_section_data(section, &contents, 1);
 
     // For MachO and probably PE this is necessary to prevent the linker from throwing away the
     // .rustc section. For ELF this isn't necessary, but it also doesn't harm.
     file.add_symbol(Symbol {
         name: symbol_name.as_bytes().to_vec(),
         value: offset,
-        size: compressed.len() as u64,
+        size: contents.len() as u64,
         kind: SymbolKind::Data,
         scope: SymbolScope::Dynamic,
         weak: false,
