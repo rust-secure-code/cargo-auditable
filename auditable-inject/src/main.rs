@@ -7,17 +7,15 @@ use object::{
     SectionKind, SymbolFlags, SymbolKind, SymbolScope,
 };
 
-
 pub fn create_compressed_metadata_file(
-    sess: &Session,
-    metadata: &EncodedMetadata,
+    format: &FormatDescription,
+    compressed: &[u8],
     symbol_name: &str,
 ) -> Vec<u8> {
-    let mut compressed = rustc_metadata::METADATA_HEADER.to_vec();
-    FrameEncoder::new(&mut compressed).write_all(metadata.raw_data()).unwrap();
-    let mut file = if let Some(file) = create_object_file(sess) {
+    let mut file = if let Some(file) = create_object_file(format) {
         file
     } else {
+        // FIXME: this was copied from rustc codebase but looks sketchy
         return compressed.to_vec();
     };
     let section = file.add_section(
@@ -50,76 +48,24 @@ pub fn create_compressed_metadata_file(
     file.write().unwrap()
 }
 
-fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {
-    let endianness = match sess.target.options.endian {
-        Endian::Little => Endianness::Little,
-        Endian::Big => Endianness::Big,
-    };
-    let architecture = match &sess.target.arch[..] {
-        "arm" => Architecture::Arm,
-        "aarch64" => Architecture::Aarch64,
-        "x86" => Architecture::I386,
-        "s390x" => Architecture::S390x,
-        "mips" => Architecture::Mips,
-        "mips64" => Architecture::Mips64,
-        "x86_64" => {
-            if sess.target.pointer_width == 32 {
-                Architecture::X86_64_X32
-            } else {
-                Architecture::X86_64
-            }
-        }
-        "powerpc" => Architecture::PowerPc,
-        "powerpc64" => Architecture::PowerPc64,
-        "riscv32" => Architecture::Riscv32,
-        "riscv64" => Architecture::Riscv64,
-        "sparc64" => Architecture::Sparc64,
-        // Unsupported architecture.
-        _ => return None,
-    };
-    let binary_format = if sess.target.is_like_osx {
-        BinaryFormat::MachO
-    } else if sess.target.is_like_windows {
-        BinaryFormat::Coff
-    } else {
-        BinaryFormat::Elf
-    };
-
-    let mut file = write::Object::new(binary_format, architecture, endianness);
-    match architecture {
-        Architecture::Mips => {
-            // copied from `mipsel-linux-gnu-gcc foo.c -c` and
-            // inspecting the resulting `e_flags` field.
-            let e_flags = elf::EF_MIPS_CPIC
-                | elf::EF_MIPS_PIC
-                | if sess.target.options.cpu.contains("r6") {
-                    elf::EF_MIPS_ARCH_32R6 | elf::EF_MIPS_NAN2008
-                } else {
-                    elf::EF_MIPS_ARCH_32R2
-                };
-            file.flags = FileFlags::Elf { e_flags };
-        }
-        Architecture::Mips64 => {
-            // copied from `mips64el-linux-gnuabi64-gcc foo.c -c`
-            let e_flags = elf::EF_MIPS_CPIC
-                | elf::EF_MIPS_PIC
-                | if sess.target.options.cpu.contains("r6") {
-                    elf::EF_MIPS_ARCH_64R6 | elf::EF_MIPS_NAN2008
-                } else {
-                    elf::EF_MIPS_ARCH_64R2
-                };
-            file.flags = FileFlags::Elf { e_flags };
-        }
-        Architecture::Riscv64 if sess.target.options.features.contains("+d") => {
-            // copied from `riscv64-linux-gnu-gcc foo.c -c`, note though
-            // that the `+d` target feature represents whether the double
-            // float abi is enabled.
-            let e_flags = elf::EF_RISCV_RVC | elf::EF_RISCV_FLOAT_ABI_DOUBLE;
-            file.flags = FileFlags::Elf { e_flags };
-        }
-        _ => {}
-    };
+fn create_object_file(f: &FormatDescription) -> Option<write::Object<'static>> {
+    // The equivalent function inside rustc contains spooky special-casing for MIPS and RISC-V:
+    // https://github.com/rust-lang/rust/blob/03a8cc7df1d65554a4d40825b0490c93ac0f0236/compiler/rustc_codegen_ssa/src/back/metadata.rs#L133-L165
+    // I am ignoring that in the prototype for now.
+    // To get this into Cargo, presumably we will need a way to share that code between rustc and Cargo.
+    // -- Shnatsel
+    let mut file = write::Object::new(f.format, f.architecture, f.endian);
     Some(file)
+}
+
+pub struct FormatDescription {
+    format: BinaryFormat,
+    architecture: Architecture,
+    endian: Endianness
+}
+
+fn guess_format() -> FormatDescription {
+    todo!();
 }
 
 fn main() {
