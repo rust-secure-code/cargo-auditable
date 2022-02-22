@@ -35,8 +35,8 @@ fn guess_architecture(target_triple: &str) -> Architecture {
     if target_triple.starts_with("arm") { Architecture::Arm }
     else if target_triple.starts_with("aarch64") { Architecture::Aarch64 }
     else if target_triple.starts_with("s390x") { Architecture::S390x }
-    else if target_triple.starts_with("mips") { Architecture::Mips }
     else if target_triple.starts_with("mips64") { Architecture::Mips64 }
+    else if target_triple.starts_with("mips") { Architecture::Mips }
     else if target_triple.starts_with("x86_64") { Architecture::X86_64 }
         // TODO - x32 ABI ignored for now
         // if sess.target.pointer_width == 32 {

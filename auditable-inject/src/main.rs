@@ -1,5 +1,5 @@
-// Shamelessly copied from rustc codebase:
-// https://github.com/rust-lang/rust/blob/e100ec5bc7cd768ec17d75448b29c9ab4a39272b/compiler/rustc_codegen_ssa/src/back/metadata.rs#L233-L287
+//! Shamelessly copied from rustc codebase:
+//! https://github.com/rust-lang/rust/blob/3b186511f62b0ce20e72ede0e8e13f8787155f02/compiler/rustc_codegen_ssa/src/back/metadata.rs#L260-L298
 
 mod format_guess;
 
@@ -57,5 +57,13 @@ fn create_object_file(f: &FormatDescription) -> write::Object<'static> {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let target_triple = std::env::args().nth(1).unwrap_or_else(|| usage() );
+    let format = guess_format(&target_triple);
+    
+
+}
+
+fn usage() -> ! {
+    eprintln!("Usage: auditable-inject target-triple /path/to/data_to_inject /path/to/output_file");
+    std::process::exit(1);
 }
