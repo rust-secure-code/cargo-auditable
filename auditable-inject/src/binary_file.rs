@@ -54,3 +54,17 @@ fn create_object_file(f: &FormatDescription) -> write::Object<'static> {
     // -- Shnatsel
     write::Object::new(f.format, f.architecture, f.endian)
 }
+
+// use object::BinaryFormat;
+//
+// /// Section name for the audit data
+// fn section_name(format: BinaryFormat) -> &'static str {
+//     // referenced from
+//     // https://github.com/Shnatsel/rust-audit/blob/995d3b11a38b540187684171a33ddd6c1f701612/auditable/src/lib.rs#L60-L62
+//     match format {
+//         BinaryFormat::Elf => ".rust-deps-v0",
+//         BinaryFormat::MachO => "rust-deps-v0",
+//         BinaryFormat::Pe => "rdep-v0",
+//         _ => panic!("Unsupported binary format"),
+//     }
+// }
