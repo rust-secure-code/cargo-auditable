@@ -9,7 +9,6 @@ use object::BinaryFormat;
 fn main() {
     let target_triple = std::env::args().nth(1).unwrap_or_else(|| usage() );
     let in_filename = std::env::args().nth(2).unwrap_or_else(|| usage() );
-    let out_filename = std::env::args().nth(3).unwrap_or_else(|| usage() );
 
     let contents = std::fs::read("/etc/hosts").expect("Unable to read input file");
 
@@ -19,7 +18,9 @@ fn main() {
 }
 
 fn usage() -> ! {
-    eprintln!("Usage: auditable-inject target-triple /path/to/data_to_inject /path/to/output_file");
+    eprintln!("Usage: auditable-inject target-triple /path/to/data_to_inject");
+    eprintln!("Then use the following before compiling:");
+    eprintln!("export RUSTFLAGS='-Clink-arg=audit_data.o -Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO'");
     std::process::exit(1);
 }
 
