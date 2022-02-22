@@ -4,13 +4,11 @@ mod binary_file;
 use format_guess::{FormatDescription, guess_format};
 use binary_file::create_metadata_file;
 
-use object::BinaryFormat;
-
 fn main() {
     let target_triple = std::env::args().nth(1).unwrap_or_else(|| usage() );
     let in_filename = std::env::args().nth(2).unwrap_or_else(|| usage() );
 
-    let contents = std::fs::read("/etc/hosts").expect("Unable to read input file");
+    let contents = std::fs::read(in_filename).expect("Unable to read input file");
 
     let format = guess_format(&target_triple);
     let binfile = create_metadata_file(&format, &contents, "AUDITABLE_VERSION_INFO");
@@ -24,6 +22,8 @@ fn usage() -> ! {
     std::process::exit(1);
 }
 
+// use object::BinaryFormat;
+//
 // /// Section name for the audit data
 // fn section_name(format: BinaryFormat) -> &'static str {
 //     // referenced from
