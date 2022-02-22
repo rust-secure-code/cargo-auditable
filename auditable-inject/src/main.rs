@@ -1,7 +1,7 @@
 mod format_guess;
 mod binary_file;
 
-use format_guess::{FormatDescription, guess_format};
+use format_guess::guess_format;
 use binary_file::create_metadata_file;
 
 fn main() {

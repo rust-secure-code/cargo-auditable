@@ -3,12 +3,11 @@
 //! and butchered to fit into a simplified prototype
 
 use object::write::{self, StandardSegment, Symbol, SymbolSection};
-use object::{
-    elf, Architecture, BinaryFormat, Endianness, FileFlags, Object, ObjectSection, SectionFlags,
+use object::{BinaryFormat, SectionFlags,
     SectionKind, SymbolFlags, SymbolKind, SymbolScope,
 };
 
-use crate::format_guess::{FormatDescription, guess_format};
+use crate::format_guess::FormatDescription;
 
 pub fn create_metadata_file(
     format: &FormatDescription,
