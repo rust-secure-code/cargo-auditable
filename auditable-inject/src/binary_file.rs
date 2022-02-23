@@ -170,4 +170,91 @@ unix
         assert_eq!(result.format(), BinaryFormat::Elf);
         assert_eq!(result.architecture(), Architecture::X86_64);
     }
+
+    #[test]
+    fn test_create_object_file_windows_msvc() {
+        let rustc_output = br#"debug_assertions
+target_arch="x86_64"
+target_endian="little"
+target_env="msvc"
+target_family="windows"
+target_feature="fxsr"
+target_feature="sse"
+target_feature="sse2"
+target_os="windows"
+target_pointer_width="64"
+target_vendor="pc"
+windows
+"#;
+        let target_triple = "x86_64-pc-windows-msvc";
+        let target_info = crate::format_guess::parse_rustc_target_info(rustc_output);
+        let result = create_object_file(&target_info, target_triple).unwrap();
+        assert_eq!(result.format(), BinaryFormat::Coff);
+        assert_eq!(result.architecture(), Architecture::X86_64);
+    }
+
+    #[test]
+    fn test_create_object_file_windows_gnu() {
+        let rustc_output = br#"debug_assertions
+target_arch="x86_64"
+target_endian="little"
+target_env="gnu"
+target_family="windows"
+target_feature="fxsr"
+target_feature="sse"
+target_feature="sse2"
+target_os="windows"
+target_pointer_width="64"
+target_vendor="pc"
+windows
+"#;
+        let target_triple = "x86_64-pc-windows-gnu";
+        let target_info = crate::format_guess::parse_rustc_target_info(rustc_output);
+        let result = create_object_file(&target_info, target_triple).unwrap();
+        assert_eq!(result.format(), BinaryFormat::Coff);
+        assert_eq!(result.architecture(), Architecture::X86_64);
+    }
+
+    #[test]
+    fn test_create_object_file_macos() {
+        let rustc_output = br#"debug_assertions
+target_arch="x86_64"
+target_endian="little"
+target_env=""
+target_family="unix"
+target_feature="fxsr"
+target_feature="sse"
+target_feature="sse2"
+target_feature="sse3"
+target_feature="ssse3"
+target_os="macos"
+target_pointer_width="64"
+target_vendor="apple"
+unix
+"#;
+        let target_triple = "x86_64-apple-darwin";
+        let target_info = crate::format_guess::parse_rustc_target_info(rustc_output);
+        let result = create_object_file(&target_info, target_triple).unwrap();
+        assert_eq!(result.format(), BinaryFormat::MachO);
+        assert_eq!(result.architecture(), Architecture::X86_64);
+    }
+
+    #[test]
+    fn test_create_object_file_linux_arm() {
+        let rustc_output = br#"debug_assertions
+target_arch="aarch64"
+target_endian="little"
+target_env="gnu"
+target_family="unix"
+target_os="linux"
+target_pointer_width="64"
+target_vendor="unknown"
+unix
+"#;
+        let target_triple = "aarch64-unknown-linux-gnu";
+        let target_info = crate::format_guess::parse_rustc_target_info(rustc_output);
+        let result = create_object_file(&target_info, target_triple).unwrap();
+        assert_eq!(result.format(), BinaryFormat::Elf);
+        assert_eq!(result.architecture(), Architecture::Aarch64);
+    }
 }
