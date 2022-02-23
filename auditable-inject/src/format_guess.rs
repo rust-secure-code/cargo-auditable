@@ -16,28 +16,29 @@ pub(crate) fn parse_rustc_target_info(rustc_output: &[u8]) -> RustcTargetInfo {
     // Decoupled from `rustc_target_info` to allow unit testing
     // `pub(crate)` so that unit tests in other modules could use it
     rustc_output
-    .lines()
-    .filter_map(|line| {
-        let line = line.unwrap();
-        // rustc outputs some free-standing values as well as key-value pairs
-        // we're only interested in the pairs, which are separated by '=' and the value is quoted
-        if line.contains("=") {
-            let key = line.split("=").nth(0).unwrap();
-            let mut value: String = line.split("=").skip(1).collect();
-            // strip first and last chars of the quoted value. Verify that they're quotes
-            assert!(value.pop().unwrap() == '"');
-            assert!(value.remove(0) == '"');
-            Some((key.to_owned(), value))
-        } else {
-            None
-        }
-    }).collect()
+        .lines()
+        .filter_map(|line| {
+            let line = line.unwrap();
+            // rustc outputs some free-standing values as well as key-value pairs
+            // we're only interested in the pairs, which are separated by '=' and the value is quoted
+            if line.contains("=") {
+                let key = line.split("=").nth(0).unwrap();
+                let mut value: String = line.split("=").skip(1).collect();
+                // strip first and last chars of the quoted value. Verify that they're quotes
+                assert!(value.pop().unwrap() == '"');
+                assert!(value.remove(0) == '"');
+                Some((key.to_owned(), value))
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_rustc_parser_linux() {
         let rustc_output = br#"debug_assertions

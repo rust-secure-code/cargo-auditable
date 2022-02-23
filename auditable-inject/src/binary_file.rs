@@ -3,9 +3,9 @@
 //! and butchered ever so slightly
 
 use object::write::{self, StandardSegment, Symbol, SymbolSection};
-use object::{BinaryFormat, SectionFlags,
-    SectionKind, SymbolFlags, SymbolKind, SymbolScope,
-    Architecture, Endianness, elf, FileFlags
+use object::{
+    elf, Architecture, BinaryFormat, Endianness, FileFlags, SectionFlags, SectionKind, SymbolFlags,
+    SymbolKind, SymbolScope,
 };
 
 use crate::format_guess::RustcTargetInfo;
@@ -17,7 +17,8 @@ pub fn create_metadata_file(
     contents: &[u8],
     symbol_name: &str,
 ) -> Vec<u8> {
-    let mut file = create_object_file(target_info, target_triple).expect("Unsupported architecture");
+    let mut file =
+        create_object_file(target_info, target_triple).expect("Unsupported architecture");
     let section = file.add_section(
         file.segment_name(StandardSegment::Data).to_vec(),
         b".dep-v0".to_vec(),
@@ -48,7 +49,10 @@ pub fn create_metadata_file(
     file.write().unwrap()
 }
 
-fn create_object_file(info: &RustcTargetInfo, target_triple: &str) -> Option<write::Object<'static>> {
+fn create_object_file(
+    info: &RustcTargetInfo,
+    target_triple: &str,
+) -> Option<write::Object<'static>> {
     // This conversion evolves over time, and has some subtle logic for MIPS and RISC-V later on, that also evolves.
     // If/when uplifiting this into Cargo, we will need to extract this code from rustc and put it in the `object` crate
     // so that it could be shared between rustc and Cargo.
@@ -126,7 +130,7 @@ fn create_object_file(info: &RustcTargetInfo, target_triple: &str) -> Option<wri
 }
 
 // Ended up not being necessary because I just changed the section name to .dep-v0
-// 
+//
 // use object::BinaryFormat;
 //
 // /// Section name for the audit data
@@ -144,7 +148,7 @@ fn create_object_file(info: &RustcTargetInfo, target_triple: &str) -> Option<wri
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_create_object_file_linux() {
         let rustc_output = br#"debug_assertions
