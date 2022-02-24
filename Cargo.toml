@@ -6,6 +6,7 @@ members = [
     "auditable-extract",
     "auditable-inject",
     "auditable-serde",
-    "rust-audit-info",
+    "cargo-auditable"
     "hello-auditable",
+    "rust-audit-info",
 ]
