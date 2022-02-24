@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 cargo-subcommand = "0.5.0"
-object = {version = "0.28.1", features = ["write"]}
+object = {version = "0.28.1", default-features = false, features = ["write"]}
