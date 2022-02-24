@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 mod binary_file;
 mod format_guess;
 
