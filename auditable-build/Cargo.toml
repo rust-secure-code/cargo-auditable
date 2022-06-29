@@ -11,4 +11,4 @@ edition = "2018"
 auditable-serde = {path = "../auditable-serde", features = ["from_metadata"]}
 miniz_oxide = {version = "0.4.0"}
 serde_json = {version =  "1.0.57"}
-cargo_metadata = "0.11"
+cargo_metadata = "0.15.0"

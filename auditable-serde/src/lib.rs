@@ -50,7 +50,7 @@ use std::convert::TryInto;
 #[cfg(any(feature = "from_metadata",feature = "toml"))]
 use std::convert::TryFrom;
 #[cfg(feature = "from_metadata")]
-use cargo_metadata;
+pub use cargo_metadata;
 #[cfg(feature = "from_metadata")]
 use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 
