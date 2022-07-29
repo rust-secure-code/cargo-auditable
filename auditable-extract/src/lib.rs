@@ -75,6 +75,9 @@ pub enum Error {
     NotAnExecutable,
     UnexpectedEof,
     MalformedFile,
+    SymbolsSectionIsMissing,
+    SectionIsMissing,
+    UnexpectedSectionType
 }
 
 impl std::error::Error for Error {}
@@ -86,6 +89,9 @@ impl std::fmt::Display for Error {
             Error::NotAnExecutable => "Not an executable file",
             Error::UnexpectedEof => "Unexpected end of file",
             Error::MalformedFile => "Malformed executable file",
+            Error::SymbolsSectionIsMissing => "Symbols section missing from exectuable",
+            Error::SectionIsMissing => "Section is missing from executable",
+            Error::UnexpectedSectionType => "Unexpected executable section type",
         };
         write!(f, "{}", message)
     }
@@ -96,6 +102,9 @@ impl From<binfarce::ParseError> for Error {
         match e {
             binfarce::ParseError::MalformedInput => Error::MalformedFile,
             binfarce::ParseError::UnexpectedEof => Error::UnexpectedEof,
+            binfarce::ParseError::SymbolsSectionIsMissing => Error::SymbolsSectionIsMissing,
+            binfarce::ParseError::SectionIsMissing(_) => Error::SectionIsMissing,
+            binfarce::ParseError::UnexpectedSectionType { .. } => Error::UnexpectedSectionType,
         }
-    }   
+    }
 }

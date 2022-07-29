@@ -335,10 +335,10 @@ fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
 
 #[cfg(feature = "toml")]
 impl TryFrom <&Package> for cargo_lock::Dependency {
-    type Error = cargo_lock::error::Error;
+    type Error = cargo_lock::Error;
     fn try_from(input: &Package) -> Result<Self, Self::Error> {
         Ok(cargo_lock::Dependency {
-            name: cargo_lock::package::name::Name::from_str(&input.name)?,
+            name: cargo_lock::package::Name::from_str(&input.name)?,
             // to_string() is used to work around incompatible semver crate versions
             version: cargo_lock::package::Version::parse(&input.version.to_string())?,
             source: Option::None,
@@ -347,21 +347,20 @@ impl TryFrom <&Package> for cargo_lock::Dependency {
 }
 
 #[cfg(feature = "toml")]
-impl TryFrom<&VersionInfo> for cargo_lock::lockfile::Lockfile {
-    type Error = cargo_lock::error::Error;
+impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
+    type Error = cargo_lock::Error;
     fn try_from(input: &VersionInfo) -> Result<Self, Self::Error> {
         let mut packages: Vec<cargo_lock::Package> = Vec::new();
         for pkg in input.packages.iter() {
             packages.push(cargo_lock::package::Package {
-                name: cargo_lock::package::name::Name::from_str(&pkg.name)?,
+                name: cargo_lock::package::Name::from_str(&pkg.name)?,
                 // to_string() is used to work around incompatible semver crate versions
                 version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
                 checksum: Option::None,
                 dependencies: {
                     let result: Result<Vec<_>, _> = pkg.dependencies.iter().map(|i| {
-                        input.packages.get(*i).ok_or(cargo_lock::error::Error::new(
-                            cargo_lock::error::ErrorKind::Parse,
-                            &format!("There is no dependency with index {} in the input JSON", i))
+                        input.packages.get(*i).ok_or(cargo_lock::Error::Parse(
+                            format!("There is no dependency with index {} in the input JSON", i))
                         )?.try_into()
                     }).collect();
                     result?
@@ -370,12 +369,12 @@ impl TryFrom<&VersionInfo> for cargo_lock::lockfile::Lockfile {
                 source: None,
             })
         }
-        Ok(cargo_lock::lockfile::Lockfile {
-            version: cargo_lock::lockfile::version::ResolveVersion::V2,
+        Ok(cargo_lock::Lockfile {
+            version: cargo_lock::ResolveVersion::V2,
             packages: packages,
             root: None,
             metadata: std::collections::BTreeMap::new(),
-            patch: cargo_lock::patch::Patch { unused: Vec::new() },
+            patch: cargo_lock::Patch { unused: Vec::new() },
         })
     }
 }
@@ -399,6 +398,6 @@ mod tests {
     fn to_toml() {
         let metadata = load_own_metadata();
         let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
-        let _lockfile_struct: cargo_lock::lockfile::Lockfile = (&version_info_struct).try_into().unwrap();
+        let _lockfile_struct: cargo_lock::Lockfile = (&version_info_struct).try_into().unwrap();
     }
 }
