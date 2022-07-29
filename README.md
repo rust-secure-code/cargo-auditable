@@ -90,6 +90,11 @@ The data format is designed not to disrupt reproducible builds. It contains no t
 
 It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
 
+[syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
+When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
+
+[go-rustaudit](https://github.com/microsoft/go-rustaudit) is golang binary for parsing Rust audit information from binaries, used in syft.
+
 ### What is the data format, exactly?
 
 It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, [these Rust data structures](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/src/lib.rs#L14) map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in a linker section with a name that [varies by platform](https://github.com/Shnatsel/rust-audit/blob/master/auditable/src/lib.rs).
