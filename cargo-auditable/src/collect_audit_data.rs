@@ -17,7 +17,10 @@ fn choose_compression_level() -> u8 {
 }
 
 fn get_metadata() -> Metadata {
-    let metadata_command = MetadataCommand::new();
+    let mut metadata_command = MetadataCommand::new();
+    // this env var will be set by Cargo
+    let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
+    metadata_command.current_dir(manifest_dir);
     // TODO: parse rustc arguments to pass on features
     // let mut features = enabled_features();
     // if let Some(index) = features.iter().position(|x| x.as_str() == "default") {
