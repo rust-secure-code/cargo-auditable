@@ -9,14 +9,13 @@ use std::{process::Command, ffi::OsString};
 
 fn main() {
     // TODO: refactor cargo-subcommand to use os_args and OsStr types. Paths can be non-UTF-8 on most platforms.
-    // TODO: fix https://github.com/dvc94ch/cargo-subcommand/issues/9, it's a release blocker
+    // (or maybe not in case it turns out that cargo-metadata breaks on those anyway)
     let cmd = Subcommand::new(std::env::args(), "auditable", |_, _| Ok(false)).unwrap();
-    //println!("{:#?}", cmd);
 
     // Get the audit data to embed
     let contents: Vec<u8> = collect_audit_data::compressed_dependency_list(&cmd);
 
-    // TODO: run the code from `auditable-inject` to write the metadata to an object file
+    // write the audit info to an object file
     let target_triple = cmd.target().unwrap_or(cmd.host_triple());
     let target_info = target_info::rustc_target_info(&target_triple);
     let binfile = object_file::create_metadata_file(
@@ -28,7 +27,7 @@ fn main() {
     // TODO: proper path
     std::fs::write("audit_data.o", binfile).expect("Unable to write output file");
 
-    // TODO: set the RUSTFLAGS environment variable and call Cargo with all the Cargo args
+    // set the RUSTFLAGS environment variable to inject our object and call Cargo with all the Cargo args
     let mut command = cargo_command(&cmd);
     command.env("RUSTFLAGS", rustflags_with_audit_object());
     let results = command.status().expect("Failed to invoke cargo! Make sure it's in your $PATH");
