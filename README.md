@@ -103,7 +103,7 @@ It is not yet stabilized, so we do not have extensive docs or a JSON schema. How
 
 Yes. The data format is designed for interoperability with alternative implementations. You can also use pre-existing platform-specific tools or libraries for data extraction. E.g. on Linux:
 ```bash
-objcopy -O binary --only-section=.rust-deps-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
+objcopy -O binary --only-section=.dep-v0 target/release/hello-auditable /dev/stdout | pigz -zd -
 ```
 However, [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the `auditable-extract` crate or the `rust-audit-info` command-line tool if possible - they are written in 100% safe Rust, so they will not have such vulnerabilities.
 
