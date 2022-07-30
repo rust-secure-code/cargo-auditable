@@ -17,7 +17,7 @@ fn main() {
 }
 
 fn do_work() -> Result<(), Box<dyn Error>> {
-    // TODO: use pico-args
+    // TODO: use bpaf or some such
     let input = std::env::args().nth(1)
         .ok_or("Usage: rust-audit-info FILE")?;
 
