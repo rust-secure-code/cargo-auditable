@@ -11,5 +11,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-auditable-extract = {path = "../auditable-extract"}
+auditable-extract = {version = "0.2.0-alpha.1", path = "../auditable-extract"}
 miniz_oxide = "0.5.3"
