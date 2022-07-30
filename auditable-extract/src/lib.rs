@@ -46,23 +46,23 @@ pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<&'a [u8], Error> {
     match binfarce::detect_format(data) {
         Format::Elf32{byte_order} => {
             let section = binfarce::elf32::parse(data, byte_order)?
-                .section_with_name(".rust-deps-v0")?.ok_or(Error::NoAuditData)?;
+                .section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::Elf64{byte_order} => {
             let section = binfarce::elf64::parse(data, byte_order)?
-                .section_with_name(".rust-deps-v0")?.ok_or(Error::NoAuditData)?;
+                .section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::Macho => {
             let parsed = binfarce::macho::parse(data)?;
-            let section = parsed.section_with_name("__TEXT", "rust-deps-v0")?;
+            let section = parsed.section_with_name("__TEXT", ".dep-v0")?;
             let section = section.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
         Format::PE => {
             let parsed = binfarce::pe::parse(data)?;
-            let section = parsed.section_with_name("rdep-v0")?.ok_or(Error::NoAuditData)?;
+            let section = parsed.section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
         _ => Err(Error::NotAnExecutable)
