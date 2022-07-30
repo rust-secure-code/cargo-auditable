@@ -11,7 +11,6 @@ categories = ["command-line-utilities", "encoding"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cargo-subcommand = "0.5.0"
 object = {version = "0.28.1", default-features = false, features = ["write"]}
 auditable-serde = {version = "0.2.0", path = "../auditable-serde", features = ["from_metadata"]}
 miniz_oxide = {version = "0.5.0"}
