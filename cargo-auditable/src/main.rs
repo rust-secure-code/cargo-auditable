@@ -44,6 +44,12 @@ fn cargo_command(cargo_auditable_args: &Subcommand) -> Command {
     for arg in cargo_auditable_args.args() {
         command.arg(arg);
     }
+    // Work around https://github.com/rust-lang/cargo/issues/4423 by explicitly passing the host platform if not already specified.
+    // Otherwise proc macros will fail to build. Sadly this changes the output directory, which is one hell of a footgun!
+    // TODO: either prevent the change to the output dir, or make it so different and obvious that it's not confusing anymore.
+    if cargo_auditable_args.target().is_none() {
+        command.arg(format!("--target={}", cargo_auditable_args.host_triple()));
+    }
     command
 }
 
