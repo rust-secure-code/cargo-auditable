@@ -22,6 +22,20 @@ pub struct RustcArgs {
     pub target: Option<String>,
 }
 
+impl RustcArgs {
+    pub fn enabled_features(&self) -> Vec<&str> {
+        let mut result = Vec::new();
+        for item in &self.cfg {
+            if item.starts_with("feature=\"") {
+                // feature names are assumed to not contain escaped quotes
+                // TODO: check if that holds
+                result.push(item.split('"').nth(1).unwrap());
+            }
+        }
+        result
+    }
+}
+
 pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
     let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
     let mut parser = pico_args::Arguments::from_vec(raw_args);

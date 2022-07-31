@@ -16,7 +16,7 @@ pub fn main() {
         // TODO: check if crates that are both rlib and bin actually work
         if args.crate_types.contains(&"bin".to_owned()) || args.crate_types.contains(&"cdylib".to_owned()) {
             // Get the audit data to embed
-            let contents: Vec<u8> = collect_audit_data::compressed_dependency_list();
+            let contents: Vec<u8> = collect_audit_data::compressed_dependency_list(&args);
             // write the audit info to an object file
             let target_triple = args.target.unwrap_or(rustc_host_target_triple());
             let target_info = target_info::rustc_target_info(&target_triple);
