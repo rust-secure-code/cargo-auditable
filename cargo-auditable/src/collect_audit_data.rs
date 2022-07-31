@@ -9,13 +9,9 @@ use crate::rustc_arguments::RustcArgs;
 pub fn compressed_dependency_list(args: &RustcArgs) -> Vec<u8> {
     let version_info = VersionInfo::try_from(&get_metadata(args)).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
-    let compressed_json = compress_to_vec_zlib(json.as_bytes(), choose_compression_level());
+    // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
+    let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
     compressed_json
-}
-
-fn choose_compression_level() -> u8 {
-    // TODO: check if optimizations are enabled by parsing rustc arguments
-    7
 }
 
 fn get_metadata(args: &RustcArgs) -> Metadata {
