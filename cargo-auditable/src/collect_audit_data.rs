@@ -26,11 +26,11 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
     metadata_command.current_dir(manifest_dir);
 
-    // remove RUSTC_WRAPPER so that we don't recurse back into our own rustc wrapper infinitely
+    // remove RUSTC_WORKSPACE_WRAPPER so that we don't recurse back into our own rustc wrapper infinitely
     // Unfortunately, the cargo_metadata crate we use here doesn't allow setting env vars or using a custom command,
     // so we have to clear the env var from our very own process, which the metadata command will then inherit.
     // This is mindly horrifying because it's a global effect on our current process and also isn't thread-safe
-    std::env::remove_var("RUSTC_WRAPPER");
+    std::env::remove_var("RUSTC_WORKSPACE_WRAPPER");
 
     // Pass the features that are actually enabled for this crate to cargo-metadata
     let mut features = args.enabled_features();

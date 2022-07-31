@@ -4,10 +4,13 @@ pub fn main() {
     // set the RUSTFLAGS environment variable to inject our object and call Cargo with all the Cargo args
     let mut command = cargo_command();
     // Set the environment variable to use this binary as a rustc wrapper, that's when we do the real work
+    // It's important that we set RUSTC_WORKSPACE_WRAPPER and not RUSTC_WRAPPER because only the former invalidates cache.
+    // If we use RUSTC_WRAPPER, running `cargo auditable` will not trigger a rebuild.
+    // The WORKSPACE part is a bit of a misnomer: it will be run for a local crate even if there's just one, not a workspace.
     // TODO: technically argv[0] is a convention, a not certainty.
-    // But it's probably not a code execution vulnerability since whoever sets this could set RUSTC_WRAPPER themselves?
+    // But it's probably not a code execution vulnerability since whoever sets this could set RUSTC_WORKSPACE_WRAPPER themselves?
     let path_to_this_binary = std::env::args_os().next().unwrap();
-    command.env("RUSTC_WRAPPER", path_to_this_binary);
+    command.env("RUSTC_WORKSPACE_WRAPPER", path_to_this_binary);
     let results = command.status().expect("Failed to invoke cargo! Make sure it's in your $PATH");
     std::process::exit(results.code().unwrap());
 }
