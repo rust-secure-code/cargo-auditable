@@ -28,6 +28,9 @@ pub fn main() {
         std::fs::write("audit_data.o", binfile).expect("Unable to write output file");
 
         // Modify the rustc command
+        // TODO: weirdly this breaks when I define a custom linker in my global Cargo config,
+        // but setting RUSTFLAGS with these exact options and a custom linker worked fine.
+        // WTF?
         command.arg("-Clink-arg=audit_data.o");
         command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
     }
