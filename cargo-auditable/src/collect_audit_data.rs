@@ -36,8 +36,11 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
     metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
 
-    // Get the underlying std::process::Command and re-implement MetadataCommandd::exec, to clear
-    // RUSTC_WRAPPER in the child process to avoid recursion
+    // Get the underlying std::process::Command and re-implement MetadataCommandd::exec,
+    // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
+    // The alternative would be modifying the environment of our own process,
+    // which is sketchy and discouraged on POSIX because it's not thread-safe:
+    // https://doc.rust-lang.org/stable/std/env/fn.remove_var.html
     let mut metadata_command = metadata_command.cargo_command();
     metadata_command.env_remove("RUSTC_WORKSPACE_WRAPPER");
     let output = metadata_command.output().unwrap();
