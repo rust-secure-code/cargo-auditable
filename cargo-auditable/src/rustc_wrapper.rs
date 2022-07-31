@@ -1,6 +1,6 @@
 use std::{process::Command, env};
 
-use crate::{collect_audit_data, target_info, object_file};
+use crate::{collect_audit_data, target_info, object_file, rustc_arguments};
 
 use std::io::BufRead;
 
@@ -9,30 +9,34 @@ pub fn main() {
 
     // if this is a primary package in our workspace, inject the audit data
     if let Some(_) = env::var_os("CARGO_PRIMARY_PACKAGE") {
-        // Get the audit data to embed
-        let contents: Vec<u8> = collect_audit_data::compressed_dependency_list();
+        let args = rustc_arguments::parse_args().unwrap();
 
-        // TODO: parse the rust args to determine the crate type, and only inject audit data into bin and uuuh dylib?
+        // Only inject arguments into crate types 'bin' and 'cdylib'
+        // What if there are multiple types, you might ask? I have no idea!
+        // TODO: check if crates that are both rlib and bin actually work
+        if args.crate_types.contains(&"bin".to_owned()) || args.crate_types.contains(&"cdylib".to_owned()) {
+            // Get the audit data to embed
+            let contents: Vec<u8> = collect_audit_data::compressed_dependency_list();
+            // write the audit info to an object file
+            let target_triple = args.target.unwrap_or(rustc_host_target_triple());
+            let target_info = target_info::rustc_target_info(&target_triple);
+            let binfile = object_file::create_metadata_file(
+                &target_info,
+                &target_triple,
+                &contents,
+                "AUDITABLE_VERSION_INFO", // TODO: make a constant and version it?
+            );
+            // Place the audit data in the output dir.
+            // We can place it anywhere really, the only concern is clutter and name collisions,
+            // and the target dir is locked so we're probably good
+            let filename = format!("{}_audit_data.o", args.crate_name);
+            let path = args.out_dir.clone().join(filename);
+            std::fs::write(path, binfile).expect("Unable to write output file");
 
-        // write the audit info to an object file
-        // TODO: parse rustc arguments to detemine the target passed when cross-compiling
-        let target_triple = rustc_host_target_triple();
-        let target_info = target_info::rustc_target_info(&target_triple);
-        let binfile = object_file::create_metadata_file(
-            &target_info,
-            &target_triple,
-            &contents,
-            "AUDITABLE_VERSION_INFO", // TODO: make a constant and version it?
-        );
-        // TODO: proper path
-        std::fs::write("audit_data.o", binfile).expect("Unable to write output file");
-
-        // Modify the rustc command
-        // TODO: weirdly this breaks when I define a custom linker in my global Cargo config,
-        // but setting RUSTFLAGS with these exact options and a custom linker worked fine.
-        // WTF?
-        command.arg("-Clink-arg=audit_data.o");
-        command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
+            // Modify the rustc command
+            command.arg("-Clink-arg=audit_data.o");
+            command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
+        }
     }
 
     // Invoke rustc

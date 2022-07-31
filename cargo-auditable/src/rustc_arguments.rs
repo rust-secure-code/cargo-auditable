@@ -15,11 +15,11 @@ use pico_args;
 
 /// Includes only the rustc arguments we care about
 pub struct RustcArgs {
-    crate_name: String,
-    crate_types: Vec<String>,
-    cfg: Vec<String>,
-    out_dir: PathBuf,
-    target: String,
+    pub crate_name: String,
+    pub crate_types: Vec<String>,
+    pub cfg: Vec<String>,
+    pub out_dir: PathBuf,
+    pub target: Option<String>,
 }
 
 pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
@@ -31,6 +31,6 @@ pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
         crate_types: parser.values_from_str("--crate-type")?,
         cfg: parser.values_from_str("--cfg")?,
         out_dir: parser.value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| Ok(PathBuf::from(s)))?,
-        target: parser.value_from_str("--target")?,
+        target: parser.opt_value_from_str("--target")?,
     })
 }
