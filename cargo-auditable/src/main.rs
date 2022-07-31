@@ -5,7 +5,7 @@ mod target_info;
 mod collect_audit_data;
 mod cargo_auditable;
 mod rustc_wrapper;
-mod rustc_argument_parser;
+mod rustc_arguments;
 
 use std::process::exit;
 
