@@ -1,4 +1,4 @@
-use std::{process::Command, env};
+use std::{process::Command, env, ffi::OsString};
 
 use crate::{collect_audit_data, target_info, object_file, rustc_arguments};
 
@@ -31,10 +31,13 @@ pub fn main() {
             // and the target dir is locked so we're probably good
             let filename = format!("{}_audit_data.o", args.crate_name);
             let path = args.out_dir.clone().join(filename);
-            std::fs::write(path, binfile).expect("Unable to write output file");
+            std::fs::write(&path, binfile).expect("Unable to write output file");
 
-            // Modify the rustc command
-            command.arg("-Clink-arg=audit_data.o");
+            // Modify the rustc command to link the object file with audit data
+            let mut linker_command = OsString::from("-Clink-arg=");
+            linker_command.push(&path);
+            command.arg(linker_command);
+            // Prevent the symbol from being removed as unused by the linker
             command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
         }
     }
