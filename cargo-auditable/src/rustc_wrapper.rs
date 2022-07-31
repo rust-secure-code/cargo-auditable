@@ -39,8 +39,18 @@ pub fn main() {
         let mut linker_command = OsString::from("-Clink-arg=");
         linker_command.push(&path);
         command.arg(linker_command);
-        // Prevent the symbol from being removed as unused by the linker
-        command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
+        // Prevent the symbol from being removed as unused by the linker. --require-defined is
+        // stronger than --undefined, in that both attempt to include a symbol in the output
+        // but the former fails if the symbol is undefined. lld doesn't support --require-defined
+        // though, so attempt to use --undefined if that's being used.
+        if command
+            .get_args()
+            .any(|arg| arg.to_string_lossy().ends_with("-fuse-ld=lld"))
+        {
+            command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+        } else {
+            command.arg("-Clink-arg=-Wl,--require-defined=AUDITABLE_VERSION_INFO");
+        }
     }
 
     // Invoke rustc
