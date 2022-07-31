@@ -72,6 +72,8 @@ Now you can `cargo build` and the dependency data will be embedded in the final 
 
 See the [auditable "Hello, world!"](https://github.com/Shnatsel/rust-audit/tree/master/hello-auditable) project for an example of how it all fits together.
 
+We're experimenting with more convenient data injection using a cargo subcommand, `cargo auditable`, but it's not yet ready for production use.
+
 ## FAQ
 
 ### Doesn't this bloat my binary?
@@ -88,12 +90,12 @@ The data format is designed not to disrupt reproducible builds. It contains no t
 
 ### Is there any tooling to consume this data?
 
-It is interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
-
 [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 
 [go-rustaudit](https://github.com/microsoft/go-rustaudit) is golang binary for parsing Rust audit information from binaries, used in syft.
+
+It is also interoperable with existing tooling that consumes Cargo.lock via the JSON-to-TOML convertor. You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
 
 ### What is the data format, exactly?
 
@@ -115,9 +117,7 @@ All URLs and file paths are redacted, but the crate names, feature names and ver
 
 ### What about recording the compiler version?
 
-It's already there. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in safe Rust.
-
-In theory we could duplicate it in the JSON for ease of access, but this can be added later in a backwards-compatible fashion.
+It's already there, in the `.rustc` section. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in safe Rust.
 
 ### What about keeping track of versions of statically linked C libraries?
 
@@ -125,7 +125,7 @@ Good question. I don't think they are exposed in any reasonable way right now. W
 
 ### What is blocking uplifting this into Cargo?
 
+ 1. Fully switching to the `cargo auditable` subcommand to simplify data injection
  1. Getting some real-world experience with this before committing to a stable data format
- 1. https://github.com/rust-lang/rust/issues/47384
 
 Help on these points would be greatly appreciated.
