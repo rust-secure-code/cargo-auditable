@@ -8,71 +8,18 @@ The implementation has gotten to the point where it's time to get some real-worl
 
 The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate. RFC for a proper implementation in Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
-## Demo
+## Make your crate auditable
 
-Clone this repository:
 ```bash
-git clone https://github.com/Shnatsel/rust-audit.git
-cd rust-audit
+# Install the tooling
+cargo install cargo-auditable rust-audit-info
+# Open your Rust project
+cd your_project
+# Build your project with dependency lists embedded in the binaries
+cargo auditable build --release
+# Recover the dependency info from the compiled binary
+rust-audit-info target/release/your-project
 ```
-Compile the tooling and a sample binary with dependency tree embedded:
-```bash
-cargo build --release
-```
-Recover the dependency tree we've just embedded.
-```bash
-target/release/rust-audit-info target/release/hello-auditable
-```
-You can also audit the recovered dependency tree for known vulnerabilities using `cargo audit`:
-```bash
-(cd auditable-serde && cargo build --release --features "toml" --example json-to-toml)
-cargo install cargo-audit
-target/release/rust-audit-info target/release/hello-auditable > dependency-tree.json
-target/release/examples/json-to-toml dependency-tree.json | cargo audit -f -
-```
-
-The `auditable-extract` crate allows your own tools to easily consume this info.
-
-## How to make your crate auditable
-
-Add the following to your `Cargo.toml`:
-
-```toml
-build = "build.rs"
-
-[dependencies]
-auditable = "0.1"
-
-[build-dependencies]
-auditable-build = "0.1"
-```
-
-Create a `build.rs` file next to `Cargo.toml` with the following contents:
-```rust
-fn main() {
-    auditable_build::collect_dependency_list();
-}
-```
-
-Add the following to the beginning your `main.rs` (or any other file):
-
-```rust
-static COMPRESSED_DEPENDENCY_LIST: &[u8] = auditable::inject_dependency_list!();
-```
-
-Put the following in some reachable location in the code, e.g. in `fn main()`:
-```rust
-    // Actually use the data to work around a bug in rustc:
-    // https://github.com/rust-lang/rust/issues/47384
-    // On nightly you can use `test::black_box` instead of `println!`
-    println!("{}", COMPRESSED_DEPENDENCY_LIST[0]);
-```
-
-Now you can `cargo build` and the dependency data will be embedded in the final binary automatically. You can verify that the data is actually embedded using the extraction steps from [the demo](#Demo).
-
-See the [auditable "Hello, world!"](https://github.com/Shnatsel/rust-audit/tree/master/hello-auditable) project for an example of how it all fits together.
-
-We're experimenting with more convenient data injection using a cargo subcommand, `cargo auditable`, but it's not yet ready for production use.
 
 ## FAQ
 
