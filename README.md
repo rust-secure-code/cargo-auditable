@@ -72,7 +72,6 @@ Good question. I don't think they are exposed in any reasonable way right now. W
 
 ### What is blocking uplifting this into Cargo?
 
- 1. Fully switching to the `cargo auditable` subcommand to simplify data injection
- 1. Getting some real-world experience with this before committing to a stable data format
+We need to get some real-world experience with this before committing to a stable data format.
 
-Help on these points would be greatly appreciated.
+If you're looking to use it, we'd be happy to hear about your requirements so that we can accommodate them!
