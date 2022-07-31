@@ -1,7 +1,7 @@
-use std::convert::TryFrom;
 use auditable_serde::VersionInfo;
-use miniz_oxide::deflate::compress_to_vec_zlib;
 use cargo_metadata::{Metadata, MetadataCommand};
+use miniz_oxide::deflate::compress_to_vec_zlib;
+use std::{convert::TryFrom, str::from_utf8};
 
 use crate::rustc_arguments::RustcArgs;
 
@@ -26,12 +26,6 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
     metadata_command.current_dir(manifest_dir);
 
-    // remove RUSTC_WORKSPACE_WRAPPER so that we don't recurse back into our own rustc wrapper infinitely
-    // Unfortunately, the cargo_metadata crate we use here doesn't allow setting env vars or using a custom command,
-    // so we have to clear the env var from our very own process, which the metadata command will then inherit.
-    // This is mindly horrifying because it's a global effect on our current process and also isn't thread-safe
-    std::env::remove_var("RUSTC_WORKSPACE_WRAPPER");
-
     // Pass the features that are actually enabled for this crate to cargo-metadata
     let mut features = args.enabled_features();
     if let Some(index) = features.iter().position(|x| x == &"default") {
@@ -41,5 +35,22 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     }
     let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
     metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
-    metadata_command.exec().unwrap()
+
+    // Get the underlying std::process::Command and re-implement MetadataCommandd::exec, to clear
+    // RUSTC_WRAPPER in the child process to avoid recursion
+    let mut metadata_command = metadata_command.cargo_command();
+    metadata_command.env_remove("RUSTC_WORKSPACE_WRAPPER");
+    let output = metadata_command.output().unwrap();
+    if !output.status.success() {
+        panic!(
+            "cargo metadata failure: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let stdout = from_utf8(&output.stdout)
+        .expect("cargo metadata output not utf8")
+        .lines()
+        .find(|line| line.starts_with('{'))
+        .expect("cargo metadata output not json");
+    MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output")
 }
