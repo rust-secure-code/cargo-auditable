@@ -3,9 +3,9 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     fs::File,
-    io::Read,
+    io::{Read, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::{Command, Stdio, Output},
     str::FromStr,
 };
 
@@ -39,7 +39,7 @@ where
         .output()
         .unwrap();
 
-    assert!(output.status.success());
+        ensure_build_succeeded(&output);
 
     let mut bins = HashMap::new();
     std::str::from_utf8(&output.stdout)
@@ -84,6 +84,15 @@ where
             bins.entry(package).or_insert(Vec::new()).push(binary);
         });
     bins
+}
+
+fn ensure_build_succeeded(output: &Output) {
+    if ! output.status.success() {
+        let stderr = std::io::stderr();
+        let mut handle = stderr.lock();
+        handle.write_all(&output.stderr).unwrap();
+        panic!("Build with `cargo auditable` failed");
+    }
 }
 
 fn get_dependency_info(binary: &Utf8Path) -> VersionInfo {
