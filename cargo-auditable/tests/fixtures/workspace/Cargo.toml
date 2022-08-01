@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    # lib crate, no cdylib or bin target
+    "foo",
+    # dependes on foo, has bin target 
+    "bar",
+    # depends on foo and bar optionally, just foo by default
+    # produces bin and cdylib
+    "baz",
+]
