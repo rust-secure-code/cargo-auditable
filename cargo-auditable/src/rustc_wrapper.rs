@@ -26,7 +26,7 @@ pub fn main() {
                 &target_info,
                 &target_triple,
                 &contents,
-                "AUDITABLE_VERSION_INFO", // TODO: make a constant and version it?
+                "AUDITABLE_VERSION_INFO",
             );
             // Place the audit data in the output dir.
             // We can place it anywhere really, the only concern is clutter and name collisions,
