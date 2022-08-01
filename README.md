@@ -1,4 +1,4 @@
-## rust-audit
+## cargo-auditable
 
 Know the exact crate versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities in production, at scale, with zero bookkeeping.
 
