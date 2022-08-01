@@ -25,7 +25,7 @@ rust-audit-info target/release/your-project
 
 ### Doesn't this bloat my binary?
 
-No. The embedded dependency list uses under 5kB even on large dependency tress with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
+No. The embedded dependency list uses under 5kB even on large dependency trees with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
 
 ### What about embedded platforms?
 
