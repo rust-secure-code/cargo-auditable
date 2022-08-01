@@ -25,7 +25,7 @@ rust-audit-info target/release/your-project
 
 ### Doesn't this bloat my binary?
 
-Not really. A "Hello World" on x86 Linux compiles into a ~1Mb file in the best case (recent Rust without jemalloc, LTO enabled). Its dependency tree even with a couple of dependencies is < 1Kb, that's under 1/1000 of the size. We also compress it with zlib to drive the size down further. Since the size of dependency tree info grows linearly with the number of dependencies, it will keep being negligible.
+No. The embedded dependency list uses under 5kB even on large dependency tress with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
 
 ### What about embedded platforms?
 
@@ -58,17 +58,17 @@ However, [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.co
 
 ### Does this disclose any sensitive information?
 
-**TL;DR:** The list of enabled features is the only newly disclosed information.
+The list of enabled features is the only newly disclosed information.
 
 All URLs and file paths are redacted, but the crate names, feature names and versions are recorded as-is. At present panic messages already disclose all this info and more, except feature names. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
 
 ### What about recording the compiler version?
 
-It's already there, in the `.rustc` section. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in safe Rust.
+It's already there, in the `.rustc` section. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in a memory-safe language.
 
 ### What about keeping track of versions of statically linked C libraries?
 
-Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way later.
+Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way.
 
 ### What is blocking uplifting this into Cargo?
 
