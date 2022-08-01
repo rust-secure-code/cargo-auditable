@@ -220,3 +220,28 @@ fn test_self_hosting() {
         .iter()
         .any(|p| p.name == "rust-audit-info"));
 }
+
+/// This exercises a real-world project with complications such as proc macros
+#[test]
+fn test_lto() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/workspace/lto_binary_crate/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--release"]);
+    eprintln!("LTO binary map: {:?}", bins);
+
+    // lto_binary_crate should have two dependencies, library_crate and itself
+    let lto_binary_crate_bin = &bins.get("lto_binary_crate").unwrap()[0];
+    let dep_info = get_dependency_info(lto_binary_crate_bin);
+    eprintln!(
+        "{} dependency info: {:?}",
+        lto_binary_crate_bin, dep_info
+    );
+    assert!(dep_info.packages.len() == 2);
+    assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "lto_binary_crate"));
+}
