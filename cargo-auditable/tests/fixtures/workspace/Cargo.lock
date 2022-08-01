@@ -20,10 +20,3 @@ dependencies = [
 [[package]]
 name = "library_crate"
 version = "0.1.0"
-
-[[package]]
-name = "lto_binary_crate"
-version = "0.1.0"
-dependencies = [
- "library_crate",
-]

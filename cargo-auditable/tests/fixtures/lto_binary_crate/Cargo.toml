@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-library_crate = {path = "../library_crate"}
+
+[workspace]
 
 [profile.release]
 lto=true
