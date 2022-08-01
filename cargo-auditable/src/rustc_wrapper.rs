@@ -42,7 +42,7 @@ pub fn main() {
             command.arg(linker_command);
             // Prevent the symbol from being removed as unused by the linker
             if target_triple.contains("-apple-") {
-                command.arg("-Clink-arg=-Wl,-u,AUDITABLE_VERSION_INFO");
+                command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
             } else {
                 command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
             }
