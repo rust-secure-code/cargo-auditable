@@ -105,7 +105,7 @@ fn test_cargo_auditable_workspaces() {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/workspace/Cargo.toml");
     // Run in workspace root with default features
     let bins = run_cargo_auditable(&workspace_cargo_toml, &[]);
-    eprintln!("Binary map: {:?}", bins);
+    eprintln!("Test fixture binary map: {:?}", bins);
     // No binaries for library_crate
     assert!(bins.get("library_crate").is_none());
 
@@ -187,4 +187,25 @@ fn test_cargo_auditable_workspaces() {
         .packages
         .iter()
         .any(|p| p.name == "crate_with_features"));
+}
+
+/// This exercises a real-world project with complications such as proc macros
+#[test]
+fn test_self_hosting() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../rust-audit-info/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &[]);
+    eprintln!("Self-hosting binary map: {:?}", bins);
+
+    // verify that the dependency info is present at all
+    let bin = &bins.get("rust-audit-info").unwrap()[0];
+    let dep_info = get_dependency_info(bin);
+    eprintln!("{} dependency info: {:?}", bin, dep_info);
+    assert!(dep_info.packages.len() > 1);
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "rust-audit-info"));
 }
