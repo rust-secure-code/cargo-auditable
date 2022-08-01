@@ -1,0 +1,12 @@
+[package]
+name = "lto_binary_crate"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+library_crate = {path = "../library_crate"}
+
+[profile.release]
+lto=true

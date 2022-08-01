@@ -8,4 +8,6 @@ members = [
     # depends on library_crate and binary_and_cdylib_crate optionally, just library_crate by default
     # produces bin and cdylib
     "crate_with_features",
+    # # dependes on library_crate, has bin target,.is built with LTO in release mode
+    "lto_binary_crate"
 ]
