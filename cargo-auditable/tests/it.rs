@@ -5,7 +5,7 @@ use std::{
     fs::File,
     io::{Read, Write},
     path::PathBuf,
-    process::{Command, Stdio, Output},
+    process::{Command, Output, Stdio},
     str::FromStr,
 };
 
@@ -39,7 +39,7 @@ where
         .output()
         .unwrap();
 
-        ensure_build_succeeded(&output);
+    ensure_build_succeeded(&output);
 
     let mut bins = HashMap::new();
     std::str::from_utf8(&output.stdout)
@@ -87,7 +87,7 @@ where
 }
 
 fn ensure_build_succeeded(output: &Output) {
-    if ! output.status.success() {
+    if !output.status.success() {
         let stderr = std::io::stderr();
         let mut handle = stderr.lock();
         handle.write_all(&output.stdout).unwrap();
@@ -225,8 +225,8 @@ fn test_self_hosting() {
 #[test]
 fn test_lto() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
-    let workspace_cargo_toml =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/lto_binary_crate/Cargo.toml");
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/lto_binary_crate/Cargo.toml");
     // Run in workspace root with default features
     let bins = run_cargo_auditable(&workspace_cargo_toml, &["--release"]);
     eprintln!("LTO binary map: {:?}", bins);
@@ -234,10 +234,7 @@ fn test_lto() {
     // lto_binary_crate should only depend on itself
     let lto_binary_crate_bin = &bins.get("lto_binary_crate").unwrap()[0];
     let dep_info = get_dependency_info(lto_binary_crate_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        lto_binary_crate_bin, dep_info
-    );
+    eprintln!("{} dependency info: {:?}", lto_binary_crate_bin, dep_info);
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info
         .packages
