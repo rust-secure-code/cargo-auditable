@@ -27,8 +27,8 @@ impl RustcArgs {
         let mut result = Vec::new();
         for item in &self.cfg {
             if item.starts_with("feature=\"") {
-                // feature names are assumed to not contain escaped quotes
-                // TODO: check if that holds
+                // feature names cannot contain quotes according to the documentation:
+                // https://doc.rust-lang.org/cargo/reference/features.html#the-features-section
                 result.push(item.split('"').nth(1).unwrap());
             }
         }
