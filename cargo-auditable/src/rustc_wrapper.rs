@@ -7,9 +7,8 @@ use std::io::BufRead;
 pub fn main() {
     let mut command = rustc_command();
 
-    // if this is a primary package in our workspace, inject the audit data
-    // TODO: this may interact strangely with caching, and result in audit data not being injected sometimes.
-    // We need to investigate if that's an issue.
+    // Binaries and C dynamic libraries are not built as non-primary packages,
+    // so this should not cause issues with Cargo caches.
     if let Some(_) = env::var_os("CARGO_PRIMARY_PACKAGE") {
         let args = rustc_arguments::parse_args().unwrap();
 
