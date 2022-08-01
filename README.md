@@ -6,7 +6,7 @@ This works by embedding data about the dependency tree in JSON format into a ded
 
 The implementation has gotten to the point where it's time to get some real-world experience with it, but the **data format is not yet stable.** Linux, Windows and Mac OS are currently supported.
 
-The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external subcommand. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
+The end goal is to get Cargo itself to encode this information in binaries. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
 ## Usage
 
