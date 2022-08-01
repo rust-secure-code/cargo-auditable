@@ -8,7 +8,7 @@ The implementation has gotten to the point where it's time to get some real-worl
 
 The end goal is to get Cargo itself to encode this information in binaries instead of relying on an external crate. RFC for a proper implementation in Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
-## Make your crate auditable
+## Usage
 
 ```bash
 # Install the tooling
