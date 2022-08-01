@@ -90,7 +90,9 @@ fn ensure_build_succeeded(output: &Output) {
     if ! output.status.success() {
         let stderr = std::io::stderr();
         let mut handle = stderr.lock();
+        handle.write_all(&output.stdout).unwrap();
         handle.write_all(&output.stderr).unwrap();
+        handle.flush().unwrap();
         panic!("Build with `cargo auditable` failed");
     }
 }
