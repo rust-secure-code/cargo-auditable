@@ -1,6 +1,6 @@
 //! Parses rustc arguments to extract the info not provided via environment variables.
 
-use std::{path::PathBuf, ffi::OsString};
+use std::{ffi::OsString, path::PathBuf};
 
 use pico_args;
 
@@ -10,7 +10,7 @@ use pico_args;
 // We also intentionally do very little validation, to avoid rejecting new configurations
 // that may be added to rustc in the future.
 //
-// For reference, the rustc argument parsing code is at 
+// For reference, the rustc argument parsing code is at
 // https://github.com/rust-lang/rust/blob/26ecd44160f54395b3bd5558cc5352f49cb0a0ba/compiler/rustc_session/src/config.rs
 
 /// Includes only the rustc arguments we care about
@@ -44,7 +44,9 @@ pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
         crate_name: parser.value_from_str("--crate-name")?,
         crate_types: parser.values_from_str("--crate-type")?,
         cfg: parser.values_from_str("--cfg")?,
-        out_dir: parser.value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| Ok(PathBuf::from(s)))?,
+        out_dir: parser.value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| {
+            Ok(PathBuf::from(s))
+        })?,
         target: parser.opt_value_from_str("--target")?,
     })
 }

@@ -1,11 +1,11 @@
 #![forbid(unsafe_code)]
 
-mod object_file;
-mod target_info;
-mod collect_audit_data;
 mod cargo_auditable;
-mod rustc_wrapper;
+mod collect_audit_data;
+mod object_file;
 mod rustc_arguments;
+mod rustc_wrapper;
+mod target_info;
 
 use std::process::exit;
 

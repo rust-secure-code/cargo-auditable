@@ -1,4 +1,4 @@
-use std::{process::Command, env};
+use std::{env, process::Command};
 
 pub fn main() {
     // set the RUSTFLAGS environment variable to inject our object and call Cargo with all the Cargo args
@@ -11,7 +11,9 @@ pub fn main() {
     // But it's probably not a code execution vulnerability since whoever sets this could set RUSTC_WORKSPACE_WRAPPER themselves?
     let path_to_this_binary = std::env::args_os().next().unwrap();
     command.env("RUSTC_WORKSPACE_WRAPPER", path_to_this_binary);
-    let results = command.status().expect("Failed to invoke cargo! Make sure it's in your $PATH");
+    let results = command
+        .status()
+        .expect("Failed to invoke cargo! Make sure it's in your $PATH");
     std::process::exit(results.code().unwrap());
 }
 

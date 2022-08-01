@@ -1,6 +1,6 @@
-use std::{process::Command, env, ffi::OsString};
+use std::{env, ffi::OsString, process::Command};
 
-use crate::{collect_audit_data, target_info, object_file, rustc_arguments};
+use crate::{collect_audit_data, object_file, rustc_arguments, target_info};
 
 use std::io::BufRead;
 
@@ -16,7 +16,9 @@ pub fn main() {
         // Only inject arguments into crate types 'bin' and 'cdylib'
         // What if there are multiple types, you might ask? I have no idea!
         // TODO: check if crates that are both rlib and bin actually work
-        if args.crate_types.contains(&"bin".to_owned()) || args.crate_types.contains(&"cdylib".to_owned()) {
+        if args.crate_types.contains(&"bin".to_owned())
+            || args.crate_types.contains(&"cdylib".to_owned())
+        {
             // Get the audit data to embed
             let contents: Vec<u8> = collect_audit_data::compressed_dependency_list(&args);
             // write the audit info to an object file
@@ -45,7 +47,9 @@ pub fn main() {
     }
 
     // Invoke rustc
-    let results = command.status().expect("Failed to invoke rustc! Make sure it's in your $PATH");
+    let results = command
+        .status()
+        .expect("Failed to invoke rustc! Make sure it's in your $PATH");
     std::process::exit(results.code().unwrap());
 }
 
