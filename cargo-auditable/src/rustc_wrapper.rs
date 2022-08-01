@@ -64,7 +64,6 @@ fn rustc_command() -> Command {
 
 /// Returns the default target triple for the rustc we're running
 fn rustc_host_target_triple() -> String {
-    // TODO: does this still work when rustup is configured to cross-compile by default, e.g. linux-gnu to linux-musl?
     Command::new("rustc")
         .arg("-vV")
         .output()
