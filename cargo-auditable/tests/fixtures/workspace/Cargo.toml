@@ -7,5 +7,5 @@ members = [
     "binary_and_cdylib_crate",
     # depends on library_crate and binary_and_cdylib_crate optionally, just library_crate by default
     # produces bin and cdylib
-    "binary_and_cdylib_crate_with_features",
+    "crate_with_features",
 ]

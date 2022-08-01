@@ -123,11 +123,10 @@ fn test_cargo_auditable_workspaces() {
         .iter()
         .any(|p| p.name == "binary_and_cdylib_crate"));
 
-    // binary_and_cdylib_crate_with_features should create a binary and cdylib each with two dependencies, library_crate and binary_and_cdylib_crate_with_features,
-    let binary_and_cdylib_crate_with_features_bins =
-        &bins.get("binary_and_cdylib_crate_with_features").unwrap();
-    assert!(binary_and_cdylib_crate_with_features_bins.len() == 2);
-    let dep_info = get_dependency_info(&binary_and_cdylib_crate_with_features_bins[0]);
+    // crate_with_features should create a binary and cdylib each with two dependencies, library_crate and crate_with_features,
+    let crate_with_features_bins = &bins.get("crate_with_features").unwrap();
+    assert!(crate_with_features_bins.len() == 2);
+    let dep_info = get_dependency_info(&crate_with_features_bins[0]);
     eprintln!(
         "{} dependency info: {:?}",
         binary_and_cdylib_crate_bin, dep_info
@@ -137,9 +136,9 @@ fn test_cargo_auditable_workspaces() {
     assert!(dep_info
         .packages
         .iter()
-        .any(|p| p.name == "binary_and_cdylib_crate_with_features"));
+        .any(|p| p.name == "crate_with_features"));
 
-    let dep_info = get_dependency_info(&binary_and_cdylib_crate_with_features_bins[1]);
+    let dep_info = get_dependency_info(&crate_with_features_bins[1]);
     eprintln!(
         "{} dependency info: {:?}",
         binary_and_cdylib_crate_bin, dep_info
@@ -149,17 +148,16 @@ fn test_cargo_auditable_workspaces() {
     assert!(dep_info
         .packages
         .iter()
-        .any(|p| p.name == "binary_and_cdylib_crate_with_features"));
+        .any(|p| p.name == "crate_with_features"));
 
     // Run enabling binary_and_cdylib_crate feature
     let bins = run_cargo_auditable(
         &workspace_cargo_toml,
         &["--features", "binary_and_cdylib_crate"],
     );
-    // binary_and_cdylib_crate_with_features should now have three dependencies, library_crate binary_and_cdylib_crate and binary_and_cdylib_crate_with_features,
-    let binary_and_cdylib_crate_with_features_bin =
-        &bins.get("binary_and_cdylib_crate_with_features").unwrap()[0];
-    let dep_info = get_dependency_info(binary_and_cdylib_crate_with_features_bin);
+    // crate_with_features should now have three dependencies, library_crate binary_and_cdylib_crate and crate_with_features,
+    let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
+    let dep_info = get_dependency_info(crate_with_features_bin);
     eprintln!(
         "{} dependency info: {:?}",
         binary_and_cdylib_crate_bin, dep_info
@@ -169,7 +167,7 @@ fn test_cargo_auditable_workspaces() {
     assert!(dep_info
         .packages
         .iter()
-        .any(|p| p.name == "binary_and_cdylib_crate_with_features"));
+        .any(|p| p.name == "crate_with_features"));
     assert!(dep_info
         .packages
         .iter()
@@ -177,10 +175,9 @@ fn test_cargo_auditable_workspaces() {
 
     // Run without default features
     let bins = run_cargo_auditable(&workspace_cargo_toml, &["--no-default-features"]);
-    // binary_and_cdylib_crate_with_features should now only depend on binary_and_cdylib_crate_with_features
-    let binary_and_cdylib_crate_with_features_bin =
-        &bins.get("binary_and_cdylib_crate_with_features").unwrap()[0];
-    let dep_info = get_dependency_info(binary_and_cdylib_crate_with_features_bin);
+    // crate_with_features should now only depend on crate_with_features
+    let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
+    let dep_info = get_dependency_info(crate_with_features_bin);
     eprintln!(
         "{} dependency info: {:?}",
         binary_and_cdylib_crate_bin, dep_info
@@ -189,5 +186,5 @@ fn test_cargo_auditable_workspaces() {
     assert!(dep_info
         .packages
         .iter()
-        .any(|p| p.name == "binary_and_cdylib_crate_with_features"));
+        .any(|p| p.name == "crate_with_features"));
 }

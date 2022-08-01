@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "binary_and_cdylib_crate_with_features"
+name = "crate_with_features"
 version = "0.1.0"
 dependencies = [
  "binary_and_cdylib_crate",
