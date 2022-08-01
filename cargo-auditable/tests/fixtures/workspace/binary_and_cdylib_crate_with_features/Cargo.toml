@@ -1,0 +1,18 @@
+[package]
+name = "binary_and_cdylib_crate_with_features"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate_type = ["cdylib", "lib"]
+
+[dependencies]
+library_crate = {path = "../library_crate", optional = true}
+binary_and_cdylib_crate = {path = "../binary_and_cdylib_crate", optional = true}
+
+[features]
+default = ["library_crate"]
+library_crate = ["dep:library_crate"]
+binary_and_cdylib_crate = ["dep:binary_and_cdylib_crate"]
+

@@ -3,20 +3,20 @@
 version = 3
 
 [[package]]
-name = "bar"
+name = "binary_and_cdylib_crate"
 version = "0.1.0"
 dependencies = [
- "foo",
+ "library_crate",
 ]
 
 [[package]]
-name = "baz"
+name = "binary_and_cdylib_crate_with_features"
 version = "0.1.0"
 dependencies = [
- "bar",
- "foo",
+ "binary_and_cdylib_crate",
+ "library_crate",
 ]
 
 [[package]]
-name = "foo"
+name = "library_crate"
 version = "0.1.0"

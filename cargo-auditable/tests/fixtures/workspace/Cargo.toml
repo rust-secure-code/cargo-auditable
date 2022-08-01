@@ -2,10 +2,10 @@
 
 members = [
     # lib crate, no cdylib or bin target
-    "foo",
-    # dependes on foo, has bin target 
-    "bar",
-    # depends on foo and bar optionally, just foo by default
+    "library_crate",
+    # dependes on library_crate, has bin target 
+    "binary_and_cdylib_crate",
+    # depends on library_crate and binary_and_cdylib_crate optionally, just library_crate by default
     # produces bin and cdylib
-    "baz",
+    "binary_and_cdylib_crate_with_features",
 ]
