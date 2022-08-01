@@ -41,7 +41,9 @@ pub fn main() {
             linker_command.push(&path);
             command.arg(linker_command);
             // Prevent the symbol from being removed as unused by the linker
-            if !target_triple.contains("-apple-") { // Apple platforms don't support the flag
+            if target_triple.contains("-apple-") {
+                command.arg("-Clink-arg=-u AUDITABLE_VERSION_INFO");
+            } else {
                 command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
             }
         }
