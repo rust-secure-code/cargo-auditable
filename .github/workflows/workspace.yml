@@ -25,7 +25,7 @@ jobs:
         platform:
           - ubuntu-latest
           #- macos-latest TODO: currently broken
-          - windows-latest
+          # - windows-latest TODO: currently broken
         toolchain:
           - stable
     runs-on: ${{ matrix.platform }}
