@@ -118,16 +118,17 @@ pub struct Package {
     pub features: Vec<String>,
 }
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
-#[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DependencyKind {
-    build,
-    runtime,
+    #[serde(rename = "build")]
+    Build,
+    #[serde(rename = "runtime")]
+    Runtime,
 }
 
 impl Default for DependencyKind {
     fn default() -> Self {
-        DependencyKind::runtime
+        DependencyKind::Runtime
     }
 }
 
@@ -146,8 +147,8 @@ impl From<PrivateDepKind> for DependencyKind {
         match priv_kind {
             // TODO: use TryFrom? Not that anyone cares, this code is private
             PrivateDepKind::Development => panic!("Cannot convert development dependency to serializable format"),
-            PrivateDepKind::Build => DependencyKind::build,
-            PrivateDepKind::Runtime => DependencyKind::runtime,
+            PrivateDepKind::Build => DependencyKind::Build,
+            PrivateDepKind::Runtime => DependencyKind::Runtime,
         }
     }
 }
