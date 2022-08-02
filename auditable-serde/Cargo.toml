@@ -4,7 +4,7 @@ version = "0.3.0"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-secure-code/cargo-auditable"
-description = "Serialize/deserialize data encoded by `auditable` crate"
+description = "Serialize/deserialize data encoded by `cargo auditable`"
 categories = ["encoding"]
 edition = "2018"
 
