@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - `cargo auditable` now works via setting `RUSTC_WORKSPACE_WRAPPER` and acting as a workspace wrapper. This fixes workspace handling and numerous other issues.
  - On Apple platforms the audit data is now placed in the `__DATA` segment instead of `__TEXT` segment.
+ - `auditable-serde::DependencyKind` enum variants are now CamelCase
 
 ### Removed
  - Dropped support for the `auditable` crate and `build.rs`-based injection. Please use `cargo auditable` instead.
