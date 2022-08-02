@@ -9,7 +9,7 @@ pub fn main() {
     // The WORKSPACE part is a bit of a misnomer: it will be run for a local crate even if there's just one, not a workspace.
     // TODO: technically argv[0] is a convention, a not certainty.
     // But it's probably not a code execution vulnerability since whoever sets this could set RUSTC_WORKSPACE_WRAPPER themselves?
-    let path_to_this_binary = std::env::args_os().next().unwrap();
+    let path_to_this_binary = std::env::current_exe().unwrap();
     command.env("RUSTC_WORKSPACE_WRAPPER", path_to_this_binary);
     let results = command
         .status()
