@@ -145,7 +145,6 @@ enum PrivateDepKind {
 impl From<PrivateDepKind> for DependencyKind {
     fn from(priv_kind: PrivateDepKind) -> Self {
         match priv_kind {
-            // TODO: use TryFrom? Not that anyone cares, this code is private
             PrivateDepKind::Development => panic!("Cannot convert development dependency to serializable format"),
             PrivateDepKind::Build => DependencyKind::Build,
             PrivateDepKind::Runtime => DependencyKind::Runtime,
@@ -172,7 +171,7 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
             cargo_metadata::DependencyKind::Normal => PrivateDepKind::Runtime,
             cargo_metadata::DependencyKind::Development => PrivateDepKind::Development,
             cargo_metadata::DependencyKind::Build => PrivateDepKind::Build,
-            _ => panic!("Unknown dependency kind") // TODO: implement TryFrom instead?
+            _ => panic!("Unknown dependency kind")
         }
     }
 }
