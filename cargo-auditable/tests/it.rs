@@ -66,13 +66,12 @@ where
                     .iter()
                     .any(|kind| kind.as_str() == "cdylib")
                 {
-                    // Filter out rlibs, assume everything else is a cdylib as --bin artifacts
-                    // have a separate executable artifact message, and we don't use other types e.g
-                    // staticlib in the test fixtures
+                    // Detect .so (Linux) and .dylib files (Mac)
+                    // TODO: Windows cdylib detection
                     artifact
                         .filenames
                         .into_iter()
-                        .filter(|f| f.extension() != Some("rlib"))
+                        .filter(|f| f.extension() == Some("dylib") || f.extension() == Some("so"))
                         .for_each(|f| {
                             binaries.push((member.clone(), f));
                         });
