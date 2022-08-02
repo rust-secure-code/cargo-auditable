@@ -80,12 +80,12 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 /// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
 /// is possible via the `TryFrom` trait. This is the preferred way to construct this structure.
 /// An example demonstrating that can be found
-/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/from-metadata.rs).
+/// [here](https://github.com/rust-secure-code/cargo-auditable/blob/master/auditable-serde/examples/from-metadata.rs).
 ///
 /// If the `toml` feature is enabled, a conversion into the [`cargo_lock::Lockfile`](https://docs.rs/cargo-lock/)
 /// struct is possible via the `TryFrom` trait. This can be useful if you need to interoperate with tooling
 /// that consumes the `Cargo.lock` file format. An example demonstrating it can be found
-/// [here](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/examples/json-to-toml.rs).
+/// [here](https://github.com/rust-secure-code/cargo-auditable/blob/master/auditable-serde/examples/json-to-toml.rs).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
     pub packages: Vec<Package>,

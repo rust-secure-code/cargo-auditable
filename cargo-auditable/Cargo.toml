@@ -4,7 +4,7 @@ version = "0.3.0"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Shnatsel/rust-audit"
+repository = "https://github.com/rust-secure-code/cargo-auditable"
 description = "Make production Rust binaries auditable"
 categories = ["command-line-utilities", "encoding"]
 

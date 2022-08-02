@@ -46,7 +46,7 @@ It is also interoperable with existing tooling that consumes Cargo.lock via the 
 
 ### What is the data format, exactly?
 
-It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, [these Rust data structures](https://github.com/Shnatsel/rust-audit/blob/master/auditable-serde/src/lib.rs#L14) map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in a linker section named `.dep-v0`.
+It is not yet stabilized, so we do not have extensive docs or a JSON schema. However, [these Rust data structures](https://github.com/rust-secure-code/cargo-auditable/blob/master/auditable-serde/src/lib.rs#L14) map to JSON one-to-one and are extensively commented. The JSON is Zlib-compressed and placed in a linker section named `.dep-v0`.
 
 ### Can I read this data using a tool written in a different language?
 
