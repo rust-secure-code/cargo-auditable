@@ -56,7 +56,7 @@ pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<&'a [u8], Error> {
         },
         Format::Macho => {
             let parsed = binfarce::macho::parse(data)?;
-            let section = parsed.section_with_name("__TEXT", ".dep-v0")?;
+            let section = parsed.section_with_name("__DATA", ".dep-v0")?;
             let section = section.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         },
