@@ -262,7 +262,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         //
         // We use sort_unstable here because there is no point in
         // not reordering equal elements, since they're supplied by
-        // in arbitratry order by cargo-metadata anyway
+        // in arbitrary order by cargo-metadata anyway
         // and the order even varies between executions.
         packages.sort_unstable_by(|a, b| {
             // This is a workaround for Package not implementing Ord.
