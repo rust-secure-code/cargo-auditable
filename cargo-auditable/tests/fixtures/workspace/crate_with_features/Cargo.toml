@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[[bin]]
+# avoid pdb name collision with lib target
+name = "crate_with_features_bin"
+path = "src/main.rs"
+
 [lib]
 crate_type = ["cdylib", "lib"]
 

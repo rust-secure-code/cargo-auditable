@@ -66,12 +66,11 @@ where
                     .iter()
                     .any(|kind| kind.as_str() == "cdylib")
                 {
-                    // Detect .so (Linux) and .dylib files (Mac)
-                    // TODO: Windows cdylib detection
+                    // Detect files with .so (Linux), .dylib (Mac) and .dll (Windows) extensions
                     artifact
                         .filenames
                         .into_iter()
-                        .filter(|f| f.extension() == Some("dylib") || f.extension() == Some("so"))
+                        .filter(|f| f.extension() == Some("dylib") || f.extension() == Some("so") || f.extension() == Some("dll"))
                         .for_each(|f| {
                             binaries.push((member.clone(), f));
                         });
