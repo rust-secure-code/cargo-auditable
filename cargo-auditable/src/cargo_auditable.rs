@@ -7,8 +7,10 @@ pub fn main() {
     // It's important that we set RUSTC_WORKSPACE_WRAPPER and not RUSTC_WRAPPER because only the former invalidates cache.
     // If we use RUSTC_WRAPPER, running `cargo auditable` will not trigger a rebuild.
     // The WORKSPACE part is a bit of a misnomer: it will be run for a local crate even if there's just one, not a workspace.
-    // TODO: technically argv[0] is a convention, a not certainty.
-    // But it's probably not a code execution vulnerability since whoever sets this could set RUSTC_WORKSPACE_WRAPPER themselves?
+    // Security note:
+    // `std::env::current_exe()` is not supposed to be relied on for security - the binary may be moved, etc.
+    // But should not a code execution vulnerability since whoever sets this could set RUSTC_WORKSPACE_WRAPPER themselves
+    // This would matter if the binary was made setuid, but it isn't, so this should be fine.
     let path_to_this_binary = std::env::current_exe().unwrap();
     command.env("RUSTC_WORKSPACE_WRAPPER", path_to_this_binary);
     let results = command
