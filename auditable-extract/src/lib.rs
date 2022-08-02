@@ -1,10 +1,13 @@
 #![forbid(unsafe_code)]
 
-//! Extracts the dependency tree information embedded in executables by the
-//! [`auditable`](http://docs.rs/auditable/) crate.
+//! Extracts the dependency tree information embedded in executables by
+//! [`cargo auditable`](https://github.com/rust-secure-code/cargo-auditable).
 //!
-//! This crate handles all binary format parsing for you and is designed to be resilient to malicious input.
-//! It is 100% safe Rust (including dependencies) and does not perform any heap allocations.
+//! This crate handles all binary format parsing ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format),
+//! [PE](https://en.wikipedia.org/wiki/Portable_Executable), 
+//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O))
+//! 
+//! 100% safe Rust (including all dependencies), no heap allocations. Specifically designed to be resilient to malicious input.
 //! 
 //! ## Usage
 //!
@@ -18,7 +21,7 @@
 //!
 //! fn main() -> Result<(), Box<dyn Error>> {
 //!     // Read the input
-//!     let f = File::open("target/release/hello-auditable")?;
+//!     let f = File::open("target/release/hello-world")?;
 //!     let mut f = BufReader::new(f);
 //!     let mut input_binary = Vec::new();
 //!     f.read_to_end(&mut input_binary)?;
