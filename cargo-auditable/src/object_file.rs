@@ -116,23 +116,43 @@ fn create_object_file(
                 };
             file.flags = FileFlags::Elf { e_flags };
         }
-        // TODO
-        // Architecture::Riscv64 if sess.target.options.features.contains("+d") => {
-        //     // copied from `riscv64-linux-gnu-gcc foo.c -c`, note though
-        //     // that the `+d` target feature represents whether the double
-        //     // float abi is enabled.
-        //     let e_flags = elf::EF_RISCV_RVC | elf::EF_RISCV_FLOAT_ABI_DOUBLE;
-        //     file.flags = FileFlags::Elf { e_flags };
-        // }
+        Architecture::Riscv64 if has_riscv_double_precision_float_abi(target_triple) => {
+            // copied from `riscv64-linux-gnu-gcc foo.c -c`, note though
+            // that the `+d` target feature represents whether the double
+            // float abi is enabled.
+            let e_flags = elf::EF_RISCV_RVC | elf::EF_RISCV_FLOAT_ABI_DOUBLE;
+            file.flags = FileFlags::Elf { e_flags };
+        }
         _ => {}
     };
     Some(file)
+}
+
+// This function was not present in the original rustc code, which simply used 
+// `sess.target.options.features.contains("+d")`
+// We do not have access to compiler internals, so we have to reimplement the check
+// for double-precision floating-point ABI.
+fn has_riscv_double_precision_float_abi(target_triple: &str) -> bool {
+    let arch = target_triple.split('-').next().unwrap();
+    assert_eq!(&arch[..5], "riscv");
+    let extensions = &arch[7..];
+    extensions.contains('g') || extensions.contains('d')
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::target_info::parse_rustc_target_info;
+
+    #[test]
+    fn test_riscv_abi_detection() {
+        // real-world target with double floats
+        assert!(has_riscv_double_precision_float_abi("riscv64gc-unknown-linux-gnu"));
+        // real-world target without double floats
+        assert!( ! has_riscv_double_precision_float_abi("riscv32imac-unknown-none-elf"));
+        // made-up target with double floats but without atomics
+        assert!(has_riscv_double_precision_float_abi("riscv64imd-unknown-none-elf"));
+    }
 
     #[test]
     fn test_create_object_file_linux() {
