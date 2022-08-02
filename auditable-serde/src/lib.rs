@@ -1,13 +1,14 @@
 #![forbid(unsafe_code)]
 
 //! Parses and serializes the JSON dependency tree embedded in executables by the
-//! [`auditable`](http://docs.rs/auditable/) crate.
+//! [`cargo auditable`](https://github.com/rust-secure-code/cargo-auditable).
 //!
 //! This crate defines the data structures that a serialized to/from JSON
 //! and implements the serialization/deserialization routines via `serde`.
-//! It also provides optional conversions from `cargo metadata` and to `Cargo.lock` formats.
+//! It also provides optional conversions from [`cargo metadata`](https://docs.rs/cargo_metadata/)
+//! and to [`Cargo.lock`](https://docs.rs/cargo-lock) formats.
 //! 
-//! The `VersionInfo` struct is where all the magic happens, see the docs on it for more info.
+//! The [`VersionInfo`] struct is where all the magic happens, see the docs on it for more info.
 //! 
 //! ## Basic usage
 //!
@@ -22,7 +23,7 @@
 //!
 //! fn main() -> Result<(), Box<dyn Error>> {
 //!     // Read the input
-//!     let f = File::open("target/release/hello-auditable")?;
+//!     let f = File::open("target/release/hello-world")?;
 //!     let mut f = BufReader::new(f);
 //!     let mut input_binary = Vec::new();
 //!     f.read_to_end(&mut input_binary)?;
