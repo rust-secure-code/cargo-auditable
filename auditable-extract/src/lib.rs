@@ -89,7 +89,7 @@ impl std::fmt::Display for Error {
             Error::NotAnExecutable => "Not an executable file",
             Error::UnexpectedEof => "Unexpected end of file",
             Error::MalformedFile => "Malformed executable file",
-            Error::SymbolsSectionIsMissing => "Symbols section missing from exectuable",
+            Error::SymbolsSectionIsMissing => "Symbols section missing from executable",
             Error::SectionIsMissing => "Section is missing from executable",
             Error::UnexpectedSectionType => "Unexpected executable section type",
         };

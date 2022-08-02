@@ -5,7 +5,7 @@ use std::{convert::TryFrom, str::from_utf8};
 
 use crate::rustc_arguments::RustcArgs;
 
-/// Run this in your build.rs to collect dependency info and make it avaible to `inject_dependency_list!` macro
+/// Run this in your build.rs to collect dependency info and make it available to `inject_dependency_list!` macro
 pub fn compressed_dependency_list(args: &RustcArgs) -> Vec<u8> {
     let version_info = VersionInfo::try_from(&get_metadata(args)).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
@@ -32,7 +32,7 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
     metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
 
-    // Get the underlying std::process::Command and re-implement MetadataCommandd::exec,
+    // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
     // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
     // The alternative would be modifying the environment of our own process,
     // which is sketchy and discouraged on POSIX because it's not thread-safe:
