@@ -258,3 +258,25 @@ fn test_bin_and_lib_in_one_crate() {
         .iter()
         .any(|p| p.name == "lib_and_bin_crate"));
 }
+
+/// A previous approach had trouble with build scripts and proc macros.
+/// Verify that those still work.
+#[test]
+fn test_build_script() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/crate_with_build_script/Cargo.toml");
+    
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &[]);
+    eprintln!("LTO binary map: {:?}", bins);
+
+    // crate_with_build_script should only depend on itself
+    let crate_with_build_script_bin = &bins.get("crate_with_build_script").unwrap()[0];
+    let dep_info = get_dependency_info(crate_with_build_script_bin);
+    eprintln!("{} dependency info: {:?}", crate_with_build_script_bin, dep_info);
+    assert!(dep_info.packages.len() == 1);
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "crate_with_build_script"));
+}
