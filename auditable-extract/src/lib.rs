@@ -45,7 +45,7 @@ use binfarce::Format;
 /// Extracts the Zlib-compressed dependency info from an executable.
 ///
 /// This function does not allocate any memory on the heap and can be safely given untrusted input.
-pub fn raw_auditable_data<'a>(data: &'a [u8]) -> Result<&'a [u8], Error> {
+pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
     match binfarce::detect_format(data) {
         Format::Elf32{byte_order} => {
             let section = binfarce::elf32::parse(data, byte_order)?
