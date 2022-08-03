@@ -12,7 +12,7 @@ pub fn main() {
     if let Some(_) = env::var_os("CARGO_PRIMARY_PACKAGE") {
         let args = rustc_arguments::parse_args().unwrap();
 
-        // Only inject arguments into crate types 'bin' and 'cdylib'
+        // Only inject audit data into crate types 'bin' and 'cdylib'
         if args.crate_types.contains(&"bin".to_owned())
             || args.crate_types.contains(&"cdylib".to_owned())
         {
