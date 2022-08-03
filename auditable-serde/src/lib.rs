@@ -42,7 +42,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use serde_json;
+
 use std::str::FromStr;
 #[cfg(feature = "toml")]
 use cargo_lock;
@@ -51,7 +51,7 @@ use std::convert::TryInto;
 #[cfg(any(feature = "from_metadata",feature = "toml"))]
 use std::convert::TryFrom;
 #[cfg(feature = "from_metadata")]
-use cargo_metadata;
+
 #[cfg(feature = "from_metadata")]
 use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
 
@@ -222,7 +222,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         id_to_dep_kind.insert(toplevel_crate_id, PrivateDepKind::Runtime);
         let mut current_queue: Vec<&cargo_metadata::Node> = vec![id_to_node[toplevel_crate_id]];
         let mut next_step_queue: Vec<&cargo_metadata::Node> = Vec::new();
-        while current_queue.len() > 0 {
+        while !current_queue.is_empty() {
             for parent in current_queue.drain(..) {
                 let parent_dep_kind = id_to_dep_kind[parent.id.repr.as_str()];
                 for child in &parent.deps {
@@ -289,7 +289,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
                 source: source_to_source_string(&p.source),
-                kind: (*metadata_package_dep_kind(&p).unwrap()).into(),
+                kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
                 features: Vec::new(),
             }

@@ -31,7 +31,7 @@ pub fn create_metadata_file(
         }
         _ => {}
     };
-    let offset = file.append_section_data(section, &contents, 1);
+    let offset = file.append_section_data(section, contents, 1);
 
     // For MachO and probably PE this is necessary to prevent the linker from throwing away the
     // .rustc section. For ELF this isn't necessary, but it also doesn't harm.

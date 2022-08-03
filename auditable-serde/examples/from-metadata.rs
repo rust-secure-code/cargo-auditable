@@ -4,7 +4,7 @@
 
 use auditable_serde::VersionInfo;
 use cargo_metadata::{Metadata, MetadataCommand};
-use serde_json;
+
 use std::{error::Error, convert::TryFrom};
 
 fn get_metadata() -> Result<Metadata, cargo_metadata::Error> {

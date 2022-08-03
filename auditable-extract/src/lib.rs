@@ -39,7 +39,7 @@
 //! }
 //! ```
 
-use binfarce;
+
 use binfarce::Format;
 
 /// Extracts the Zlib-compressed dependency info from an executable.

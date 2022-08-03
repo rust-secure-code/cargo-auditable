@@ -9,7 +9,7 @@ pub fn main() {
 
     // Binaries and C dynamic libraries are not built as non-primary packages,
     // so this should not cause issues with Cargo caches.
-    if let Some(_) = env::var_os("CARGO_PRIMARY_PACKAGE") {
+    if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
         let args = rustc_arguments::parse_args().unwrap();
 
         // Only inject audit data into crate types 'bin' and 'cdylib'
@@ -31,7 +31,7 @@ pub fn main() {
             // We can place it anywhere really, the only concern is clutter and name collisions,
             // and the target dir is locked so we're probably good
             let filename = format!("{}_audit_data.o", args.crate_name);
-            let path = args.out_dir.clone().join(filename);
+            let path = args.out_dir.join(filename);
             std::fs::write(&path, binfile).expect("Unable to write output file");
 
             // Modify the rustc command to link the object file with audit data
