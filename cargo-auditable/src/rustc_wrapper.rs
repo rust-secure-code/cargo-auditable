@@ -13,8 +13,6 @@ pub fn main() {
         let args = rustc_arguments::parse_args().unwrap();
 
         // Only inject arguments into crate types 'bin' and 'cdylib'
-        // What if there are multiple types, you might ask? I have no idea!
-        // TODO: check if crates that are both rlib and bin actually work
         if args.crate_types.contains(&"bin".to_owned())
             || args.crate_types.contains(&"cdylib".to_owned())
         {
