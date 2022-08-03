@@ -6,7 +6,7 @@ authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-secure-code/cargo-auditable"
 description = "Make production Rust binaries auditable"
-categories = ["cargo-plugins", "encoding"]
+categories = ["development-tools::cargo-plugins", "encoding"]
 readme = "../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
