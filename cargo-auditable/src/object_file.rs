@@ -128,7 +128,7 @@ fn create_object_file(
     Some(file)
 }
 
-// This function was not present in the original rustc code, which simply used 
+// This function was not present in the original rustc code, which simply used
 // `sess.target.options.features.contains("+d")`
 // We do not have access to compiler internals, so we have to reimplement the check
 // for double-precision floating-point ABI.
@@ -147,11 +147,17 @@ mod tests {
     #[test]
     fn test_riscv_abi_detection() {
         // real-world target with double floats
-        assert!(has_riscv_double_precision_float_abi("riscv64gc-unknown-linux-gnu"));
+        assert!(has_riscv_double_precision_float_abi(
+            "riscv64gc-unknown-linux-gnu"
+        ));
         // real-world target without double floats
-        assert!( ! has_riscv_double_precision_float_abi("riscv32imac-unknown-none-elf"));
+        assert!(!has_riscv_double_precision_float_abi(
+            "riscv32imac-unknown-none-elf"
+        ));
         // made-up target with double floats but without atomics
-        assert!(has_riscv_double_precision_float_abi("riscv64imd-unknown-none-elf"));
+        assert!(has_riscv_double_precision_float_abi(
+            "riscv64imd-unknown-none-elf"
+        ));
     }
 
     #[test]
