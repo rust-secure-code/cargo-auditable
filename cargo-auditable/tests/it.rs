@@ -198,7 +198,7 @@ fn test_cargo_auditable_workspaces() {
         .any(|p| p.name == "crate_with_features"));
 }
 
-/// This exercises a real-world project with complications such as proc macros
+/// This exercises a small real-world project
 #[test]
 fn test_self_hosting() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
@@ -219,7 +219,6 @@ fn test_self_hosting() {
         .any(|p| p.name == "rust-audit-info"));
 }
 
-/// This exercises a real-world project with complications such as proc macros
 #[test]
 fn test_lto() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
@@ -238,4 +237,24 @@ fn test_lto() {
         .packages
         .iter()
         .any(|p| p.name == "lto_binary_crate"));
+}
+
+#[test]
+fn test_bin_and_lib_in_one_crate() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/lib_and_bin_crate/Cargo.toml");
+    
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--bin=some_binary"]);
+    eprintln!("LTO binary map: {:?}", bins);
+
+    // lib_and_bin_crate should only depend on itself
+    let lib_and_bin_crate_bin = &bins.get("lib_and_bin_crate").unwrap()[0];
+    let dep_info = get_dependency_info(lib_and_bin_crate_bin);
+    eprintln!("{} dependency info: {:?}", lib_and_bin_crate_bin, dep_info);
+    assert!(dep_info.packages.len() == 1);
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "lib_and_bin_crate"));
 }
