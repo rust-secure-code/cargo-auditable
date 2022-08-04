@@ -28,9 +28,9 @@ jobs:
           - windows-latest
         toolchain:
           - stable
-      include:
-        - os: windows-latest
-          target: ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"]
+        include:
+          - os: windows-latest
+            target: ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"]
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
