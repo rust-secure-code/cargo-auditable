@@ -25,13 +25,9 @@ jobs:
         platform:
           - ubuntu-latest
           - macos-latest
+          - windows-latest
         toolchain:
           - stable
-        include:
-          - os: windows-latest
-            target: "x86_64-pc-windows-msvc"
-          - os: windows-latest
-            target: "x86_64-pc-windows-gnu"
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -48,6 +44,4 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-      - if: ${{ matrix.target }}
-        run: cargo test --all-features --target=${{ matrix.target }}
       - run: cargo test --all-features
