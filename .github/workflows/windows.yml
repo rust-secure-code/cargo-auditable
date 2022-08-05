@@ -33,6 +33,6 @@ jobs:
       - name: "Test on the native x86_64-pc-windows-mscv"
         run: cargo test --all-features
       - name: "Test when cross-compiling to x86_64-pc-windows-gnu"
-        run: cargo test --all-features
         env:
           AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
+        run: cargo test --all-features
