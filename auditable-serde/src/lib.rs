@@ -155,8 +155,11 @@ impl From<Source> for String {
 #[cfg(feature = "from_metadata")]
 impl From<&cargo_metadata::Source> for Source {
     fn from(meta_source: &cargo_metadata::Source) -> Self {
-        Source::from(meta_source.repr.as_str().split('+').next()
-            .expect("Encoding of source strings in `cargo metadata` has changed!"))
+        match meta_source.repr.as_str() {
+            "registry+https://github.com/rust-lang/crates.io-index" => Source::CratesIo,
+            source => Source::from(source.split('+').next()
+                .expect("Encoding of source strings in `cargo metadata` has changed!"))
+        }
     }
 }
 
