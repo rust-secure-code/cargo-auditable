@@ -30,6 +30,7 @@ jobs:
           profile: minimal
           override: true
           target: "i686-unknown-linux-gnu"
+          target: "x86_64-unknown-linux-musl"
       - name: "Test on the native x86_64-unknown-linux-gnu"
         run: cargo test --all-features
       - name: "Install the 32-bit GCC toolchain"
