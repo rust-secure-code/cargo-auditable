@@ -141,10 +141,7 @@ fn test_cargo_auditable_workspaces() {
     }
     for binary in binary_and_cdylib_crate_bins {
         let dep_info = get_dependency_info(binary);
-        eprintln!(
-            "{} dependency info: {:?}",
-            binary, dep_info
-        );
+        eprintln!("{} dependency info: {:?}", binary, dep_info);
         // binary_and_cdylib_crate should have two dependencies, library_crate and itself
         assert!(dep_info.packages.len() == 2);
         assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
