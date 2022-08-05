@@ -28,13 +28,13 @@ where
 {
     let mut command = Command::new(EXE);
     command
-    .arg("auditable")
-    .arg("build")
-    .arg("--manifest-path")
-    .arg(cargo_toml_path)
-    // We'll parse these to get binary paths
-    .arg("--message-format=json")
-    .args(args);
+        .arg("auditable")
+        .arg("build")
+        .arg("--manifest-path")
+        .arg(cargo_toml_path)
+        // We'll parse these to get binary paths
+        .arg("--message-format=json")
+        .args(args);
 
     if let Ok(target) = std::env::var("AUDITABLE_TEST_TARGET") {
         command.arg(format!("--target={target}"));
