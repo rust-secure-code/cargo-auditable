@@ -15,6 +15,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+          target: "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -42,7 +43,7 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-      - run: cargo test --all-features
+      - run: cargo test --all-features # default x86_64-pc-windows-msvc
       - run: cargo test --all-features
         env:
           AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
