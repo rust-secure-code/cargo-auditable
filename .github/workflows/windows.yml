@@ -1,4 +1,4 @@
-name: Workspace
+name: Windows
 
 on:
   pull_request: {}
@@ -23,8 +23,6 @@ jobs:
     strategy:
       matrix:
         platform:
-          - ubuntu-latest
-          - macos-latest
           - windows-latest
         toolchain:
           - stable
@@ -45,3 +43,4 @@ jobs:
           profile: minimal
           override: true
       - run: cargo test --all-features
+      - run: AUDITABLE_TEST_TARGET=x86_64-pc-windows-gnu cargo test --all-features
