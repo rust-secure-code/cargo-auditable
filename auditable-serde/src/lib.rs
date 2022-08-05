@@ -98,9 +98,7 @@ pub struct Package {
     pub name: String,
     pub version: semver::Version,
     /// Currently "git", "local" or "registry". Designed to be extensible with other revision control systems, etc.
-    ///
-    /// May be extended in the future to record a specific revision, e.g. `git-sha1+90ac1a1e8b072e0d595c63db39875b371397173d`
-    pub source: String,
+    pub source: Source,
     /// "build" or "runtime". If it's both a build and a runtime dependency, "runtime" is recorded.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
@@ -117,6 +115,51 @@ pub struct Package {
     #[serde(skip_serializing_if = "is_default")]
     pub features: Vec<String>,
 }
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[serde(from = "&str")]
+#[serde(into = "String")]
+pub enum Source {
+    CratesIo,
+    Git,
+    Local,
+    Registry,
+    Other(String)
+}
+
+impl From<&str> for Source {
+    fn from(s: &str) -> Self {
+        match s {
+            "crates.io" => Self::CratesIo,
+            "git" => Self::Git,
+            "local" => Self::Local,
+            "registry" => Self::Registry,
+            other_str => Self::Other(other_str.to_string())
+        }
+    }
+}
+
+impl From<Source> for String {
+    fn from(s: Source) -> String {
+        match s {
+            Source::CratesIo => "crates.io".to_owned(),
+            Source::Git =>  "git".to_owned(),
+            Source::Local =>  "local".to_owned(),
+            Source::Registry =>  "registry".to_owned(),
+            Source::Other(string) => string
+        }
+    }
+}
+
+#[cfg(feature = "from_metadata")]
+impl From<&cargo_metadata::Source> for Source {
+    fn from(meta_source: &cargo_metadata::Source) -> Self {
+        Source::from(meta_source.repr.as_str().split('+').next()
+            .expect("Encoding of source strings in `cargo metadata` has changed!"))
+    }
+}
+
 /// The fields are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub enum DependencyKind {
@@ -288,7 +331,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
             Package {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
-                source: source_to_source_string(&p.source),
+                source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
                 features: Vec::new(),
@@ -323,15 +366,6 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
 fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
     deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
     .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
-}
-
-#[cfg(feature = "from_metadata")]
-fn source_to_source_string(s: &Option<cargo_metadata::Source>) -> String {
-    if let Some(source) = s {
-        source.repr.as_str().split('+').next().unwrap_or("").to_owned()
-    } else {
-        "local".to_owned()
-    }
 }
 
 #[cfg(feature = "toml")]
@@ -382,7 +416,7 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
 
 #[cfg(test)]
 mod tests {
-    use super::VersionInfo;
+    use super::*;
     use std::{convert::TryInto, path::PathBuf};
 
     #[cfg(feature = "from_metadata")]
