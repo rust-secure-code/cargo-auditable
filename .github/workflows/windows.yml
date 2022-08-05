@@ -15,7 +15,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          target: "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"
+          target: "x86_64-pc-windows-gnu"
       - uses: actions-rs/cargo@v1
         with:
           command: check
