@@ -130,39 +130,36 @@ fn test_cargo_auditable_workspaces() {
     // No binaries for library_crate
     assert!(bins.get("library_crate").is_none());
 
-    // binary_and_cdylib_crate should have two dependencies, library_crate and itself
-    let binary_and_cdylib_crate_bin = &bins.get("binary_and_cdylib_crate").unwrap()[0];
-    let dep_info = get_dependency_info(binary_and_cdylib_crate_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        binary_and_cdylib_crate_bin, dep_info
-    );
-    assert!(dep_info.packages.len() == 2);
-    assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
-    assert!(dep_info
-        .packages
-        .iter()
-        .any(|p| p.name == "binary_and_cdylib_crate"));
+    // binary_and_cdylib_crate
+    let binary_and_cdylib_crate_bins = bins.get("binary_and_cdylib_crate").unwrap();
+    match std::env::var("AUDITABLE_TEST_TARGET") {
+        // musl targets do not produce cdylibs by default: https://github.com/rust-lang/cargo/issues/8607
+        // So when targeting musl, we only check that the binary has been built, not the cdylib.
+        Ok(target) if target.contains("musl") => assert!(binary_and_cdylib_crate_bins.len() >= 1),
+        // everything else should build both the binary and cdylib
+        _ => assert_eq!(binary_and_cdylib_crate_bins.len(), 2),
+    }
+    for binary in binary_and_cdylib_crate_bins {
+        let dep_info = get_dependency_info(binary);
+        eprintln!(
+            "{} dependency info: {:?}",
+            binary, dep_info
+        );
+        // binary_and_cdylib_crate should have two dependencies, library_crate and itself
+        assert!(dep_info.packages.len() == 2);
+        assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
+        assert!(dep_info
+            .packages
+            .iter()
+            .any(|p| p.name == "binary_and_cdylib_crate"));
+    }
 
-    // crate_with_features should create a binary and cdylib each with two dependencies, library_crate and itself
-    let crate_with_features_bins = &bins.get("crate_with_features").unwrap();
-    assert!(crate_with_features_bins.len() == 2);
-    let dep_info = get_dependency_info(&crate_with_features_bins[0]);
+    // crate_with_features should create a binary with two dependencies, library_crate and itself
+    let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
+    let dep_info = get_dependency_info(&crate_with_features_bin);
     eprintln!(
         "{} dependency info: {:?}",
-        binary_and_cdylib_crate_bin, dep_info
-    );
-    assert!(dep_info.packages.len() == 2);
-    assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
-    assert!(dep_info
-        .packages
-        .iter()
-        .any(|p| p.name == "crate_with_features"));
-
-    let dep_info = get_dependency_info(&crate_with_features_bins[1]);
-    eprintln!(
-        "{} dependency info: {:?}",
-        binary_and_cdylib_crate_bin, dep_info
+        crate_with_features_bin, dep_info
     );
     assert!(dep_info.packages.len() == 2);
     assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
@@ -181,7 +178,7 @@ fn test_cargo_auditable_workspaces() {
     let dep_info = get_dependency_info(crate_with_features_bin);
     eprintln!(
         "{} dependency info: {:?}",
-        binary_and_cdylib_crate_bin, dep_info
+        crate_with_features_bin, dep_info
     );
     assert!(dep_info.packages.len() == 3);
     assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
@@ -201,7 +198,7 @@ fn test_cargo_auditable_workspaces() {
     let dep_info = get_dependency_info(crate_with_features_bin);
     eprintln!(
         "{} dependency info: {:?}",
-        binary_and_cdylib_crate_bin, dep_info
+        crate_with_features_bin, dep_info
     );
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info

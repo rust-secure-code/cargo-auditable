@@ -9,9 +9,6 @@ publish = false
 name = "crate_with_features_bin"
 path = "src/main.rs"
 
-[lib]
-crate_type = ["cdylib", "lib"]
-
 [dependencies]
 library_crate = {path = "../library_crate", optional = true}
 binary_and_cdylib_crate = {path = "../binary_and_cdylib_crate", optional = true}

@@ -6,5 +6,8 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate_type = ["cdylib", "lib"]
+
 [dependencies]
 library_crate = {path = "../library_crate"}
