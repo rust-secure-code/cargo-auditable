@@ -97,7 +97,7 @@ pub struct Package {
     /// Crate name specified in the `name` field in Cargo.toml file. Examples: "libc", "rand"
     pub name: String,
     pub version: semver::Version,
-    /// Currently "git", "local" or "registry". Designed to be extensible with other revision control systems, etc.
+    /// Currently "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
     pub source: Source,
     /// "build" or "runtime". If it's both a build and a runtime dependency, "runtime" is recorded.
     #[serde(default)]
@@ -116,6 +116,7 @@ pub struct Package {
     pub features: Vec<String>,
 }
 
+/// Serializes to "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(from = "&str")]
