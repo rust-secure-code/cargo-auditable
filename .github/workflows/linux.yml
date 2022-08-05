@@ -31,6 +31,7 @@ jobs:
           override: true
           target: "i686-unknown-linux-gnu"
       - run: cargo test --all-features # default x86_64-unknown-linux-gnu
+      - run: sudo apt install gcc-multilib # install the 32-bit GCC toolchain
       - run: cargo test --all-features
         env:
           AUDITABLE_TEST_TARGET: "i686-unknown-linux-gnu"
