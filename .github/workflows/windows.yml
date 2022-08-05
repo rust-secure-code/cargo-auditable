@@ -45,4 +45,4 @@ jobs:
       - run: cargo test --all-features
       - run: cargo test --all-features
         env:
-          - AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
+          AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
