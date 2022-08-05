@@ -21,18 +21,26 @@ const EXE: &str = env!("CARGO_BIN_EXE_cargo-auditable");
 
 /// Run cargo auditable with --manifest-path <cargo_toml_path arg> and extra args,
 /// returning of map of workspace member names -> produced binaries (bin and cdylib)
+/// Reads the AUDITABLE_TEST_TARGET environment variable to determine the target to compile for
 fn run_cargo_auditable<P>(cargo_toml_path: P, args: &[&str]) -> HashMap<String, Vec<Utf8PathBuf>>
 where
     P: AsRef<OsStr>,
 {
-    let output = Command::new(EXE)
-        .arg("auditable")
-        .arg("build")
-        .arg("--manifest-path")
-        .arg(cargo_toml_path)
-        // We'll parse these to get binary paths
-        .arg("--message-format=json")
-        .args(args)
+    let mut command = Command::new(EXE);
+    command
+    .arg("auditable")
+    .arg("build")
+    .arg("--manifest-path")
+    .arg(cargo_toml_path)
+    // We'll parse these to get binary paths
+    .arg("--message-format=json")
+    .args(args);
+
+    if let Ok(target) = std::env::var("AUDITABLE_TEST_TARGET") {
+        command.arg(format!("--target={target}"));
+    }
+
+    let output = command
         // We don't need to read stderr, so inherit for easier test debugging
         .stderr(Stdio::inherit())
         .stdout(Stdio::piped())
