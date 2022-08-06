@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased 
+
+### Added
+ - "crates.io" is now recognized and encoded as a source, distinct from "registry"
+ - `rust-audit-info` now supports custom limits set on the command line
+ - `i686-unknown-linux-gnu`, `x86_64-unknown-linux-musl`, `x86_64-pc-windows-gnu` targets are now tested on CI
+
+### Changed
+ - `rust-audit-info` now defaults to the limit of 8MiB for the output size
+ - `auditable-serde` has a strongly-typed `Source` type - an `enum` instead of a `String`
+ - 
+
 ## 0.3.0 - 2022-08-03
 
 ### Added
