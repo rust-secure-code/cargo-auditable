@@ -6,7 +6,14 @@ use std::env::args_os;
 use std::io::{BufReader, Read, Write};
 use std::{error::Error, fs::File};
 
-const USAGE: &'static str = "Usage: rust-audit-info FILE [INPUT_SIZE_LIMIT OUTPUT_SIZE_LIMIT]";
+const USAGE: &'static str = "\
+Usage: rust-audit-info FILE [INPUT_SIZE_LIMIT] [OUTPUT_SIZE_LIMIT]
+
+The limits are specified in bytes. The default values are:
+
+    INPUT_SIZE_LIMIT: 1073741824 (1 GiB)
+    OUTPUT_SIZE_LIMIT: 67108864 (64 MiB)
+";
 
 fn main() {
     if let Err(e) = actual_main() {
