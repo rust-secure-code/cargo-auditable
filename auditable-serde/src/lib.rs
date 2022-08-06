@@ -96,21 +96,25 @@ pub struct VersionInfo {
 pub struct Package {
     /// Crate name specified in the `name` field in Cargo.toml file. Examples: "libc", "rand"
     pub name: String,
+    /// The package's version in the [semantic version](https://semver.org) format. 
     pub version: semver::Version,
     /// Currently "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
     pub source: Source,
-    /// "build" or "runtime". If it's both a build and a runtime dependency, "runtime" is recorded.
+    /// "build" or "runtime". May be omitted if set to "runtime".
+    /// If it's both a build and a runtime dependency, "runtime" is recorded.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub kind: DependencyKind,
     /// Packages are stored in an ordered array both in the `VersionInfo` struct and in JSON.
     /// Here we refer to each package by its index in the array.
+    /// May be omitted if the list is empty.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub dependencies: Vec<usize>,
     /// List of features, identical to the way `cargo metadata` presents them.
     ///
     /// The feature "default" will also be recorded unless `--no-default-features` is used.
+    /// May be omitted if the list is empty.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub features: Vec<String>,
