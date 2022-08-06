@@ -34,7 +34,7 @@ fn actual_main() -> Result<(), Box<dyn Error>> {
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
         let mut f = BufReader::new(f);
-        extract_compressed_audit_data(&mut f, Default::default())?
+        extract_compressed_audit_data(&mut f, limits)?
     };
 
     let decompressed_data =
