@@ -1,7 +1,7 @@
 #![forbid(unsafe_code)]
 
-use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
 use auditable_extract::raw_auditable_data;
+use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
 use std::io::Read;
 use std::io::Write;
 use std::{error::Error, fs::File, io::BufReader};
@@ -15,7 +15,8 @@ fn main() {
 
 fn do_work() -> Result<(), Box<dyn Error>> {
     // TODO: use pico-args
-    let input = std::env::args().nth(1)
+    let input = std::env::args()
+        .nth(1)
         .ok_or("Usage: rust-audit-info FILE")?;
 
     let limits: Limits = Default::default(); // TODO: read from CLI arguments
@@ -26,10 +27,9 @@ fn do_work() -> Result<(), Box<dyn Error>> {
         extract_compressed_audit_data(&mut f, Default::default())?
     };
 
-    let decompressed_data = decompress_to_vec_zlib_with_limit(
-        &compressed_audit_data,
-        limits.decompressed_json_size)
-        .map_err(|_| "Failed to decompress audit data")?;
+    let decompressed_data =
+        decompress_to_vec_zlib_with_limit(&compressed_audit_data, limits.decompressed_json_size)
+            .map_err(|_| "Failed to decompress audit data")?;
 
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
@@ -38,7 +38,10 @@ fn do_work() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn extract_compressed_audit_data<T: Read>(reader: &mut T, limits: Limits) -> Result<Vec<u8>, Box<dyn Error>> {
+fn extract_compressed_audit_data<T: Read>(
+    reader: &mut T,
+    limits: Limits,
+) -> Result<Vec<u8>, Box<dyn Error>> {
     // In case you're wondering why the check for the limit is weird like that:
     // When .take() returns EOF, it doesn't tell you if that's because it reached the limit
     // or because the underlying reader ran out of data.
@@ -73,7 +76,7 @@ pub struct Limits {
 impl Default for Limits {
     fn default() -> Self {
         Self {
-            input_file_size: 1024 * 1024 * 1024, // 1Gib
+            input_file_size: 1024 * 1024 * 1024,      // 1Gib
             decompressed_json_size: 1024 * 1024 * 64, // 64Mib
         }
     }
