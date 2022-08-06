@@ -86,8 +86,8 @@ pub struct Limits {
 impl Default for Limits {
     fn default() -> Self {
         Self {
-            input_file_size: 1024 * 1024 * 1024,      // 1Gib
-            decompressed_json_size: 1024 * 1024 * 64, // 64Mib
+            input_file_size: 1024 * 1024 * 1024,      // 1GiB
+            decompressed_json_size: 1024 * 1024 * 16, // 8MiB
         }
     }
 }
