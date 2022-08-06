@@ -1,6 +1,6 @@
 [package]
 name = "cargo-auditable"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ readme = "../README.md"
 
 [dependencies]
 object = {version = "0.28.1", default-features = false, features = ["write"]}
-auditable-serde = {version = "0.3.0", path = "../auditable-serde", features = ["from_metadata"]}
+auditable-serde = {version = "0.4.0", path = "../auditable-serde", features = ["from_metadata"]}
 miniz_oxide = {version = "0.5.0"}
 serde_json = "1.0.57"
 cargo_metadata = "0.15"
