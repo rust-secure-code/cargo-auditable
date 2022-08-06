@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  - `rust-audit-info` now defaults to the limit of 8MiB for the output size
  - `auditable-serde` has a strongly-typed `Source` type - an `enum` instead of a `String`
- - 
 
 ## 0.3.0 - 2022-08-03
 
