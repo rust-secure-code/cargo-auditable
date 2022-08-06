@@ -81,3 +81,24 @@ impl Default for Limits {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn input_file_limits() {
+        let limits = Limits {
+            input_file_size: 128,
+            decompressed_json_size: 99999,
+        };
+        let fake_data = vec![0; 1024];
+        let mut reader = std::io::Cursor::new(fake_data);
+        let result = extract_compressed_audit_data(&mut reader, limits);
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("The input file is too large"));
+    }
+}
