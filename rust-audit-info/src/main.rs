@@ -3,6 +3,7 @@
 use auditable_extract::raw_auditable_data;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
 use std::env::args_os;
+use std::ffi::OsString;
 use std::io::{BufReader, Read, Write};
 use std::{error::Error, fs::File};
 
@@ -23,20 +24,7 @@ fn main() {
 }
 
 fn actual_main() -> Result<(), Box<dyn Error>> {
-    let input = args_os().nth(1).ok_or(USAGE)?;
-    let mut limits: Limits = Default::default();
-    if let Some(s) = args_os().nth(2) {
-        let utf8_s = s
-            .to_str()
-            .ok_or("Invalid UTF-8 in input size limit argument")?;
-        limits.input_file_size = utf8_s.parse::<usize>()?
-    }
-    if let Some(s) = args_os().nth(3) {
-        let utf8_s = s
-            .to_str()
-            .ok_or("Invalid UTF-8 in output size limit argument")?;
-        limits.decompressed_json_size = utf8_s.parse::<usize>()?
-    }
+    let (input, limits) = parse_args()?;
 
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
@@ -82,6 +70,24 @@ fn extract_compressed_audit_data<T: Read>(
         Err("Audit data size is over the limit even before decompression")?;
     }
     Ok(compressed_audit_data.to_owned())
+}
+
+fn parse_args() -> Result<(OsString, Limits), Box<dyn Error>> {
+    let input = args_os().nth(1).ok_or(USAGE)?;
+    let mut limits: Limits = Default::default();
+    if let Some(s) = args_os().nth(2) {
+        let utf8_s = s
+            .to_str()
+            .ok_or("Invalid UTF-8 in input size limit argument")?;
+        limits.input_file_size = utf8_s.parse::<usize>()?
+    }
+    if let Some(s) = args_os().nth(3) {
+        let utf8_s = s
+            .to_str()
+            .ok_or("Invalid UTF-8 in output size limit argument")?;
+        limits.decompressed_json_size = utf8_s.parse::<usize>()?
+    }
+    Ok((input, limits))
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
