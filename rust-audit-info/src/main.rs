@@ -23,8 +23,8 @@ fn do_work() -> Result<(), Box<dyn Error>> {
 
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
-        let mut f = BufReader::new(f);
-        extract_compressed_audit_data(&mut f, Default::default())?
+        let f = BufReader::new(f);
+        extract_compressed_audit_data(Box::new(f), Default::default())?
     };
 
     let decompressed_data =
@@ -38,8 +38,8 @@ fn do_work() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn extract_compressed_audit_data<T: Read>(
-    reader: &mut T,
+fn extract_compressed_audit_data(
+    reader: Box<dyn std::io::Read>,
     limits: Limits,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     // In case you're wondering why the check for the limit is weird like that:
@@ -93,8 +93,8 @@ mod tests {
             decompressed_json_size: 99999,
         };
         let fake_data = vec![0; 1024];
-        let mut reader = std::io::Cursor::new(fake_data);
-        let result = extract_compressed_audit_data(&mut reader, limits);
+        let reader = std::io::Cursor::new(fake_data);
+        let result = extract_compressed_audit_data(Box::new(reader), limits);
         assert!(result.is_err());
         assert!(result
             .unwrap_err()
