@@ -2,24 +2,34 @@
 
 use auditable_extract::raw_auditable_data;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
-use std::io::Read;
-use std::io::Write;
-use std::{error::Error, fs::File, io::BufReader};
+use std::env::args_os;
+use std::io::{BufReader, Read, Write};
+use std::{error::Error, fs::File};
+
+const USAGE: &'static str = "Usage: rust-audit-info FILE [INPUT_SIZE_LIMIT OUTPUT_SIZE_LIMIT]";
 
 fn main() {
-    if let Err(e) = do_work() {
+    if let Err(e) = actual_main() {
         eprintln!("{}", e);
         std::process::exit(1);
     }
 }
 
-fn do_work() -> Result<(), Box<dyn Error>> {
-    // TODO: use pico-args
-    let input = std::env::args()
-        .nth(1)
-        .ok_or("Usage: rust-audit-info FILE")?;
-
-    let limits: Limits = Default::default(); // TODO: read from CLI arguments
+fn actual_main() -> Result<(), Box<dyn Error>> {
+    let input = args_os().nth(1).ok_or(USAGE)?;
+    let mut limits: Limits = Default::default();
+    if let Some(s) = args_os().nth(2) {
+        let utf8_s = s
+            .to_str()
+            .ok_or("Invalid UTF-8 in input size limit argument")?;
+        limits.input_file_size = utf8_s.parse::<usize>()?
+    }
+    if let Some(s) = args_os().nth(3) {
+        let utf8_s = s
+            .to_str()
+            .ok_or("Invalid UTF-8 in output size limit argument")?;
+        limits.decompressed_json_size = utf8_s.parse::<usize>()?
+    }
 
     let compressed_audit_data: Vec<u8> = {
         let f = File::open(input)?;
