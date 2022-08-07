@@ -113,6 +113,7 @@ pub struct Package {
     pub dependencies: Vec<usize>,
     /// Whether this is the root package in the dependency tree.
     /// There should only be one root package.
+    /// May be omitted if set to `false`.
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub root: bool,
