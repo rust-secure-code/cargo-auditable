@@ -111,6 +111,11 @@ pub struct Package {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub dependencies: Vec<usize>,
+    /// Whether this is the root package in the dependency tree.
+    /// There should only be one root package.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_default")]
+    pub root: bool,
 }
 
 /// Serializes to "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
@@ -335,6 +340,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
+                root: p.id.repr == toplevel_crate_id,
             }
         }).collect();
 
