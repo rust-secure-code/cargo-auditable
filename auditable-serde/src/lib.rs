@@ -111,13 +111,6 @@ pub struct Package {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub dependencies: Vec<usize>,
-    /// List of features, identical to the way `cargo metadata` presents them.
-    ///
-    /// The feature "default" will also be recorded unless `--no-default-features` is used.
-    /// May be omitted if the list is empty.
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_default")]
-    pub features: Vec<String>,
 }
 
 /// Serializes to "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
@@ -342,11 +335,10 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
-                features: Vec::new(),
             }
         }).collect();
 
-        // Fill in dependency info and features from resolved dependency graph
+        // Fill in dependency info from resolved dependency graph
         for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
             let package_id = node.id.repr.as_str();
             if id_to_index.contains_key(package_id) { // dev-dependencies are not included
@@ -361,9 +353,6 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 }
                 // .sort_unstable() is fine because they're all integers
                 package.dependencies.sort_unstable();
-                // Features
-                package.features = node.features.clone();
-                package.features.sort_unstable(); // same for strings
             }
         }
         Ok(VersionInfo {packages})
