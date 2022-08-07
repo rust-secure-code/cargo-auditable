@@ -89,7 +89,7 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
-    pub dependencies: Dependencies
+    pub dependency_tree: Dependencies
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -364,11 +364,11 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         }
 
         let root_index = id_to_index[toplevel_crate_id];
-        let dependencies = Dependencies (
+        let dependency_tree = Dependencies (
             traverse_dependencies(&dep_map, root_index),
         );
 
-        Ok(VersionInfo {packages, dependencies})
+        Ok(VersionInfo {packages, dependency_tree})
     }
 }
 
