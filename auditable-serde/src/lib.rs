@@ -43,7 +43,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use std::str::FromStr;
+use std::{str::FromStr, collections::{BTreeMap, BTreeSet}};
 #[cfg(feature = "toml")]
 use cargo_lock;
 #[cfg(feature = "toml")]
@@ -89,7 +89,13 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
+    pub dependencies: Dependencies
 }
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct Dependencies (
+    BTreeMap<usize, Vec<Dependencies>>
+);
 
 /// A single package in the dependency tree
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
@@ -105,12 +111,6 @@ pub struct Package {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
     pub kind: DependencyKind,
-    /// Packages are stored in an ordered array both in the `VersionInfo` struct and in JSON.
-    /// Here we refer to each package by its index in the array.
-    /// May be omitted if the list is empty.
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_default")]
-    pub dependencies: Vec<usize>,
     /// Whether this is the root package in the dependency tree.
     /// There should only be one root package.
     /// May be omitted if set to `false`.
@@ -334,36 +334,55 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         };
         
         // Convert packages from cargo-metadata representation to our representation
-        let mut packages: Vec<Package> = packages.into_iter().map(|p| {
+        let packages: Vec<Package> = packages.into_iter().map(|p| {
             Package {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
                 source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
-                dependencies: Vec::new(),
                 root: p.id.repr == toplevel_crate_id,
             }
         }).collect();
 
         // Fill in dependency info from resolved dependency graph
+        // now that we know all the IDs
+        let mut dep_map: BTreeMap<usize, BTreeSet<usize>> = BTreeMap::new();
         for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
             let package_id = node.id.repr.as_str();
             if id_to_index.contains_key(package_id) { // dev-dependencies are not included
-                let package : &mut Package = &mut packages[id_to_index[package_id]];
+                let package_index = id_to_index[package_id];
+                dep_map.insert(package_index, BTreeSet::new());
                 // Dependencies
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
                     let dep_id = dep.repr.as_str();
                     if id_to_dep_kind[dep_id] != PrivateDepKind::Development {
-                        package.dependencies.push(id_to_index[dep_id]);
+                        dep_map.entry(package_index).or_default().insert(id_to_index[dep_id]);
                     }
                 }
-                // .sort_unstable() is fine because they're all integers
-                package.dependencies.sort_unstable();
             }
         }
-        Ok(VersionInfo {packages})
+
+        let root_index = id_to_index[toplevel_crate_id];
+        let dependencies = Dependencies (
+            traverse_dependencies(&dep_map, root_index),
+        );
+
+        Ok(VersionInfo {packages, dependencies})
     }
+}
+
+fn traverse_dependencies(dep_map: &BTreeMap<usize, BTreeSet<usize>>, index: usize) -> BTreeMap<usize, Vec<Dependencies>> {
+    let mut result = BTreeMap::new();
+    let mut mydeps = Vec::new();
+    for item in &dep_map[&index] {
+        mydeps.push(Dependencies (
+            traverse_dependencies(dep_map, *item),
+        ));
+    };
+    mydeps.sort_unstable(); // they're all integers so swapping equal elements doesn't matter
+    result.insert(index, mydeps);
+    result
 }
 
 #[cfg(feature = "from_metadata")]
