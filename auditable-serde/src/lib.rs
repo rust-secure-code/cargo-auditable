@@ -406,7 +406,10 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
                     result?
                 },
                 replace: None,
-                source: None,
+                source: match &pkg.source {
+                    Source::CratesIo => Some(cargo_lock::package::SourceId::from_url("registry+https://github.com/rust-lang/crates.io-index")?),
+                    _ => None // we don't store enough info about other sources to reconstruct the URL
+                }
             };
             if pkg.root {
                 if root_package.is_some() {
