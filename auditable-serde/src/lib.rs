@@ -41,6 +41,10 @@
 //! }
 //! ```
 
+mod validation;
+
+use validation::RawVersionInfo;
+
 use serde::{Deserialize, Serialize};
 
 use std::str::FromStr;
@@ -87,6 +91,7 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 /// that consumes the `Cargo.lock` file format. An example demonstrating it can be found
 /// [here](https://github.com/rust-secure-code/cargo-auditable/blob/master/auditable-serde/examples/json-to-toml.rs).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[serde(try_from = "RawVersionInfo")]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
 }
