@@ -66,3 +66,41 @@ fn has_cylic_dependencies(v: &RawVersionInfo) -> bool {
     // if the set isn't empty, the graph has cycles
     ! ts.is_empty()
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::*;
+    use super::*;
+
+    fn dummy_package(pkg_counter: u32, root: bool, deps: Vec<usize>) -> Package {
+        Package {
+            name: format!("test_{pkg_counter}"),
+            version: semver::Version::from_str("0.0.0").unwrap(),
+            source: Source::Local,
+            kind: DependencyKind::Build,
+            dependencies: deps,
+            root: root,
+        }
+    }
+
+    // these tests are very basic because `topological_sort` crate is already tested extensively
+
+    #[test]
+    fn cyclic_dependencies() {
+        let pkg0 = dummy_package(0, true, vec![1]);
+        let pkg1 = dummy_package(1, false, vec![0]);
+        let raw = RawVersionInfo { packages: vec![pkg0, pkg1] };
+        assert!(VersionInfo::try_from(raw).is_err());
+    }
+
+    #[test]
+    fn no_cyclic_dependencies() {
+        let pkg0 = dummy_package(0, true, vec![1]);
+        let pkg1 = dummy_package(1, false, vec![]);
+        let raw = RawVersionInfo { packages: vec![pkg0, pkg1] };
+        assert!(VersionInfo::try_from(raw).is_ok());
+    }
+
+}
