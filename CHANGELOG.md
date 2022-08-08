@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
  - `root: true` annotation to the root package in the serialized JSON, to make traversing the dependency graph easier.
+ - When deserializing JSON, we validate that there is no more than one root package.
+ - When deserializing JSON, we validate that there are no cycles in the dependency graph.
  - When converting to Cargo.lock format, source is now passed through if it's crates.io. The root package is also specified.
 
 ### Removed
