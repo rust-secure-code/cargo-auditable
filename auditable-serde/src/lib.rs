@@ -409,7 +409,9 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
                 source: None,
             };
             if pkg.root {
-                assert!(root_package.is_none(), "More than one root package in JSON format!");
+                if root_package.is_some() {
+                    return Err(cargo_lock::Error::Parse("More than one root package specified in JSON!".to_string()));
+                }
                 root_package = Some(lock_pkg.clone());
             }
             packages.push(lock_pkg);
