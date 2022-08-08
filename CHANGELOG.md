@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+ - `root: true` annotation to the root package in the serialized JSON, to make traversing the dependency graph easier.
+ - When converting to Cargo.lock format, source is now passed through if it's crates.io. The root package is also specified.
+
+### Removed
+ - The list of enabled features is no longer recorded in JSON, significantly reducing the binary size overhead. There didn't seem to be any use cases for it. If you need it, please contact us.
+
 ## 0.4.0 - 2022-08-06
 
 ### Added
