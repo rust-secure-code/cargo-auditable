@@ -389,9 +389,10 @@ impl TryFrom <&Package> for cargo_lock::Dependency {
 impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
     type Error = cargo_lock::Error;
     fn try_from(input: &VersionInfo) -> Result<Self, Self::Error> {
+        let mut root_package: Option<cargo_lock::Package> = None;
         let mut packages: Vec<cargo_lock::Package> = Vec::new();
         for pkg in input.packages.iter() {
-            packages.push(cargo_lock::package::Package {
+            let lock_pkg = cargo_lock::package::Package {
                 name: cargo_lock::package::Name::from_str(&pkg.name)?,
                 // to_string() is used to work around incompatible semver crate versions
                 version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
@@ -406,12 +407,17 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
                 },
                 replace: None,
                 source: None,
-            })
+            };
+            if pkg.root {
+                assert!(root_package.is_none(), "More than one root package in JSON format!");
+                root_package = Some(lock_pkg.clone());
+            }
+            packages.push(lock_pkg);
         }
         Ok(cargo_lock::Lockfile {
             version: cargo_lock::ResolveVersion::V2,
             packages: packages,
-            root: None,
+            root: root_package,
             metadata: std::collections::BTreeMap::new(),
             patch: cargo_lock::Patch { unused: Vec::new() },
         })
