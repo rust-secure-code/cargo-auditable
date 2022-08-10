@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "with_platform_dep",
+    "should_not_be_included",
+]
