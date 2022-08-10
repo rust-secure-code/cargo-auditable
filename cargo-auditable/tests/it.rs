@@ -289,3 +289,27 @@ fn test_build_script() {
         .iter()
         .any(|p| p.name == "crate_with_build_script"));
 }
+
+#[test]
+fn test_platform_specific_deps() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/platform_specific_deps/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &[]);
+    eprintln!("Test fixture binary map: {:?}", bins);
+
+    let test_target = std::env::var("AUDITABLE_TEST_TARGET");
+    if test_target.is_err() || ! test_target.unwrap().starts_with("m68k") {
+        // 'with_platform_dep' should only depend on 'should_not_be_included' on m68k processors
+        // and we're not building for those, so it should be omitted
+        let bin = &bins.get("with_platform_dep").unwrap()[0];
+        let dep_info = get_dependency_info(&bin);
+        eprintln!(
+            "{} dependency info: {:?}",
+            bin, dep_info
+        );
+        assert!(dep_info.packages.len() == 1);
+        assert!(!dep_info.packages.iter().any(|p| p.name == "should_not_be_included"));
+    }
+}
