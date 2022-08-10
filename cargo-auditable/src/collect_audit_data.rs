@@ -6,15 +6,15 @@ use std::{convert::TryFrom, str::from_utf8};
 use crate::rustc_arguments::RustcArgs;
 
 /// Run this in your build.rs to collect dependency info and make it available to `inject_dependency_list!` macro
-pub fn compressed_dependency_list(args: &RustcArgs) -> Vec<u8> {
-    let version_info = VersionInfo::try_from(&get_metadata(args)).unwrap();
+pub fn compressed_dependency_list(args: &RustcArgs, target_triple: &str) -> Vec<u8> {
+    let version_info = VersionInfo::try_from(&get_metadata(args, target_triple)).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
     compressed_json
 }
 
-fn get_metadata(args: &RustcArgs) -> Metadata {
+fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     let mut metadata_command = MetadataCommand::new();
 
     // Point cargo-metadata to the correct Cargo.toml in a workspace.
@@ -31,6 +31,10 @@ fn get_metadata(args: &RustcArgs) -> Metadata {
     }
     let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
     metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
+
+    // Restrict the dependency resolution to just the platform the binary is being compiled for.
+    // By default `cargo metadata` resolves the dependency tree for all platforms.
+    metadata_command.other_options(vec!["--filter-platform".to_owned(), target_triple.to_owned()]);
 
     // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
     // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
