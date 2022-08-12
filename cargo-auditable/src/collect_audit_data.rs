@@ -34,7 +34,10 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
 
     // Restrict the dependency resolution to just the platform the binary is being compiled for.
     // By default `cargo metadata` resolves the dependency tree for all platforms.
-    metadata_command.other_options(vec!["--filter-platform".to_owned(), target_triple.to_owned()]);
+    metadata_command.other_options(vec![
+        "--filter-platform".to_owned(),
+        target_triple.to_owned(),
+    ]);
 
     // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
     // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
