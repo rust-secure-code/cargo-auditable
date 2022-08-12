@@ -9,7 +9,7 @@ use std::{
     str::FromStr,
 };
 
-use auditable_serde::VersionInfo;
+use auditable_serde::{VersionInfo, DependencyKind};
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Artifact,
@@ -312,4 +312,25 @@ fn test_platform_specific_deps() {
         assert!(dep_info.packages.len() == 1);
         assert!(!dep_info.packages.iter().any(|p| p.name == "should_not_be_included"));
     }
+}
+
+#[test]
+fn test_build_then_runtime_dep() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/build_then_runtime_dep/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &[]);
+    eprintln!("Test fixture binary map: {:?}", bins);
+
+    // check that the build types are propagated correctly
+    let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
+    let dep_info = get_dependency_info(toplevel_crate_bin);
+    eprintln!(
+        "{} dependency info: {:?}",
+        toplevel_crate_bin, dep_info
+    );
+    assert!(dep_info.packages.len() == 3);
+    assert!(dep_info.packages.iter().any(|p| p.name == "build_dep" && p.kind == DependencyKind::Build));
+    assert!(dep_info.packages.iter().any(|p| p.name == "runtime_dep_of_build_dep" && p.kind == DependencyKind::Build));
 }
