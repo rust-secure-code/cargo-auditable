@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "top_level_crate",
+    "build_dep",
+    "runtime_dep_of_build_dep",
+]
