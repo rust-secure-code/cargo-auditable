@@ -29,10 +29,12 @@ In a word, no. The embedded dependency list uses under 5kB even on large depende
 
 ### Is there any tooling to consume this data?
 
+[trivy](https://github.com/aquasecurity/trivy) v0.31.0+ has support for detecting this data in binaries and reporting on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
+
 [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 
-[go-rustaudit](https://github.com/microsoft/go-rustaudit) is golang binary for parsing Rust audit information from binaries, used in syft.
+[go-rustaudit](https://github.com/microsoft/go-rustaudit) is a golang library for parsing the dependency list from binaries, used in syft and trivy.
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
 
