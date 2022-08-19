@@ -5,7 +5,7 @@ use std::{convert::TryFrom, str::from_utf8};
 
 use crate::rustc_arguments::RustcArgs;
 
-/// Run this in your build.rs to collect dependency info and make it available to `inject_dependency_list!` macro
+/// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(args: &RustcArgs, target_triple: &str) -> Vec<u8> {
     let version_info = VersionInfo::try_from(&get_metadata(args, target_triple)).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
