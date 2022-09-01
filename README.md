@@ -70,7 +70,7 @@ It's already there, in the `.rustc` section. Run `strings your_executable | grep
 
 ### What about keeping track of versions of statically linked C libraries?
 
-Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way.
+Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way. Adopting [the `-src` crate convention](https://internals.rust-lang.org/t/statically-linked-c-c-libraries/17175?u=shnatsel) would make it happen naturally.
 
 ### What is blocking uplifting this into Cargo?
 
