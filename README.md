@@ -70,7 +70,9 @@ All URLs and file paths are redacted, but the crate names, feature names and ver
 
 ### What about recording the compiler version?
 
-It's already there, in the `.rustc` section. Run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) - `strings` is overdue for a rewrite in a memory-safe language.
+The compiler itself [will start embedding it soon.](https://github.com/rust-lang/rust/pull/97550)
+
+On older versions it's already there in the debug info. On Unix you can run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html).
 
 ### What about keeping track of versions of statically linked C libraries?
 
