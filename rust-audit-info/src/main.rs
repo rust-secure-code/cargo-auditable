@@ -34,7 +34,7 @@ fn actual_main() -> Result<(), Box<dyn Error>> {
 
     let decompressed_data =
         decompress_to_vec_zlib_with_limit(&compressed_audit_data, limits.decompressed_json_size)
-            .map_err(|_| "Failed to decompress audit data")?;
+            .map_err(|e| format!("Failed to decompress audit data: {}", e))?;
 
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
