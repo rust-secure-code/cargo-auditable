@@ -21,6 +21,10 @@ cargo auditable build --release
 rust-audit-info target/release/your-project
 ```
 
+`cargo auditable` works with any Cargo command, so e.g. `cargo auditable install` is fine. All arguments are passed to `cargo` as-is.
+
+For usage of `rust-audit-info` see [here](https://github.com/rust-secure-code/cargo-auditable/tree/master/rust-audit-info#usage).
+
 ## FAQ
 
 ### Doesn't this bloat my binary?
