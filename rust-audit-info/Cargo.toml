@@ -12,4 +12,4 @@ edition = "2018"
 
 [dependencies]
 auditable-extract = {version = "0.3.0", path = "../auditable-extract"}
-miniz_oxide = "0.5.3"
+miniz_oxide = { version = "0.6.2", features = ["std"] }
