@@ -469,10 +469,8 @@ mod tests {
         let mut metadata = *schema.schema.metadata.clone().unwrap();
 
         let title = "cargo-auditable schema".to_string();
-        let id = "https://raw.githubusercontent.com/rust-secure-code/cargo-auditable/master/cargo-auditable.schema.json"
-            .to_string();
         metadata.title = Some(title);
-        metadata.id = Some(id);
+        metadata.id = Some("https://rustsec.org/schemas/cargo-auditable.json".to_string());
         metadata.examples = [].to_vec();
         metadata.description = Some(
             "Describes the `VersionInfo` JSON data structure that cargo-auditable embeds into Rust binaries."

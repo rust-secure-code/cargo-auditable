@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://raw.githubusercontent.com/rust-secure-code/cargo-auditable/master/cargo-auditable.schema.json",
+    "$id": "https://rustsec.org/schemas/cargo-auditable.json",
     "title": "cargo-auditable schema",
     "description": "Describes the `VersionInfo` JSON data structure that cargo-auditable embeds into Rust binaries.",
     "type": "object",
