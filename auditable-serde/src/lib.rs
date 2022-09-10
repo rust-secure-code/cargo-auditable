@@ -92,16 +92,19 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 /// [here](https://github.com/rust-secure-code/cargo-auditable/blob/master/auditable-serde/examples/json-to-toml.rs).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(try_from = "RawVersionInfo")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
 }
 
 /// A single package in the dependency tree
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Package {
     /// Crate name specified in the `name` field in Cargo.toml file. Examples: "libc", "rand"
     pub name: String,
     /// The package's version in the [semantic version](https://semver.org) format. 
+    #[cfg_attr(feature = "schema", schemars(with = "String"))]
     pub version: semver::Version,
     /// Currently "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
     pub source: Source,
@@ -129,6 +132,7 @@ pub struct Package {
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 #[serde(from = "&str")]
 #[serde(into = "String")]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Source {
     CratesIo,
     Git,
@@ -172,8 +176,9 @@ impl From<&cargo_metadata::Source> for Source {
     }
 }
 
-/// The fields are ordered from weakest to strongest so that casting to integer would make sense
+/// The values are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum DependencyKind {
     #[serde(rename = "build")]
     Build,
@@ -187,7 +192,7 @@ impl Default for DependencyKind {
     }
 }
 
-/// The fields are ordered from weakest to strongest so that casting to integer would make sense
+/// The values are ordered from weakest to strongest so that casting to integer would make sense
 #[cfg(feature = "from_metadata")]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 enum PrivateDepKind {
@@ -437,6 +442,7 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::{convert::TryInto, path::PathBuf};
 
     #[cfg(feature = "from_metadata")]
@@ -454,5 +460,51 @@ mod tests {
         let metadata = load_own_metadata();
         let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
         let _lockfile_struct: cargo_lock::Lockfile = (&version_info_struct).try_into().unwrap();
+    }
+
+    #[cfg(feature = "schema")]
+    /// Generate a JsonSchema for VersionInfo
+    fn generate_schema() -> schemars::schema::RootSchema {
+        let mut schema = schemars::schema_for!(VersionInfo);
+        let mut metadata = *schema.schema.metadata.clone().unwrap();
+
+        let title = "cargo-auditable schema".to_string();
+        let id = "https://raw.githubusercontent.com/rust-secure-code/cargo-auditable/master/cargo-auditable.schema.json"
+            .to_string();
+        metadata.title = Some(title);
+        metadata.id = Some(id);
+        metadata.examples = [].to_vec();
+        metadata.description = Some(
+            "Describes the `VersionInfo` JSON data structure that cargo-auditable embeds into Rust binaries."
+                .to_string(),
+        );
+        schema.schema.metadata = Some(Box::new(metadata));
+        schema
+    }
+
+    #[test]
+    #[cfg(feature = "schema")]
+    fn verify_schema() {
+        use schemars::schema::RootSchema;
+
+        let expected = generate_schema();
+        // Printing here makes it easier to update the schema when required
+        println!(
+            "expected schema:\n{}",
+            serde_json::to_string_pretty(&expected).unwrap()
+        );
+
+        let contents = fs::read_to_string(
+            // `CARGO_MANIFEST_DIR` env is path to dir containing auditable-serde's Cargo.toml
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap()
+                .join("cargo-auditable.schema.json"),
+        )
+        .expect("error reading existing schema");
+        let actual: RootSchema =
+            serde_json::from_str(&contents).expect("error deserializing existing schema");
+
+        assert_eq!(expected, actual);
     }
 }
