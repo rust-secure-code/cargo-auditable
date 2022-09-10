@@ -15,6 +15,7 @@ all-features = true
 default = []
 from_metadata = ["cargo_metadata"]
 toml = ["cargo-lock"]
+schema = ["schemars"]
 
 [dependencies]
 serde = { version = "1", features = ["serde_derive"] }
@@ -23,6 +24,7 @@ semver = { version = "1.0", features = ["serde"] }
 cargo_metadata = { version = "0.15", optional = true }
 cargo-lock = { version = "8.0.2", default-features = false, optional = true }
 topological-sort = "0.2.2"
+schemars = {version = "0.8.10", optional = true }
 
 [[example]]
 name = "json-to-toml"
