@@ -1,12 +1,27 @@
 ## Parsing the data embedded by `cargo auditable`
 
-This document describes the steps to implement your own parser, if your language doesn't have one yet. Since the format simply uses Zlib and JSON, implementing a parser should be quite trivial. To give you a sense, this is a parser for Linux binaries written in Bash:
+Since the format simply uses Zlib and JSON, implementing a parser should be trivial. This is a barebones parser written in Python:
 
+```python3
+import lief, zlib, json
+binary = lief.parse("/path/to/file")
+audit_data_section = next(filter(lambda section: section.name == ".dep-v0", binary.sections))
+json_string = zlib.decompress(audit_data_section.content)
+audit_data = json.loads(json_string)
+```
+On Linux you can even kludge together a parser for Linux binaries in the shell, if you can't use [`rust-audit-info`](rust-audit-info/README.md):
 ```bash
 objcopy --dump-section .dep-v0=/dev/stdout $1 | pigz -zd -
 ```
 
-**Note:** we provide the cross-platform tool [`rust-audit-info`](rust-audit-info/README.md) which can be called as a subprocess from any language. It will handle all the binary wrangling for you and output the JSON embedded in the binary. It is designed for robustness and written in 100% safe Rust. You can use it to bypass implementing a parser entirely.
+### Step 0: Check if a parser already exists
+
+The following parsing libraries are available:
+
+ - [`auditable-extract`]() in Rust
+ - [`go-rustaudit`](https://github.com/microsoft/go-rustaudit) in Go
+
+We also provide a standalone binary [`rust-audit-info`](rust-audit-info/README.md) that can be called as a subprocess from any language. It will handle all the binary wrangling for you and output the JSON. Unlike most binary parsers, it is designed for resilience and is written in 100% safe Rust, so the vulnerabilites that [plague other parsers](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) are impossible in it.
 
 ### Step 1: Obtain the compressed data from the binary
 
