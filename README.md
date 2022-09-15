@@ -13,8 +13,6 @@ The end goal is to get Cargo itself to encode this information in binaries. Ther
 ```bash
 # Install the tooling
 cargo install cargo-auditable rust-audit-info
-# Open your Rust project
-cd your_project
 # Build your project with dependency lists embedded in the binaries
 cargo auditable build --release
 # Recover the dependency info from the compiled binary
