@@ -4,7 +4,7 @@ Know the exact crate versions used to build your Rust executable. Audit binaries
 
 This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
 
-Linux, Windows and Mac OS are officially supported. All ELF targets should work, but are not tested on CI.
+Linux, Windows and Mac OS are officially supported. All other ELF targets should work, but are not tested on CI. WASM is not supported, but patches are welcome.
 
 The end goal is to get Cargo itself to encode this information in binaries. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
@@ -21,7 +21,7 @@ rust-audit-info target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
-For usage of `rust-audit-info` see [here](https://github.com/rust-secure-code/cargo-auditable/tree/master/rust-audit-info#usage).
+For usage of `rust-audit-info` see [here](https://github.com/rust-secure-code/cargo-auditable/tree/master/rust-audit-info#readme).
 
 ## FAQ
 
@@ -36,22 +36,19 @@ In a word, no. The embedded dependency list uses under 5kB even on large depende
 [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 
-[go-rustaudit](https://github.com/microsoft/go-rustaudit) is a golang library for parsing the dependency list from binaries, used in syft and trivy.
+[`cargo audit`](https://crates.io/crates/cargo-audit) support is coming soon.
 
-It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). You can also write your own tooling fairly easily - `auditable-extract` and `auditable-serde` crates handle all the data extraction and parsing for you. See [the docs](https://docs.rs/auditable-extract/) to get started.
+It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be very easy to parse, even if your language does not have a library for that yet, see below.
 
 ### What is the data format, exactly?
 
 The data format is described by the JSON schema [here](cargo-auditable.schema.json).
 The JSON is Zlib-compressed and placed in a linker section named `.dep-v0`.
+That's it. You can find more info about parsing it [here](PARSING.md).
 
 ### Can I read this data using a tool written in a different language?
 
-Yes. The data format is designed for interoperability with alternative implementations. You can also use pre-existing platform-specific tools or libraries for data extraction. E.g. on Linux:
-```bash
-objcopy --dump-section .dep-v0=/dev/stdout target/release/hello-auditable | pigz -zd -
-```
-However, [don't run legacy tools on untrusted files](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html). Use the `auditable-extract` crate or the `rust-audit-info` command-line tool if possible - they are written in 100% safe Rust, so they will not have such vulnerabilities.
+Yes. The data format is designed for interoperability with alternative implementations. In fact, parsing it only takes [5 lines of Python](PARSING.md). See [here](PARSING.md) for documentation on parsing the data.
 
 ### What about embedded platforms?
 
@@ -63,9 +60,7 @@ The data format is designed not to disrupt reproducible builds. It contains no t
 
 ### Does this disclose any sensitive information?
 
-The list of enabled features is the only newly disclosed information.
-
-All URLs and file paths are redacted, but the crate names, feature names and versions are recorded as-is. At present panic messages already disclose all this info and more, except feature names. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
+No. All URLs and file paths are redacted, but the crate names and versions are recorded as-is. At present panic messages already disclose all this info and more. Also, chances are that you're legally obligated have to disclose use of specific open-source crates anyway, since MIT and many other licenses require it.
 
 ### What about recording the compiler version?
 
@@ -75,7 +70,7 @@ On older versions it's already there in the debug info. On Unix you can run `str
 
 ### What about keeping track of versions of statically linked C libraries?
 
-Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way. Adopting [the `-src` crate convention](https://internals.rust-lang.org/t/statically-linked-c-c-libraries/17175?u=shnatsel) would make it happen naturally.
+Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way. Adopting [the `-src` crate convention](https://internals.rust-lang.org/t/statically-linked-c-c-libraries/17175?u=shnatsel) would make it happen naturally, and will have other benefits as well, so that's probably the best route.
 
 ### What is blocking uplifting this into Cargo?
 
