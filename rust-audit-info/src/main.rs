@@ -13,7 +13,7 @@ Usage: rust-audit-info FILE [INPUT_SIZE_LIMIT] [OUTPUT_SIZE_LIMIT]
 The limits are specified in bytes. The default values are:
 
     INPUT_SIZE_LIMIT: 1073741824 (1 GiB)
-    OUTPUT_SIZE_LIMIT: 67108864 (64 MiB)
+    OUTPUT_SIZE_LIMIT: 8388608 (8 MiB)
 ";
 
 fn main() {
@@ -100,7 +100,7 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             input_file_size: 1024 * 1024 * 1024,      // 1GiB
-            decompressed_json_size: 1024 * 1024 * 16, // 8MiB
+            decompressed_json_size: 1024 * 1024 * 8, // 8MiB
         }
     }
 }
