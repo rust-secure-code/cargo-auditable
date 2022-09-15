@@ -18,7 +18,7 @@ objcopy --dump-section .dep-v0=/dev/stdout $1 | pigz -zd -
 
 The following parsing libraries are available:
 
- - [`auditable-extract`]() in Rust
+ - [`auditable-extract`](https://docs.rs/auditable-extract/) in Rust
  - [`go-rustaudit`](https://github.com/microsoft/go-rustaudit) in Go
 
 We also provide a standalone binary [`rust-audit-info`](rust-audit-info/README.md) that can be called as a subprocess from any language. It will handle all the binary wrangling for you and output the JSON. Unlike most binary parsers, it is designed for resilience and is written in 100% safe Rust, so the vulnerabilites that [plague other parsers](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) are impossible in it.
