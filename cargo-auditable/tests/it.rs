@@ -2,11 +2,9 @@
 use std::{
     collections::HashMap,
     ffi::OsStr,
-    fs::File,
-    io::{Read, Write},
+    io::Write,
     path::PathBuf,
     process::{Command, Output, Stdio},
-    str::FromStr,
 };
 
 use auditable_serde::{DependencyKind, VersionInfo};
@@ -14,7 +12,6 @@ use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Artifact,
 };
-use miniz_oxide::inflate::decompress_to_vec_zlib;
 
 // Path to cargo-auditable binary under test
 const EXE: &str = env!("CARGO_BIN_EXE_cargo-auditable");
@@ -108,15 +105,7 @@ fn ensure_build_succeeded(output: &Output) {
 }
 
 fn get_dependency_info(binary: &Utf8Path) -> VersionInfo {
-    // TODO merge with rust-audit-info and move into auditable extract?
-    let mut f = File::open(binary).unwrap();
-    let mut data = Vec::new();
-    f.read_to_end(&mut data).unwrap();
-    let compressed_audit_data = auditable_extract::raw_auditable_data(&data).unwrap();
-    let decompressed_data =
-        decompress_to_vec_zlib(compressed_audit_data).expect("Failed to decompress audit info");
-    let decompressed_data = String::from_utf8(decompressed_data).unwrap();
-    auditable_serde::VersionInfo::from_str(&decompressed_data).unwrap()
+    audit_info::audit_info_from_file(binary.as_std_path(), Default::default()).unwrap()
 }
 
 #[test]
