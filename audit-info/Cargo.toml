@@ -1,0 +1,21 @@
+[package]
+name = "audit-info"
+version = "0.5.0-alpha.1"
+authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rust-secure-code/cargo-auditable"
+description = "High-level crate to extract the dependency trees embedded in binaries by `cargo auditable`."
+categories = ["encoding"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+auditable-extract = {version = "0.3.0", path = "../auditable-extract"}
+auditable-serde = {version = "0.5.0", path = "../auditable-serde"}
+miniz_oxide = { version = "0.6.2", features = ["std"] }
+serde_json = { version = "1.0.57", optional = true }
+
+[features]
+serde = ["serde_json"]
+default = ["serde"]
