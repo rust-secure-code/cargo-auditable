@@ -6,6 +6,7 @@ pub enum Error {
     Io(std::io::Error),
     BinaryParsing(auditable_extract::Error),
     Decompression(miniz_oxide::inflate::DecompressError),
+    #[cfg(feature = "serde")]
     Json(serde_json::Error),
 }
 
@@ -18,6 +19,7 @@ impl std::fmt::Display for Error {
             Error::Io(e) => write!(f, "Failed to read the binary: {}", e),
             Error::BinaryParsing(e) => write!(f, "Failed to parse the binary: {}", e),
             Error::Decompression(e) => write!(f, "Failed to decompress audit data: {}", e),
+            #[cfg(feature = "serde")]
             Error::Json(e) => write!(f, "Failed to deserialize audit data from JSON: {}", e),
         }
     }
@@ -32,6 +34,7 @@ impl std::error::Error for Error {
             Error::Io(e) => Some(e),
             Error::BinaryParsing(e) => Some(e),
             Error::Decompression(e) => Some(e),
+            #[cfg(feature = "serde")]
             Error::Json(e) => Some(e),
         }
     }
@@ -61,6 +64,7 @@ impl From<miniz_oxide::inflate::DecompressError> for Error {
     }
 }
 
+#[cfg(feature = "serde")]
 impl From<serde_json::Error> for Error {
     fn from(e: serde_json::Error) -> Self {
         Self::Json(e)
