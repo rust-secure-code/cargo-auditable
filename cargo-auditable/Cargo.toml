@@ -21,4 +21,4 @@ pico-args = "0.5"
 
 [dev-dependencies]
 cargo_metadata = "0.15"
-auditable-extract = {version = "0.3.0", path = "../auditable-extract"}
+audit-info = {version = "0.5.0-alpha.1", path = "../audit-info"}
