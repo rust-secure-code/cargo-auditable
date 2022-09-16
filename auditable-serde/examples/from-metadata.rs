@@ -1,11 +1,10 @@
 /// Prints the audit data for the package in the current directory.
 /// Passes any command-line parameters it receives to `cargo metadata`,
 /// so you can specify `--filter-platform`, `--features` and other flags.
-
 use auditable_serde::VersionInfo;
 use cargo_metadata::{Metadata, MetadataCommand};
 
-use std::{error::Error, convert::TryFrom};
+use std::{convert::TryFrom, error::Error};
 
 fn get_metadata() -> Result<Metadata, cargo_metadata::Error> {
     let mut metadata_command = MetadataCommand::new();

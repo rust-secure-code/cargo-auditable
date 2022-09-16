@@ -1,14 +1,14 @@
 #![forbid(unsafe_code)]
 
 use auditable_extract::raw_auditable_data;
+#[cfg(feature = "serde")]
+use auditable_serde::VersionInfo;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
+#[cfg(feature = "serde")]
+use serde_json;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
-#[cfg(feature = "serde")]
-use serde_json;
-#[cfg(feature = "serde")]
-use auditable_serde::VersionInfo;
 
 mod error;
 
@@ -60,10 +60,7 @@ pub fn raw_audit_info_from_reader<T: BufRead>(
 // Factored into its own function for ease of unit testing,
 // and also so that the large allocation of the input file is dropped
 // before we start decompressing the data to minimize peak memory usage
-fn get_compressed_audit_data<T: BufRead>(
-    reader: &mut T,
-    limits: Limits,
-) -> Result<Vec<u8>, Error> {
+fn get_compressed_audit_data<T: BufRead>(reader: &mut T, limits: Limits) -> Result<Vec<u8>, Error> {
     // In case you're wondering why the check for the limit is weird like that:
     // When .take() returns EOF, it doesn't tell you if that's because it reached the limit
     // or because the underlying reader ran out of data.
@@ -96,10 +93,10 @@ pub fn audit_info_from_slice<T: BufRead>(
     decompressed_json_size_limit: usize,
 ) -> Result<Vec<u8>, Error> {
     Ok(serde_json::from_slice(&raw_audit_info_from_slice(
-        input_binary, decompressed_json_size_limit,
+        input_binary,
+        decompressed_json_size_limit,
     )?)?)
 }
-
 
 /// The input slice should contain the entire binary.
 /// This function is useful if you have already loaded the binary to memory, e.g. via memory-mapping.

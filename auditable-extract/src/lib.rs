@@ -4,12 +4,12 @@
 //! [`cargo auditable`](https://github.com/rust-secure-code/cargo-auditable).
 //!
 //! This crate parses platform-specific binary formats ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format),
-//! [PE](https://en.wikipedia.org/wiki/Portable_Executable), 
+//! [PE](https://en.wikipedia.org/wiki/Portable_Executable),
 //! [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and extracts the audit data.
-//! 
+//!
 //! Unlike other binary parsing crates, it is specifically designed to be resilient to malicious input.
 //! It 100% safe Rust (including all dependencies) and performs no heap allocations.
-//! 
+//!
 //! ## Usage
 //!
 //! The following snippet demonstrates full extraction pipeline, including decompression
@@ -40,7 +40,6 @@
 //! }
 //! ```
 
-
 use binfarce::Format;
 
 /// Extracts the Zlib-compressed dependency info from an executable.
@@ -48,28 +47,32 @@ use binfarce::Format;
 /// This function does not allocate any memory on the heap and can be safely given untrusted input.
 pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
     match binfarce::detect_format(data) {
-        Format::Elf32{byte_order} => {
+        Format::Elf32 { byte_order } => {
             let section = binfarce::elf32::parse(data, byte_order)?
-                .section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
+                .section_with_name(".dep-v0")?
+                .ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
-        },
-        Format::Elf64{byte_order} => {
+        }
+        Format::Elf64 { byte_order } => {
             let section = binfarce::elf64::parse(data, byte_order)?
-                .section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
+                .section_with_name(".dep-v0")?
+                .ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
-        },
+        }
         Format::Macho => {
             let parsed = binfarce::macho::parse(data)?;
             let section = parsed.section_with_name("__DATA", ".dep-v0")?;
             let section = section.ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
-        },
+        }
         Format::PE => {
             let parsed = binfarce::pe::parse(data)?;
-            let section = parsed.section_with_name(".dep-v0")?.ok_or(Error::NoAuditData)?;
+            let section = parsed
+                .section_with_name(".dep-v0")?
+                .ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
-        _ => Err(Error::NotAnExecutable)
+        _ => Err(Error::NotAnExecutable),
     }
 }
 
@@ -81,7 +84,7 @@ pub enum Error {
     MalformedFile,
     SymbolsSectionIsMissing,
     SectionIsMissing,
-    UnexpectedSectionType
+    UnexpectedSectionType,
 }
 
 impl std::error::Error for Error {}

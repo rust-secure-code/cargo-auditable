@@ -7,9 +7,9 @@
 //! and implements the serialization/deserialization routines via `serde`.
 //! It also provides optional conversions from [`cargo metadata`](https://docs.rs/cargo_metadata/)
 //! and to [`Cargo.lock`](https://docs.rs/cargo-lock) formats.
-//! 
+//!
 //! The [`VersionInfo`] struct is where all the magic happens, see the docs on it for more info.
-//! 
+//!
 //! ## Basic usage
 //!
 //! The following snippet demonstrates full extraction pipeline, including
@@ -47,17 +47,16 @@ use validation::RawVersionInfo;
 
 use serde::{Deserialize, Serialize};
 
-use std::str::FromStr;
 #[cfg(feature = "toml")]
 use cargo_lock;
+#[cfg(any(feature = "from_metadata", feature = "toml"))]
+use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-#[cfg(any(feature = "from_metadata",feature = "toml"))]
-use std::convert::TryFrom;
+use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
-
 #[cfg(feature = "from_metadata")]
-use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::HashMap};
+use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
 
 /// Dependency tree embedded in the binary.
 ///
@@ -80,7 +79,7 @@ use std::{error::Error, cmp::Ordering::*, cmp::min, fmt::Display, collections::H
 ///
 /// ## Optional features
 ///
-/// If the `from_metadata` feature is enabled, a conversion from 
+/// If the `from_metadata` feature is enabled, a conversion from
 /// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
 /// is possible via the `TryFrom` trait. This is the preferred way to construct this structure.
 /// An example demonstrating that can be found
@@ -103,7 +102,7 @@ pub struct VersionInfo {
 pub struct Package {
     /// Crate name specified in the `name` field in Cargo.toml file. Examples: "libc", "rand"
     pub name: String,
-    /// The package's version in the [semantic version](https://semver.org) format. 
+    /// The package's version in the [semantic version](https://semver.org) format.
     #[cfg_attr(feature = "schema", schemars(with = "String"))]
     pub version: semver::Version,
     /// Currently "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
@@ -138,7 +137,7 @@ pub enum Source {
     Git,
     Local,
     Registry,
-    Other(String)
+    Other(String),
 }
 
 impl From<&str> for Source {
@@ -148,7 +147,7 @@ impl From<&str> for Source {
             "git" => Self::Git,
             "local" => Self::Local,
             "registry" => Self::Registry,
-            other_str => Self::Other(other_str.to_string())
+            other_str => Self::Other(other_str.to_string()),
         }
     }
 }
@@ -157,10 +156,10 @@ impl From<Source> for String {
     fn from(s: Source) -> String {
         match s {
             Source::CratesIo => "crates.io".to_owned(),
-            Source::Git =>  "git".to_owned(),
-            Source::Local =>  "local".to_owned(),
-            Source::Registry =>  "registry".to_owned(),
-            Source::Other(string) => string
+            Source::Git => "git".to_owned(),
+            Source::Local => "local".to_owned(),
+            Source::Registry => "registry".to_owned(),
+            Source::Other(string) => string,
         }
     }
 }
@@ -170,8 +169,12 @@ impl From<&cargo_metadata::Source> for Source {
     fn from(meta_source: &cargo_metadata::Source) -> Self {
         match meta_source.repr.as_str() {
             "registry+https://github.com/rust-lang/crates.io-index" => Source::CratesIo,
-            source => Source::from(source.split('+').next()
-                .expect("Encoding of source strings in `cargo metadata` has changed!"))
+            source => Source::from(
+                source
+                    .split('+')
+                    .next()
+                    .expect("Encoding of source strings in `cargo metadata` has changed!"),
+            ),
         }
     }
 }
@@ -205,14 +208,16 @@ enum PrivateDepKind {
 impl From<PrivateDepKind> for DependencyKind {
     fn from(priv_kind: PrivateDepKind) -> Self {
         match priv_kind {
-            PrivateDepKind::Development => panic!("Cannot convert development dependency to serializable format"),
+            PrivateDepKind::Development => {
+                panic!("Cannot convert development dependency to serializable format")
+            }
             PrivateDepKind::Build => DependencyKind::Build,
             PrivateDepKind::Runtime => DependencyKind::Runtime,
         }
     }
 }
 
-fn is_default<T: Default + PartialEq> (value: &T) -> bool {
+fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     let default_value = T::default();
     value == &default_value
 }
@@ -231,12 +236,12 @@ impl From<&cargo_metadata::DependencyKind> for PrivateDepKind {
             cargo_metadata::DependencyKind::Normal => PrivateDepKind::Runtime,
             cargo_metadata::DependencyKind::Development => PrivateDepKind::Development,
             cargo_metadata::DependencyKind::Build => PrivateDepKind::Build,
-            _ => panic!("Unknown dependency kind")
+            _ => panic!("Unknown dependency kind"),
         }
     }
 }
 
-/// Error returned by the conversion from 
+/// Error returned by the conversion from
 /// [`cargo_metadata::Metadata`](https://docs.rs/cargo_metadata/0.11.1/cargo_metadata/struct.Metadata.html)
 #[cfg(feature = "from_metadata")]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -266,8 +271,15 @@ impl Error for InsufficientMetadata {}
 impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
     type Error = InsufficientMetadata;
     fn try_from(metadata: &cargo_metadata::Metadata) -> Result<Self, Self::Error> {
-        let toplevel_crate_id = metadata.resolve.as_ref().ok_or(InsufficientMetadata::NoDeps)?
-        .root.as_ref().ok_or(InsufficientMetadata::VirtualWorkspace)?.repr.as_str();
+        let toplevel_crate_id = metadata
+            .resolve
+            .as_ref()
+            .ok_or(InsufficientMetadata::NoDeps)?
+            .root
+            .as_ref()
+            .ok_or(InsufficientMetadata::VirtualWorkspace)?
+            .repr
+            .as_str();
 
         // Walk the dependency tree and resolve dependency kinds for each package.
         // We need this because there may be several different paths to the same package
@@ -277,7 +289,8 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         // as *build* dependency, but Cargo flags it as a runtime dependency.
         // Hoo boy, here I go hand-rolling BFS again!
         let nodes = &metadata.resolve.as_ref().unwrap().nodes;
-        let id_to_node: HashMap<&str, &cargo_metadata::Node> = nodes.iter().map(|n| (n.id.repr.as_str(), n)).collect();
+        let id_to_node: HashMap<&str, &cargo_metadata::Node> =
+            nodes.iter().map(|n| (n.id.repr.as_str(), n)).collect();
         let mut id_to_dep_kind: HashMap<&str, PrivateDepKind> = HashMap::new();
         id_to_dep_kind.insert(toplevel_crate_id, PrivateDepKind::Runtime);
         let mut current_queue: Vec<&cargo_metadata::Node> = vec![id_to_node[toplevel_crate_id]];
@@ -290,7 +303,9 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                     let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
                     let dep_kind = min(dep_kind, parent_dep_kind);
                     let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
-                    if dep_kind_on_previous_visit == None || &dep_kind > dep_kind_on_previous_visit.unwrap() {
+                    if dep_kind_on_previous_visit == None
+                        || &dep_kind > dep_kind_on_previous_visit.unwrap()
+                    {
                         // if we haven't visited this node in dependency graph yet
                         // or if we've visited it with a weaker dependency type,
                         // records its new dependency type and add it to the queue to visit its dependencies
@@ -308,13 +323,17 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         };
 
         // Remove dev-only dependencies from the package list and collect them to Vec
-        let mut packages: Vec<&cargo_metadata::Package> = metadata.packages.iter().filter(|p| {
-            let dep_kind = metadata_package_dep_kind(p);
-            // Dependencies that are present in the workspace but not used by the current root crate
-            // will not be in the map we've built by traversing the root crate's dependencies.
-            // In this case they will not be in the map at all. We skip them, along with dev-dependencies.
-            dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
-        }).collect();
+        let mut packages: Vec<&cargo_metadata::Package> = metadata
+            .packages
+            .iter()
+            .filter(|p| {
+                let dep_kind = metadata_package_dep_kind(p);
+                // Dependencies that are present in the workspace but not used by the current root crate
+                // will not be in the map we've built by traversing the root crate's dependencies.
+                // In this case they will not be in the map at all. We skip them, along with dev-dependencies.
+                dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
+            })
+            .collect();
 
         // This function is the simplest place to introduce sorting, since
         // it contains enough data to distinguish between equal-looking packages
@@ -329,9 +348,13 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
             // This is a workaround for Package not implementing Ord.
             // Deriving it in cargo_metadata might be more reliable?
             let names_order = a.name.cmp(&b.name);
-            if names_order != Equal {return names_order;}
+            if names_order != Equal {
+                return names_order;
+            }
             let versions_order = a.name.cmp(&b.name);
-            if versions_order != Equal {return versions_order;}
+            if versions_order != Equal {
+                return versions_order;
+            }
             // IDs are unique so comparing them should be sufficient
             a.id.repr.cmp(&b.id.repr)
         });
@@ -341,25 +364,27 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         let mut id_to_index = HashMap::new();
         for (index, package) in packages.iter().enumerate() {
             id_to_index.insert(package.id.repr.as_str(), index);
-        };
-        
+        }
+
         // Convert packages from cargo-metadata representation to our representation
-        let mut packages: Vec<Package> = packages.into_iter().map(|p| {
-            Package {
+        let mut packages: Vec<Package> = packages
+            .into_iter()
+            .map(|p| Package {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
                 source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
                 root: p.id.repr == toplevel_crate_id,
-            }
-        }).collect();
+            })
+            .collect();
 
         // Fill in dependency info from resolved dependency graph
         for node in metadata.resolve.as_ref().unwrap().nodes.iter() {
             let package_id = node.id.repr.as_str();
-            if id_to_index.contains_key(package_id) { // dev-dependencies are not included
-                let package : &mut Package = &mut packages[id_to_index[package_id]];
+            if id_to_index.contains_key(package_id) {
+                // dev-dependencies are not included
+                let package: &mut Package = &mut packages[id_to_index[package_id]];
                 // Dependencies
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
@@ -372,18 +397,20 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 package.dependencies.sort_unstable();
             }
         }
-        Ok(VersionInfo {packages})
+        Ok(VersionInfo { packages })
     }
 }
 
 #[cfg(feature = "from_metadata")]
 fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
-    deps.iter().map(|d| PrivateDepKind::from(&d.kind)).max()
-    .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
+    deps.iter()
+        .map(|d| PrivateDepKind::from(&d.kind))
+        .max()
+        .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
 }
 
 #[cfg(feature = "toml")]
-impl TryFrom <&Package> for cargo_lock::Dependency {
+impl TryFrom<&Package> for cargo_lock::Dependency {
     type Error = cargo_lock::Error;
     fn try_from(input: &Package) -> Result<Self, Self::Error> {
         Ok(cargo_lock::Dependency {
@@ -402,28 +429,37 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
         let mut root_package: Option<cargo_lock::Package> = None;
         let mut packages: Vec<cargo_lock::Package> = Vec::new();
         for pkg in input.packages.iter() {
-            let lock_pkg = cargo_lock::package::Package {
-                name: cargo_lock::package::Name::from_str(&pkg.name)?,
-                // to_string() is used to work around incompatible semver crate versions
-                version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
-                checksum: Option::None,
-                dependencies: {
-                    let result: Result<Vec<_>, _> = pkg.dependencies.iter().map(|i| {
-                        input.packages.get(*i).ok_or(cargo_lock::Error::Parse(
+            let lock_pkg =
+                cargo_lock::package::Package {
+                    name: cargo_lock::package::Name::from_str(&pkg.name)?,
+                    // to_string() is used to work around incompatible semver crate versions
+                    version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
+                    checksum: Option::None,
+                    dependencies: {
+                        let result: Result<Vec<_>, _> =
+                            pkg.dependencies
+                                .iter()
+                                .map(|i| {
+                                    input.packages.get(*i).ok_or(cargo_lock::Error::Parse(
                             format!("There is no dependency with index {} in the input JSON", i))
                         )?.try_into()
-                    }).collect();
-                    result?
-                },
-                replace: None,
-                source: match &pkg.source {
-                    Source::CratesIo => Some(cargo_lock::package::SourceId::from_url("registry+https://github.com/rust-lang/crates.io-index")?),
-                    _ => None // we don't store enough info about other sources to reconstruct the URL
-                }
-            };
+                                })
+                                .collect();
+                        result?
+                    },
+                    replace: None,
+                    source: match &pkg.source {
+                        Source::CratesIo => Some(cargo_lock::package::SourceId::from_url(
+                            "registry+https://github.com/rust-lang/crates.io-index",
+                        )?),
+                        _ => None, // we don't store enough info about other sources to reconstruct the URL
+                    },
+                };
             if pkg.root {
                 if root_package.is_some() {
-                    return Err(cargo_lock::Error::Parse("More than one root package specified in JSON!".to_string()));
+                    return Err(cargo_lock::Error::Parse(
+                        "More than one root package specified in JSON!".to_string(),
+                    ));
                 }
                 root_package = Some(lock_pkg.clone());
             }
@@ -448,7 +484,8 @@ mod tests {
     #[cfg(feature = "from_metadata")]
     fn load_own_metadata() -> cargo_metadata::Metadata {
         let mut cmd = cargo_metadata::MetadataCommand::new();
-        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
+        let cargo_toml_path =
+            PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
         cmd.manifest_path(cargo_toml_path);
         cmd.exec().unwrap()
     }
