@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use auditable_extract::raw_auditable_data;
 use auditable_serde::VersionInfo;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
