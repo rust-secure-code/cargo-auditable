@@ -17,7 +17,6 @@
     },
     "definitions": {
         "DependencyKind": {
-            "description": "The values are ordered from weakest to strongest so that casting to integer would make sense",
             "type": "string",
             "enum": [
                 "build",

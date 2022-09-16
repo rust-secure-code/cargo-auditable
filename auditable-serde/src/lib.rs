@@ -176,10 +176,10 @@ impl From<&cargo_metadata::Source> for Source {
     }
 }
 
-/// The values are ordered from weakest to strongest so that casting to integer would make sense
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum DependencyKind {
+    // The values are ordered from weakest to strongest so that casting to integer would make sense
     #[serde(rename = "build")]
     Build,
     #[serde(rename = "runtime")]
