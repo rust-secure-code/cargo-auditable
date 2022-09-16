@@ -2,11 +2,9 @@
 use std::{
     collections::HashMap,
     ffi::OsStr,
-    fs::File,
-    io::{Read, Write},
+    io::Write,
     path::PathBuf,
     process::{Command, Output, Stdio},
-    str::FromStr,
 };
 
 use auditable_serde::{DependencyKind, VersionInfo};
@@ -14,7 +12,6 @@ use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Artifact,
 };
-use miniz_oxide::inflate::decompress_to_vec_zlib;
 
 // Path to cargo-auditable binary under test
 const EXE: &str = env!("CARGO_BIN_EXE_cargo-auditable");
