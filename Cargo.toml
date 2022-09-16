@@ -5,5 +5,4 @@ members = [
     "auditable-extract",
     "auditable-serde",
     "cargo-auditable",
-    "rust-audit-info",
 ]
