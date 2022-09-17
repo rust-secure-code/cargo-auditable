@@ -14,7 +14,7 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Error::NoAuditData => write!(f, "No audit data found in the binary! Was it built with 'cargo auditable'?"),
-            Error::InputLimitExceeded => write!(f, "The input file is too large. Increase the input size limit to scan it"),
+            Error::InputLimitExceeded => write!(f, "The input file is too large. Increase the input size limit to scan it."),
             Error::OutputLimitExceeded => write!(f, "Audit data size is over the specified limit. Increase the output size limit to scan it."),
             Error::Io(e) => write!(f, "Failed to read the binary: {}", e),
             Error::BinaryParsing(e) => write!(f, "Failed to parse the binary: {}", e),
