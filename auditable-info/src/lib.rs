@@ -5,10 +5,8 @@
 //! Deserializes them to a JSON string or Rust data structures, at your option.
 //!
 //! ```rust, ignore
-//! let info = audit_info_from_file(
-//!     "path/to/file",
-//!     Default::default() // Default limits: 1GiB input file size, 8MiB audit data size
-//! )?;
+//! // Uses the default limits: 1GiB input file size, 8MiB audit data size
+//! let info = audit_info_from_file("path/to/file", Default::default())?;
 //! ```
 //!
 //! If you need a lower-level interface than the one provided by this crate,
@@ -34,10 +32,8 @@ pub use crate::error::Error;
 /// The entire file is loaded into memory. The RAM usage limit can be configured using the [`Limits`] struct.
 ///
 /// ```rust, ignore
-/// let info = audit_info_from_file(
-///     "path/to/file",
-///     Default::default() // Default limits: 1GiB input file size, 8MiB audit data size
-/// )?;
+/// // Uses the default limits: 1GiB input file size, 8MiB audit data size
+/// let info = audit_info_from_file("path/to/file", Default::default())?;
 /// ```
 ///
 /// The data is validated to only have a single root package and not contain any circular dependencies.
@@ -54,7 +50,7 @@ pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, 
 pub fn json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
-    raw_json_from_reader(&mut reader, limits)
+    json_from_reader(&mut reader, limits)
 }
 
 /// Loads audit info from the binary loaded from an arbitrary reader, e.g. the standard input.
@@ -62,7 +58,8 @@ pub fn json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
 /// ```rust, ignore
 /// let stdin = io::stdin();
 /// let mut handle = stdin.lock();
-/// audit_info::audit_info_from_reader(&mut handle, Default::default())?;
+/// // Uses the default limits: 1GiB input file size, 8MiB audit data size
+/// let info = audit_info_from_reader(&mut handle, Default::default())?;
 /// ```
 ///
 /// The data is validated to only have a single root package and not contain any circular dependencies.
@@ -71,9 +68,7 @@ pub fn audit_info_from_reader<T: BufRead>(
     reader: &mut T,
     limits: Limits,
 ) -> Result<VersionInfo, Error> {
-    Ok(serde_json::from_str(&raw_json_from_reader(
-        reader, limits,
-    )?)?)
+    Ok(serde_json::from_str(&json_from_reader(reader, limits)?)?)
 }
 
 /// Extracts the audit data and returns the JSON string.
@@ -81,7 +76,7 @@ pub fn audit_info_from_reader<T: BufRead>(
 ///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_json_from_reader<T: BufRead>(reader: &mut T, limits: Limits) -> Result<String, Error> {
+pub fn json_from_reader<T: BufRead>(reader: &mut T, limits: Limits) -> Result<String, Error> {
     let compressed_data = get_compressed_audit_data(reader, limits)?;
     let decompressed_data =
         decompress_to_vec_zlib_with_limit(&compressed_data, limits.decompressed_json_size)?;
