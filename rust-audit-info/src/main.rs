@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use audit_info::{Limits, json_from_file};
+use auditable_info::{Limits, json_from_file};
 use std::env::args_os;
 use std::io::Write;
 use std::path::PathBuf;

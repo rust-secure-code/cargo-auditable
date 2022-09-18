@@ -105,7 +105,7 @@ fn ensure_build_succeeded(output: &Output) {
 }
 
 fn get_dependency_info(binary: &Utf8Path) -> VersionInfo {
-    audit_info::audit_info_from_file(binary.as_std_path(), Default::default()).unwrap()
+    auditable_info::audit_info_from_file(binary.as_std_path(), Default::default()).unwrap()
 }
 
 #[test]
