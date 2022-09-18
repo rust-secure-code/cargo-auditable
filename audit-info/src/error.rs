@@ -8,7 +8,7 @@ pub enum Error {
     Decompression(miniz_oxide::inflate::DecompressError),
     #[cfg(feature = "serde")]
     Json(serde_json::Error),
-    Utf8(std::str::Utf8Error)
+    Utf8(std::str::Utf8Error),
 }
 
 impl std::fmt::Display for Error {

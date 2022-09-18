@@ -16,9 +16,7 @@ pub use crate::error::Error;
 
 #[cfg(feature = "serde")]
 pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, Error> {
-    Ok(serde_json::from_str(&raw_json_from_file(
-        path, limits,
-    )?)?)
+    Ok(serde_json::from_str(&raw_json_from_file(path, limits)?)?)
 }
 
 /// Returns the decompressed audit data.
@@ -46,15 +44,10 @@ pub fn audit_info_from_reader<T: BufRead>(
 ///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_json_from_reader<T: BufRead>(
-    reader: &mut T,
-    limits: Limits,
-) -> Result<String, Error> {
+pub fn raw_json_from_reader<T: BufRead>(reader: &mut T, limits: Limits) -> Result<String, Error> {
     let compressed_data = get_compressed_audit_data(reader, limits)?;
-    let decompressed_data = decompress_to_vec_zlib_with_limit(
-        &compressed_data,
-        limits.decompressed_json_size,
-    )?;
+    let decompressed_data =
+        decompress_to_vec_zlib_with_limit(&compressed_data, limits.decompressed_json_size)?;
     Ok(String::from_utf8(decompressed_data)?)
 }
 
@@ -115,10 +108,8 @@ pub fn raw_json_from_slice(
     if compressed_audit_data.len() > decompressed_json_size_limit {
         Err(Error::OutputLimitExceeded)?;
     }
-    let decompressed_data = decompress_to_vec_zlib_with_limit(
-        compressed_audit_data,
-        decompressed_json_size_limit,
-    )?;
+    let decompressed_data =
+        decompress_to_vec_zlib_with_limit(compressed_audit_data, decompressed_json_size_limit)?;
     Ok(String::from_utf8(decompressed_data)?)
 }
 
