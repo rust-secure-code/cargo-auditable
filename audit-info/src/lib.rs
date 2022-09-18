@@ -16,19 +16,19 @@ pub use crate::error::Error;
 
 #[cfg(feature = "serde")]
 pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, Error> {
-    Ok(serde_json::from_slice(&raw_audit_info_from_file(
+    Ok(serde_json::from_str(&raw_json_from_file(
         path, limits,
     )?)?)
 }
 
-/// Returns the decompressed audit data. It's supposed to be a valid string, but UTF-8 validation has not been performed yet.
+/// Returns the decompressed audit data.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_audit_info_from_file(path: &Path, limits: Limits) -> Result<Vec<u8>, Error> {
+pub fn raw_json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
-    raw_audit_info_from_reader(&mut reader, limits)
+    raw_json_from_reader(&mut reader, limits)
 }
 
 #[cfg(feature = "serde")]
@@ -36,25 +36,26 @@ pub fn audit_info_from_reader<T: BufRead>(
     reader: &mut T,
     limits: Limits,
 ) -> Result<VersionInfo, Error> {
-    Ok(serde_json::from_slice(&raw_audit_info_from_reader(
+    Ok(serde_json::from_str(&raw_json_from_reader(
         reader, limits,
     )?)?)
 }
 
-/// Returns the decompressed audit data. It's supposed to be a valid string, but UTF-8 validation has not been performed yet.
+/// Returns the decompressed audit data.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 ///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_audit_info_from_reader<T: BufRead>(
+pub fn raw_json_from_reader<T: BufRead>(
     reader: &mut T,
     limits: Limits,
-) -> Result<Vec<u8>, Error> {
+) -> Result<String, Error> {
     let compressed_data = get_compressed_audit_data(reader, limits)?;
-    Ok(decompress_to_vec_zlib_with_limit(
+    let decompressed_data = decompress_to_vec_zlib_with_limit(
         &compressed_data,
         limits.decompressed_json_size,
-    )?)
+    )?;
+    Ok(String::from_utf8(decompressed_data)?)
 }
 
 // Factored into its own function for ease of unit testing,
@@ -91,8 +92,8 @@ fn get_compressed_audit_data<T: BufRead>(reader: &mut T, limits: Limits) -> Resu
 pub fn audit_info_from_slice<T: BufRead>(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
-) -> Result<Vec<u8>, Error> {
-    Ok(serde_json::from_slice(&raw_audit_info_from_slice(
+) -> Result<String, Error> {
+    Ok(serde_json::from_str(&raw_json_from_slice(
         input_binary,
         decompressed_json_size_limit,
     )?)?)
@@ -101,23 +102,24 @@ pub fn audit_info_from_slice<T: BufRead>(
 /// The input slice should contain the entire binary.
 /// This function is useful if you have already loaded the binary to memory, e.g. via memory-mapping.
 ///
-/// Returns the decompressed audit data. It's supposed to be a valid string, but UTF-8 validation has not been performed yet.
+/// Returns the decompressed audit data.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 ///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_audit_info_from_slice(
+pub fn raw_json_from_slice(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
-) -> Result<Vec<u8>, Error> {
+) -> Result<String, Error> {
     let compressed_audit_data = raw_auditable_data(&input_binary)?;
     if compressed_audit_data.len() > decompressed_json_size_limit {
         Err(Error::OutputLimitExceeded)?;
     }
-    Ok(decompress_to_vec_zlib_with_limit(
+    let decompressed_data = decompress_to_vec_zlib_with_limit(
         compressed_audit_data,
         decompressed_json_size_limit,
-    )?)
+    )?;
+    Ok(String::from_utf8(decompressed_data)?)
 }
 
 /// Protect against [denial-of-service attacks](https://en.wikipedia.org/wiki/Denial-of-service_attack)

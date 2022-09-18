@@ -8,6 +8,7 @@ pub enum Error {
     Decompression(miniz_oxide::inflate::DecompressError),
     #[cfg(feature = "serde")]
     Json(serde_json::Error),
+    Utf8(std::str::Utf8Error)
 }
 
 impl std::fmt::Display for Error {
@@ -21,6 +22,7 @@ impl std::fmt::Display for Error {
             Error::Decompression(e) => write!(f, "Failed to decompress audit data: {}", e),
             #[cfg(feature = "serde")]
             Error::Json(e) => write!(f, "Failed to deserialize audit data from JSON: {}", e),
+            Error::Utf8(e) => write!(f, "Invalid UTF-8 in audit data: {}", e),
         }
     }
 }
@@ -36,6 +38,7 @@ impl std::error::Error for Error {
             Error::Decompression(e) => Some(e),
             #[cfg(feature = "serde")]
             Error::Json(e) => Some(e),
+            Error::Utf8(e) => Some(e),
         }
     }
 }
@@ -61,6 +64,12 @@ impl From<miniz_oxide::inflate::DecompressError> for Error {
             miniz_oxide::inflate::TINFLStatus::HasMoreOutput => Error::OutputLimitExceeded,
             _ => Error::Decompression(e),
         }
+    }
+}
+
+impl From<std::string::FromUtf8Error> for Error {
+    fn from(e: std::string::FromUtf8Error) -> Self {
+        Self::Utf8(e.utf8_error())
     }
 }
 

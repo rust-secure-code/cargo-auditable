@@ -24,11 +24,11 @@ fn main() {
 
 fn actual_main() -> Result<(), Box<dyn Error>> {
     let (input, limits) = parse_args()?;
-    let decompressed_data: Vec<u8> = raw_audit_info_from_file(&input, limits)?;
+    let decompressed_data: String = raw_audit_info_from_file(&input, limits)?;
 
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
-    stdout.write_all(&decompressed_data)?;
+    stdout.write_all(&decompressed_data.as_bytes())?;
 
     Ok(())
 }
