@@ -154,7 +154,8 @@ pub fn json_from_slice(
 /// The default limits are **1 GiB** for the `input_file_size` and **8 MiB** for `decompressed_json_size`.
 ///
 /// Note that the `decompressed_json_size` is only enforced on the level of the *serialized* JSON, i.e. a string.
-/// We do not enforce that `serde_json` does not consume more data when deserializing JSON to Rust data structures.
+/// We do not enforce that `serde_json` does not consume more memory when deserializing JSON to Rust data structures.
+/// Unfortunately Rust does not provide APIs for that.
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Limits {
     pub input_file_size: usize,
