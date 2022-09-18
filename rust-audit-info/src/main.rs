@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-use audit_info::{Limits, raw_audit_info_from_file};
+use audit_info::{Limits, json_from_file};
 use std::env::args_os;
 use std::io::Write;
 use std::path::PathBuf;
@@ -24,11 +24,11 @@ fn main() {
 
 fn actual_main() -> Result<(), Box<dyn Error>> {
     let (input, limits) = parse_args()?;
-    let decompressed_data: Vec<u8> = raw_audit_info_from_file(&input, limits)?;
+    let decompressed_data: String = json_from_file(&input, limits)?;
 
     let stdout = std::io::stdout();
     let mut stdout = stdout.lock();
-    stdout.write_all(&decompressed_data)?;
+    stdout.write_all(&decompressed_data.as_bytes())?;
 
     Ok(())
 }
