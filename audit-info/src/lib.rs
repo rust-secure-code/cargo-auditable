@@ -16,14 +16,14 @@ pub use crate::error::Error;
 
 #[cfg(feature = "serde")]
 pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, Error> {
-    Ok(serde_json::from_str(&raw_json_from_file(path, limits)?)?)
+    Ok(serde_json::from_str(&json_from_file(path, limits)?)?)
 }
 
 /// Returns the decompressed audit data.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
+pub fn json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
     raw_json_from_reader(&mut reader, limits)
