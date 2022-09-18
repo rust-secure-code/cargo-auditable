@@ -1,18 +1,18 @@
 #![forbid(unsafe_code)]
 
 //! High-level crate to extract the dependency trees embedded in binaries by `cargo auditable`.
-//! 
+//!
 //! Deserializes them to a JSON string or Rust data structures, at your option.
-//! 
+//!
 //! ```rust, ignore
 //! let info = audit_info_from_file(
 //!     "path/to/file",
 //!     Default::default() // Default limits: 1GiB input file size, 8MiB audit data size
 //! )?;
 //! ```
-//! 
+//!
 //! If you need a lower-level interface than the one provided by this crate,
-//! use the [`auditable-extract`](http://docs.rs/auditable-extract/) and 
+//! use the [`auditable-extract`](http://docs.rs/auditable-extract/) and
 //! [`auditable-serde`](http://docs.rs/auditable-serde/) crates.
 
 use auditable_extract::raw_auditable_data;
@@ -30,16 +30,16 @@ mod error;
 pub use crate::error::Error;
 
 /// Loads audit info from the specified binary compiled with `cargo auditable`.
-/// 
+///
 /// The entire file is loaded into memory. The RAM usage limit can be configured using the [`Limits`] struct.
-/// 
+///
 /// ```rust, ignore
 /// let info = audit_info_from_file(
 ///     "path/to/file",
 ///     Default::default() // Default limits: 1GiB input file size, 8MiB audit data size
 /// )?;
 /// ```
-/// 
+///
 /// The data is validated to only have a single root package and not contain any circular dependencies.
 #[cfg(feature = "serde")]
 pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, Error> {
@@ -48,7 +48,7 @@ pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, 
 
 /// Extracts the audit data from the specified binary and returns the JSON string.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
-/// 
+///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
 pub fn json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
@@ -58,13 +58,13 @@ pub fn json_from_file(path: &Path, limits: Limits) -> Result<String, Error> {
 }
 
 /// Loads audit info from the binary loaded from an arbitrary reader, e.g. the standard input.
-/// 
+///
 /// ```rust, ignore
 /// let stdin = io::stdin();
 /// let mut handle = stdin.lock();
 /// audit_info::audit_info_from_reader(&mut handle, Default::default())?;
 /// ```
-/// 
+///
 /// The data is validated to only have a single root package and not contain any circular dependencies.
 #[cfg(feature = "serde")]
 pub fn audit_info_from_reader<T: BufRead>(
@@ -153,7 +153,7 @@ pub fn json_from_slice(
 /// Protect against [denial-of-service attacks](https://en.wikipedia.org/wiki/Denial-of-service_attack)
 /// via infinite input streams or [zip bombs](https://en.wikipedia.org/wiki/Zip_bomb),
 /// which would otherwise use up all your memory and crash your machine.
-/// 
+///
 /// If the limit is exceeded, an error is returned and no further deserialization is attempted.
 ///
 /// The default limits are **1 GiB** for the `input_file_size` and **8 MiB** for `decompressed_json_size`.
