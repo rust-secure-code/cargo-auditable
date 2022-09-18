@@ -76,6 +76,9 @@ use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::D
 /// let info = VersionInfo::from_str(json_str).unwrap();
 /// assert_eq!(&info.packages[0].name, "adler");
 /// ```
+/// 
+/// If deserialization succeeds, it is guaranteed that there is only one root package,
+/// and that are no cyclic dependencies.
 ///
 /// ## Optional features
 ///
