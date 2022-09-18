@@ -19,7 +19,7 @@ pub fn audit_info_from_file(path: &Path, limits: Limits) -> Result<VersionInfo, 
     Ok(serde_json::from_str(&json_from_file(path, limits)?)?)
 }
 
-/// Returns the decompressed audit data.
+/// Extracts the audit data from the given file and returns the JSON string.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
@@ -39,7 +39,7 @@ pub fn audit_info_from_reader<T: BufRead>(
     )?)?)
 }
 
-/// Returns the decompressed audit data.
+/// Extracts the audit data and returns the JSON string.
 /// This is useful if you want to forward the data somewhere instead of parsing it to Rust data structures.
 ///
 /// If you want to obtain the Zlib-compressed data instead,
@@ -86,7 +86,7 @@ pub fn audit_info_from_slice<T: BufRead>(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
 ) -> Result<String, Error> {
-    Ok(serde_json::from_str(&raw_json_from_slice(
+    Ok(serde_json::from_str(&json_from_slice(
         input_binary,
         decompressed_json_size_limit,
     )?)?)
@@ -100,7 +100,7 @@ pub fn audit_info_from_slice<T: BufRead>(
 ///
 /// If you want to obtain the Zlib-compressed data instead,
 /// use the [`auditable-extract`](https://docs.rs/auditable-extract/) crate directly.
-pub fn raw_json_from_slice(
+pub fn json_from_slice(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
 ) -> Result<String, Error> {
