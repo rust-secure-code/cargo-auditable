@@ -145,7 +145,7 @@ pub fn json_from_slice(
     Ok(String::from_utf8(decompressed_data)?)
 }
 
-/// Protect against [denial-of-service attacks](https://en.wikipedia.org/wiki/Denial-of-service_attack)
+/// Protects against [denial-of-service attacks](https://en.wikipedia.org/wiki/Denial-of-service_attack)
 /// via infinite input streams or [zip bombs](https://en.wikipedia.org/wiki/Zip_bomb),
 /// which would otherwise use up all your memory and crash your machine.
 ///
