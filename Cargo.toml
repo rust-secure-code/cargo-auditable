@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "audit-info",
+    "auditable-info",
     "auditable-extract",
     "auditable-serde",
     "cargo-auditable",
