@@ -12,6 +12,9 @@
 //!
 //! ## Basic usage
 //!
+//! **Note:** this is a low-level crate that only implements JSON parsing. It rarely should be used directly.
+//! You probably want the higher-level [`auditable-info`](https://docs.rs/auditable-info) crate instead.
+//! 
 //! The following snippet demonstrates full extraction pipeline, including
 //! platform-specific executable handling via
 //! [`auditable-extract`](http://docs.rs/auditable-serde/) and decompression

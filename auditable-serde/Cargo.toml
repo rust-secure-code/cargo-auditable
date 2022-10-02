@@ -1,6 +1,6 @@
 [package]
 name = "auditable-serde"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-secure-code/cargo-auditable"

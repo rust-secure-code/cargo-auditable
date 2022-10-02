@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-extract"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "binfarce",
 ]
@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-serde"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "cargo-lock",
  "cargo_metadata",
