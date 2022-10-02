@@ -1,4 +1,4 @@
-High-level crate to extract the dependency trees embedded in binaries by `cargo auditable`.
+High-level crate to extract the dependency trees embedded in binaries by [`cargo auditable`](https://crates.io/crates/cargo-auditable).
 
 Deserializes them to a JSON string or Rust data structures, at your option.
 
@@ -16,11 +16,12 @@ Deserializes them to a JSON string or Rust data structures, at your option.
 // Uses the default limits: 1GiB input file size, 8MiB audit data size
 let info = audit_info_from_file("path/to/file", Default::default())?;
 ```
-Functions to load the data from a `Read` instance or from `&[u8]` are also provided.
+Functions to load the data from a `Read` instance or from `&[u8]` are also provided,
+see the [documentation](https://docs.rs/auditable-info).
 
 ### Alternatives
 
-[`rust-audit-info`](https://crates.io/crates/rust-audit-info) is a command-line interface for this crate.
+[`rust-audit-info`](https://crates.io/crates/rust-audit-info) is a command-line interface to this crate.
 
 If you need an even lower-level interface than the one provided by this crate,
 use the [`auditable-extract`](http://docs.rs/auditable-extract/) and

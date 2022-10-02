@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 
-//! High-level crate to extract the dependency trees embedded in binaries by `cargo auditable`.
+//! High-level crate to extract the dependency trees embedded in binaries by [`cargo auditable`](https://crates.io/crates/cargo-auditable).
 //!
 //! Deserializes them to a JSON string or Rust data structures, at your option.
 //!
