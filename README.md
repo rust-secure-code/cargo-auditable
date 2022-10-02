@@ -4,7 +4,7 @@ Know the exact crate versions used to build your Rust executable. Audit binaries
 
 This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
 
-Linux, Windows and Mac OS are officially supported. All other ELF targets should work, but are not tested on CI. WASM is not supported, but patches are welcome.
+Linux, Windows and Mac OS are officially supported. All other ELF targets should work, but are not tested on CI. WASM is currently not supported, but patches are welcome.
 
 The end goal is to get Cargo itself to encode this information in binaries. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
@@ -27,7 +27,7 @@ For usage of `rust-audit-info` see [here](https://github.com/rust-secure-code/ca
 
 ### Doesn't this bloat my binary?
 
-In a word, no. The embedded dependency list uses under 5kB even on large dependency trees with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
+In a word, no. The embedded dependency list uses under 4kB even on large dependency trees with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
 
 ### Is there any tooling to consume this data?
 
@@ -38,7 +38,7 @@ When used on images or directories, Rust audit support must be enabled by adding
 
 [`cargo audit`](https://crates.io/crates/cargo-audit) support is coming soon.
 
-It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be very easy to parse, even if your language does not have a library for that yet, see below.
+It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
 
 ### What is the data format, exactly?
 
@@ -56,7 +56,7 @@ Embedded platforms where you cannot spare a byte should not add anything in the 
 
 ### Does this impact reproducible builds?
 
-The data format is designed not to disrupt reproducible builds. It contains no timestamps, and the generated JSON is sorted to make sure it is identical between compilations. If anything, this *helps* with reproducible builds, since you know all the versions for a given binary now.
+The data format is specifically designed not to disrupt reproducible builds. It contains no timestamps, and the generated JSON is sorted to make sure it is identical between compilations. If anything, this *helps* with reproducible builds, since you know all the versions for a given binary now.
 
 ### Does this disclose any sensitive information?
 
@@ -66,7 +66,7 @@ No. All URLs and file paths are redacted, but the crate names and versions are r
 
 The compiler itself [will start embedding it soon.](https://github.com/rust-lang/rust/pull/97550)
 
-On older versions it's already there in the debug info. On Unix you can run `strings your_executable | grep 'rustc version'` to see it. [Don't try this on files you didn't compile yourself](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html).
+On older versions it's already there in the debug info. On Unix you can run `strings your_executable | grep 'rustc version'` to see it.
 
 ### What about keeping track of versions of statically linked C libraries?
 
