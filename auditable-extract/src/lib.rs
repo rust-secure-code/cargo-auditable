@@ -5,7 +5,7 @@
 //!
 //! This crate parses platform-specific binary formats ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format),
 //! [PE](https://en.wikipedia.org/wiki/Portable_Executable),
-//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and extracts the audit data.
+//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and obtains the compressed audit data.
 //!
 //! Unlike other binary parsing crates, it is specifically designed to be resilient to malicious input.
 //! It 100% safe Rust (including all dependencies) and performs no heap allocations.
