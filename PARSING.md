@@ -18,10 +18,10 @@ objcopy --dump-section .dep-v0=/dev/stdout $1 | pigz -zd -
 
 The following parsing libraries are available:
 
- - [`auditable-extract`](https://docs.rs/auditable-extract/) in Rust
+ - [`auditable-info`](https://docs.rs/auditable-info/) in Rust
  - [`go-rustaudit`](https://github.com/microsoft/go-rustaudit) in Go
 
-We also provide a standalone binary [`rust-audit-info`](rust-audit-info/README.md) that can be called as a subprocess from any language. It will handle all the binary wrangling for you and output the JSON. Unlike most binary parsers, it is designed for resilience and is written in 100% safe Rust, so the vulnerabilites that [plague other parsers](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) are impossible in it.
+We also provide a standalone binary [`rust-audit-info`](rust-audit-info/README.md) that can be called as a subprocess from any language. It will handle all the binary wrangling for you and output the JSON.
 
 ### Step 1: Obtain the compressed data from the binary
 
@@ -39,7 +39,9 @@ Parse the decompressed data to JSON. A well-formed JSON is guaranteed to be UTF-
 
 The JSON schema is available [here](cargo-auditable.schema.json).
 
-### Step 4 (optional): Reconstruct the dependency tree
+### Security considerations
+
+#### Reconstructing the dependency tree
 
 If your use case calls not just for obtaining the versions of the crates used in the build, but also for reconstructing the dependency tree, you need to validate the data first. The format technically allows encoding the following invalid states:
 
@@ -49,5 +51,12 @@ If your use case calls not just for obtaining the versions of the crates used in
 
 Before you walk the dependency tree, make sure that the dependency graph does not contain cycles - for example, by performing [topological sorting](https://en.wikipedia.org/wiki/Topological_sorting) - and that there is only one package with `root: true`.
 
-(We have experimented with formats that do not allow encoding such invalid states, but they turned out no easier to work with - the same issues occur and have to be dealt with, just in different places. They were also less amenable to compression.)
+(We have experimented with formats that do not allow encoding cyclic dependencies, but they turned out no easier to work with - the same issues occur and have to be dealt with, just in different places. They were also less amenable to compression.)
 
+#### Binary parsing
+
+Many binary parsing libraries are not designed with security in mind, and were never expected to be exposed to malicious input. This makes them [trivially exploitable](https://lcamtuf.blogspot.com/2014/10/psa-dont-run-strings-on-untrusted-files.html) for arbitrary code execution. Binary parsing in particular is a hotbed for memory safety bugs.
+
+If the ELF/PE/Mach-O parser in your language is a big old pile of C, consider using our Rust library instead, which was specifically designed for resilience to malicious inputs. It is implemented in 100% safe Rust, including all dependencies, so it is not susceptible to such issues.
+
+You can do that either by calling [`rust-audit-info`](rust-audit-info/README.md) as a subprocess, or by writing bindings to the [`auditable-info`](https://docs.rs/auditable-info/) library crate using the bindigns generator for your language - just google "call Rust from $LANGUAGE".
