@@ -8,8 +8,9 @@
 //! // Uses the default limits: 1GiB input file size, 8MiB audit data size
 //! let info = audit_info_from_file("path/to/file", Default::default())?;
 //! ```
+//! Functions to load the data from a `Read` instance or from `&[u8]` are also provided.
 //!
-//! If you need a lower-level interface than the one provided by this crate,
+//! If you need an even lower-level interface than the one provided by this crate,
 //! use the [`auditable-extract`](http://docs.rs/auditable-extract/) and
 //! [`auditable-serde`](http://docs.rs/auditable-serde/) crates.
 
