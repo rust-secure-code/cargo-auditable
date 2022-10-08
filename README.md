@@ -36,7 +36,7 @@ In a word, no. The embedded dependency list uses under 4kB even on large depende
 [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 
-[`cargo audit`](https://crates.io/crates/cargo-audit) support is coming soon.
+[cargo audit](https://crates.io/crates/cargo-audit) v0.17.1+ can detect this data in binaries and report on vulnerabilities if the `binary-scanning` feature is enabled. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for details.
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
 
