@@ -11,12 +11,10 @@ The end goal is to get Cargo itself to encode this information in binaries. Ther
 ## Usage
 
 ```bash
-# Install the tooling
-cargo install cargo-auditable rust-audit-info
+# Install cargo-auditable
+cargo install cargo-auditable
 # Build your project with dependency lists embedded in the binaries
 cargo auditable build --release
-# Recover the dependency info from the compiled binary
-rust-audit-info target/release/your-project
 # Scan the binary for vulnerabilities
 cargo install cargo-audit --features=binary-scanning
 cargo audit bin target/release/your-project
