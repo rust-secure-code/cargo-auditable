@@ -31,12 +31,18 @@ In a word, no. The embedded dependency list uses under 4kB even on large depende
 
 ### Is there any tooling to consume this data?
 
-[trivy](https://github.com/aquasecurity/trivy) v0.31.0+ has support for detecting this data in binaries and reporting on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
+#### Vulnerability reporting
 
-[syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
+* [cargo audit](https://crates.io/crates/cargo-audit) v0.17.1+ can detect this data in binaries and report on vulnerabilities if the `binary-scanning` feature is enabled. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for usage.
+* [trivy](https://github.com/aquasecurity/trivy) v0.31.0+ has support for detecting this data in binaries and reporting on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
+
+#### Recovering the dependency list
+
+* [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
+* [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 
-[cargo audit](https://crates.io/crates/cargo-audit) v0.17.1+ can detect this data in binaries and report on vulnerabilities if the `binary-scanning` feature is enabled. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for details.
+The list of libraries to read this data can be found [here](PARSING.md).
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
 
