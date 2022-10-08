@@ -17,6 +17,9 @@ cargo install cargo-auditable rust-audit-info
 cargo auditable build --release
 # Recover the dependency info from the compiled binary
 rust-audit-info target/release/your-project
+# Scan the binary for vulnerabilities
+cargo install cargo-audit --features=binary-scanning
+cargo audit bin target/release/your-project
 ```
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
