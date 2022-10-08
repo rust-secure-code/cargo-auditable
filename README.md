@@ -22,8 +22,6 @@ cargo audit bin target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
-For usage of `rust-audit-info` see [here](https://github.com/rust-secure-code/cargo-auditable/tree/master/rust-audit-info#readme).
-
 ## FAQ
 
 ### Doesn't this bloat my binary?
