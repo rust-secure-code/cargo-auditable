@@ -1,10 +1,10 @@
 ## rust-audit-info
 
-Command-line tool to extract the dependency trees embedded in binaries by `cargo auditable`.
+Command-line tool to extract the dependency trees embedded in binaries by [`cargo auditable`](https://crates.io/crates/cargo-auditable).
 
 It takes care of parsing the platform-specific formats ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format), [PE](https://en.wikipedia.org/wiki/Portable_Executable), [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and outputs the decompressed JSON.
 
-This tool is intentionally minimal and does not implement vulnerability scanning on its own. However, it is useful for building your own vulnerability scanner. If you're looking for a Rust library instead of a command-line tool, see [`auditable-extract`](https://docs.rs/auditable-extract/).
+This tool is intentionally minimal and does not implement vulnerability scanning on its own. However, it is useful for building your own vulnerability scanner. If you're looking for a Rust library instead of a command-line tool, see [`auditable-info`](https://docs.rs/auditable-info/).
 
 ### Features
 

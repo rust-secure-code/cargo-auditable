@@ -80,6 +80,4 @@ Good question. I don't think they are exposed in any reasonable way right now. W
 
 ### What is blocking uplifting this into Cargo?
 
-We need to get some real-world experience with this before committing to a stable data format.
-
-If you're looking to use it, we'd be happy to hear about your requirements so that we can accommodate them!
+We'd like to get more real-world experience with it. Please try it and let us know what you think!
