@@ -46,15 +46,15 @@ The list of libraries to read this data can be found [here](PARSING.md).
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
 
+### Can I read this data using a tool written in a different language?
+
+Yes. The data format is designed for interoperability with alternative implementations. In fact, parsing it only takes [5 lines of Python](PARSING.md). See [here](PARSING.md) for documentation on parsing the data.
+
 ### What is the data format, exactly?
 
 The data format is described by the JSON schema [here](cargo-auditable.schema.json).
 The JSON is Zlib-compressed and placed in a linker section named `.dep-v0`.
-That's it. You can find more info about parsing it [here](PARSING.md).
-
-### Can I read this data using a tool written in a different language?
-
-Yes. The data format is designed for interoperability with alternative implementations. In fact, parsing it only takes [5 lines of Python](PARSING.md). See [here](PARSING.md) for documentation on parsing the data.
+You can find more info about parsing it [here](PARSING.md).
 
 ### What about embedded platforms?
 
