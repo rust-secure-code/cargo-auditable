@@ -33,7 +33,7 @@ In a word, no. The embedded dependency list uses under 4kB even on large depende
 
 #### Vulnerability reporting
 
-* [cargo audit](https://crates.io/crates/cargo-audit) v0.17.1+ can detect this data in binaries and report on vulnerabilities if the `binary-scanning` feature is enabled. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for usage.
+* [cargo audit](https://crates.io/crates/cargo-audit) v0.17.1+ can detect this data in binaries and report on vulnerabilities if the `binary-scanning` feature is enabled. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for details.
 * [trivy](https://github.com/aquasecurity/trivy) v0.31.0+ has support for detecting this data in binaries and reporting on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
 
 #### Recovering the dependency list
