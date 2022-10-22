@@ -5,7 +5,7 @@ Deserializes them to a JSON string or Rust data structures, at your option.
 ### Features
 
  - Binary parsing designed from the ground up for resilience to malicious inputs.
- - 100% memory-safe Rust, including all dependencies. No memory-unsafe code anywhere in the dependency tree.
+ - 100% memory-safe Rust, including all dependencies. (There is some `unsafe` in `serde_json` and its dependencies, but only in serialization, which isn't used here).
  - Cross-platform, portable, easy to cross-compile. Runs on [any Rust target with `std`](https://doc.rust-lang.org/stable/rustc/platform-support.html).
  - Parses binaries from any supported platform, not just the platform it's running on.
  - Supports setting size limits for both input and output, to protect against [OOMs](https://en.wikipedia.org/wiki/Out_of_memory) and [zip bombs](https://en.wikipedia.org/wiki/Zip_bomb).
