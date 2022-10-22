@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-info"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "auditable-extract",
  "auditable-serde",
