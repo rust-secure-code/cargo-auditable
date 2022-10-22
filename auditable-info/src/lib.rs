@@ -118,7 +118,7 @@ fn get_compressed_audit_data<T: BufRead>(reader: &mut T, limits: Limits) -> Resu
 pub fn audit_info_from_slice<T: BufRead>(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
-) -> Result<String, Error> {
+) -> Result<VersionInfo, Error> {
     Ok(serde_json::from_str(&json_from_slice(
         input_binary,
         decompressed_json_size_limit,
