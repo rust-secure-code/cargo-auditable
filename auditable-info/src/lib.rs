@@ -115,7 +115,7 @@ fn get_compressed_audit_data<T: BufRead>(reader: &mut T, limits: Limits) -> Resu
 /// The input slice should contain the entire binary.
 /// This function is useful if you have already loaded the binary to memory, e.g. via memory-mapping.
 #[cfg(feature = "serde")]
-pub fn audit_info_from_slice<T: BufRead>(
+pub fn audit_info_from_slice(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
 ) -> Result<VersionInfo, Error> {
