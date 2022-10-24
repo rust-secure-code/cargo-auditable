@@ -491,10 +491,12 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused_imports)] // otherwise conditional compilation emits warnings
     use super::*;
     use std::fs;
     use std::{convert::TryInto, path::PathBuf};
 
+    #[cfg(feature = "toml")]
     #[cfg(feature = "from_metadata")]
     fn load_own_metadata() -> cargo_metadata::Metadata {
         let mut cmd = cargo_metadata::MetadataCommand::new();
