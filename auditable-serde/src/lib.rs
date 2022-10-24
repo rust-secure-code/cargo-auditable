@@ -422,8 +422,20 @@ impl TryFrom<&Package> for cargo_lock::Dependency {
         Ok(cargo_lock::Dependency {
             name: cargo_lock::package::Name::from_str(&input.name)?,
             version: input.version.clone(),
-            source: Option::None,
+            source: (&input.source).into(),
         })
+    }
+}
+
+#[cfg(feature = "toml")]
+impl From<&Source> for Option<cargo_lock::SourceId> {
+    fn from(source: &Source) -> Self {
+        match source {
+            Source::CratesIo => Some(cargo_lock::package::SourceId::from_url(
+                "registry+https://github.com/rust-lang/crates.io-index",
+            ).unwrap()),
+            _ => None, // we don't store enough info about other sources to reconstruct the URL
+        }
     }
 }
 
@@ -452,12 +464,7 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
                         result?
                     },
                     replace: None,
-                    source: match &pkg.source {
-                        Source::CratesIo => Some(cargo_lock::package::SourceId::from_url(
-                            "registry+https://github.com/rust-lang/crates.io-index",
-                        )?),
-                        _ => None, // we don't store enough info about other sources to reconstruct the URL
-                    },
+                    source: (&pkg.source).into(),
                 };
             if pkg.root {
                 if root_package.is_some() {
