@@ -421,8 +421,7 @@ impl TryFrom<&Package> for cargo_lock::Dependency {
     fn try_from(input: &Package) -> Result<Self, Self::Error> {
         Ok(cargo_lock::Dependency {
             name: cargo_lock::package::Name::from_str(&input.name)?,
-            // to_string() is used to work around incompatible semver crate versions
-            version: cargo_lock::package::Version::parse(&input.version.to_string())?,
+            version: input.version.clone(),
             source: Option::None,
         })
     }
@@ -438,8 +437,7 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
             let lock_pkg =
                 cargo_lock::package::Package {
                     name: cargo_lock::package::Name::from_str(&pkg.name)?,
-                    // to_string() is used to work around incompatible semver crate versions
-                    version: cargo_lock::package::Version::parse(&pkg.version.to_string())?,
+                    version: pkg.version.clone(),
                     checksum: Option::None,
                     dependencies: {
                         let result: Result<Vec<_>, _> =
