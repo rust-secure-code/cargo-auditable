@@ -431,9 +431,12 @@ impl TryFrom<&Package> for cargo_lock::Dependency {
 impl From<&Source> for Option<cargo_lock::SourceId> {
     fn from(source: &Source) -> Self {
         match source {
-            Source::CratesIo => Some(cargo_lock::package::SourceId::from_url(
-                "registry+https://github.com/rust-lang/crates.io-index",
-            ).unwrap()),
+            Source::CratesIo => Some(
+                cargo_lock::package::SourceId::from_url(
+                    "registry+https://github.com/rust-lang/crates.io-index",
+                )
+                .unwrap(),
+            ),
             _ => None, // we don't store enough info about other sources to reconstruct the URL
         }
     }

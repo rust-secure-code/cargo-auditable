@@ -14,7 +14,7 @@
 //!
 //! **Note:** this is a low-level crate that only implements binary parsing. It rarely should be used directly.
 //! You probably want the higher-level [`auditable-info`](https://docs.rs/auditable-info) crate instead.
-//! 
+//!
 //! The following snippet demonstrates full extraction pipeline, including decompression
 //! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and optional JSON parsing
 //! via [`auditable-serde`](http://docs.rs/auditable-serde/):
