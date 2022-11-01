@@ -47,14 +47,12 @@ Symbols:
 
 Functions  Expressions  Impls  Traits  Methods  Dependency
 
-0/0        0/0          0/0    0/0     0/0      🔒 rust-audit-info 0.5.0
-0/0        0/0          0/0    0/0     0/0      🔒 └──auditable-info 0.5.0
-0/0        0/0          0/0    0/0     0/0      🔒     ├── auditable-extract 0.3.1
+0/0        0/0          0/0    0/0     0/0      🔒 rust-audit-info 0.5.2
+0/0        0/0          0/0    0/0     0/0      🔒 └── auditable-info 0.6.2
+0/0        0/0          0/0    0/0     0/0      🔒     ├── auditable-extract 0.3.2
 0/0        0/0          0/0    0/0     0/0      🔒     │   └── binfarce 0.2.1
 0/0        0/0          0/0    0/0     0/0      🔒     └── miniz_oxide 0.6.2
 0/0        0/0          0/0    0/0     0/0      🔒         └── adler 1.0.2
 
-
-0/0        0/0          0/0    0/0     0/0    
-
+0/0        0/0          0/0    0/0     0/0
 ```
