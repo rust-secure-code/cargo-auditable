@@ -50,7 +50,15 @@ mod tests {
 
     #[test]
     fn test_basic_parsing() {
-        let input = ["cargo", "auditable", "build", "--locked", "--config", "net.git-fetch-with-cli=true", "--offline"];
+        let input = [
+            "cargo",
+            "auditable",
+            "build",
+            "--locked",
+            "--config",
+            "net.git-fetch-with-cli=true",
+            "--offline",
+        ];
         let raw_args = input.iter().map(|s| OsString::from(s)).collect();
         let args = CargoArgs::from_args_vec(raw_args);
         assert_eq!(args.locked, true);
@@ -61,7 +69,16 @@ mod tests {
 
     #[test]
     fn test_double_dash_to_ignore_args() {
-        let input = ["cargo", "auditable", "run", "--release", "--config", "net.git-fetch-with-cli=true", "--", "--offline"];
+        let input = [
+            "cargo",
+            "auditable",
+            "run",
+            "--release",
+            "--config",
+            "net.git-fetch-with-cli=true",
+            "--",
+            "--offline",
+        ];
         let raw_args = input.iter().map(|s| OsString::from(s)).collect();
         let args = CargoArgs::from_args_vec(raw_args);
         assert_eq!(args.offline, false);
