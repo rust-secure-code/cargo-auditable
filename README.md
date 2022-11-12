@@ -1,5 +1,7 @@
 ## cargo-auditable
 
+<a href="https://repology.org/project/cargo-auditable/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/cargo-auditable.svg" alt="Packaging status"></a>
+
 Know the exact crate versions used to build your Rust executable. Audit binaries for known bugs or security vulnerabilities in production, at scale, with zero bookkeeping.
 
 This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
@@ -12,8 +14,7 @@ The end goal is to get Cargo itself to encode this information in binaries. Ther
 
 ```bash
 # Install the tools
-cargo install cargo-auditable
-cargo install cargo-audit --features=binary-scanning
+cargo install cargo-auditable cargo-audit
 # Build your project with dependency lists embedded in the binaries
 cargo auditable build --release
 # Scan the binary for vulnerabilities
