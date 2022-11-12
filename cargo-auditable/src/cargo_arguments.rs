@@ -43,3 +43,28 @@ impl CargoArgs {
         Ok(serde_json::from_str(&json_args).unwrap())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_basic_parsing() {
+        let input = ["cargo", "auditable", "build", "--locked", "--config", "net.git-fetch-with-cli=true", "--offline"];
+        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let args = CargoArgs::from_args_vec(raw_args);
+        assert_eq!(args.locked, true);
+        assert_eq!(args.offline, true);
+        assert_eq!(args.frozen, false);
+        assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
+    }
+
+    #[test]
+    fn test_double_dash_to_ignore_args() {
+        let input = ["cargo", "auditable", "run", "--release", "--config", "net.git-fetch-with-cli=true", "--", "--offline"];
+        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let args = CargoArgs::from_args_vec(raw_args);
+        assert_eq!(args.offline, false);
+        assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
+    }
+}
