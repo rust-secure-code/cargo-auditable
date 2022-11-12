@@ -12,13 +12,13 @@ The end goal is to get Cargo itself to encode this information in binaries. Ther
 
 <a href="https://repology.org/project/cargo-auditable/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/cargo-auditable.svg" alt="Packaging status"></a>
 
-You can install the tools either via a distribution package (listed on the right), or using Cargo which works on all platforms:
+You can install the tools either via a distribution package (listed on the right), or using Cargo:
 
 ```bash
 cargo install cargo-auditable cargo-audit
 ```
 
-Usage example: 
+This is how to use it:
 
 ```bash
 # Build your project with dependency lists embedded in the binaries
