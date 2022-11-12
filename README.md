@@ -76,4 +76,4 @@ Good question. I don't think they are exposed in any reasonable way right now. W
 
 ### What is blocking uplifting this into Cargo?
 
-We'd like to get more real-world experience with it. Please try it and let us know what you think!
+Cargo itself is [currently in a feature freeze](https://blog.rust-lang.org/inside-rust/2022/03/31/cargo-team-changes.html).
