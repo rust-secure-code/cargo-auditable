@@ -49,7 +49,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_basic_parsing() {
+    fn basic_parsing() {
         let input = [
             "cargo",
             "auditable",
@@ -68,7 +68,30 @@ mod tests {
     }
 
     #[test]
-    fn test_double_dash_to_ignore_args() {
+    fn with_unrelated_flags() {
+        let input = [
+            "cargo",
+            "auditable",
+            "build",
+            "--locked",
+            "--target",
+            "x86_64-unknown-linux-gnu",
+            "--release",
+            "--config",
+            "net.git-fetch-with-cli=true",
+            "--offline",
+            "--ignore-rust-version",
+        ];
+        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let args = CargoArgs::from_args_vec(raw_args);
+        assert_eq!(args.locked, true);
+        assert_eq!(args.offline, true);
+        assert_eq!(args.frozen, false);
+        assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
+    }
+
+    #[test]
+    fn double_dash_to_ignore_args() {
         let input = [
             "cargo",
             "auditable",
