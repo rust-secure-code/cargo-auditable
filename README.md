@@ -8,22 +8,26 @@ Linux, Windows and Mac OS are officially supported. All other ELF targets should
 
 The end goal is to get Cargo itself to encode this information in binaries. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
-## Usage
+## Installation & Usage
 
 <a href="https://repology.org/project/cargo-auditable/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/cargo-auditable.svg" alt="Packaging status"></a>
 
+You can install the tools either via a distribution package (listed on the right), or using Cargo which works on all platforms:
+
 ```bash
-# Install the tools
 cargo install cargo-auditable cargo-audit
+```
+
+Usage example: 
+
+```bash
 # Build your project with dependency lists embedded in the binaries
 cargo auditable build --release
 # Scan the binary for vulnerabilities
 cargo audit bin target/release/your-project
 ```
 
-`cargo auditable` works with any Cargo command.
-
-All arguments are passed to `cargo` as-is.
+`cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
 ## FAQ
 
