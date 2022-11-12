@@ -21,7 +21,9 @@ cargo auditable build --release
 cargo audit bin target/release/your-project
 ```
 
-`cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
+`cargo auditable` works with any Cargo command.
+
+All arguments are passed to `cargo` as-is.
 
 ## FAQ
 
