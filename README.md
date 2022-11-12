@@ -12,8 +12,7 @@ The end goal is to get Cargo itself to encode this information in binaries. Ther
 
 ```bash
 # Install the tools
-cargo install cargo-auditable
-cargo install cargo-audit --features=binary-scanning
+cargo install cargo-auditable cargo-audit
 # Build your project with dependency lists embedded in the binaries
 cargo auditable build --release
 # Scan the binary for vulnerabilities
