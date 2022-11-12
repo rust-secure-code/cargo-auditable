@@ -3,11 +3,12 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
 use std::{convert::TryFrom, str::from_utf8};
 
-use crate::rustc_arguments::RustcArgs;
+use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
-pub fn compressed_dependency_list(args: &RustcArgs, target_triple: &str) -> Vec<u8> {
-    let version_info = VersionInfo::try_from(&get_metadata(args, target_triple)).unwrap();
+pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
+    let metadata = get_metadata(rustc_args, target_triple);
+    let version_info = VersionInfo::try_from(&metadata).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
@@ -34,10 +35,28 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
 
     // Restrict the dependency resolution to just the platform the binary is being compiled for.
     // By default `cargo metadata` resolves the dependency tree for all platforms.
-    metadata_command.other_options(vec![
-        "--filter-platform".to_owned(),
-        target_triple.to_owned(),
-    ]);
+    let mut other_args = vec!["--filter-platform".to_owned(), target_triple.to_owned()];
+
+    // Pass arguments such as `--config`, `--offline` and `--locked`
+    // from the original CLI invocation of `cargo auditable`
+    let orig_args = CargoArgs::from_env()
+        .expect("Env var 'CARGO_AUDITABLE_ORIG_ARGS' set by 'cargo-auditable' is unset!");
+    if orig_args.offline {
+        other_args.push("--offline".to_owned());
+    }
+    if orig_args.frozen {
+        other_args.push("--frozen".to_owned());
+    }
+    if orig_args.locked {
+        other_args.push("--locked".to_owned());
+    }
+    for arg in orig_args.config {
+        other_args.push("--config".to_owned());
+        other_args.push(arg);
+    }
+
+    // This can only be done once, multiple calls will replace previously set options.
+    metadata_command.other_options(other_args);
 
     // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
     // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
