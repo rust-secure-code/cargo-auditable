@@ -72,7 +72,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-auditable"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "auditable-info",
  "auditable-serde",
