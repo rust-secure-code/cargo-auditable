@@ -350,3 +350,14 @@ fn test_runtime_then_build_dep() {
         .iter()
         .any(|p| p.name == "build_dep_of_runtime_dep" && p.kind == DependencyKind::Build));
 }
+
+#[test]
+fn test_workspace_member_version_info() {
+    // Test that `/path/to/cargo-auditable rustc -vV works when compiling a workspace member
+    let mut command = Command::new(EXE);
+    command.env("CARGO_PRIMARY_PACKAGE", "true");
+    command.args(["rustc", "-vV"]);
+
+    let status = command.status().unwrap();
+    assert!(status.success());
+}
