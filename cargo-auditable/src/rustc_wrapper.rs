@@ -10,40 +10,43 @@ pub fn main() {
     // Binaries and C dynamic libraries are not built as non-primary packages,
     // so this should not cause issues with Cargo caches.
     if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
-        let args = rustc_arguments::parse_args().unwrap();
+        // If we fail to extract the necessary rustc args then just proceed.
+        // This may occur when running with sccache as that may run
+        // `/path/to/cargo-auditable rustc -vV` to determine compiler information.
+        if let Ok(args) = rustc_arguments::parse_args() {
+            // Only inject audit data into crate types 'bin' and 'cdylib'
+            if args.crate_types.contains(&"bin".to_owned())
+                || args.crate_types.contains(&"cdylib".to_owned())
+            {
+                // Get the audit data to embed
+                let target_triple = args.target.clone().unwrap_or_else(rustc_host_target_triple);
+                let contents: Vec<u8> =
+                    collect_audit_data::compressed_dependency_list(&args, &target_triple);
+                // write the audit info to an object file
+                let target_info = target_info::rustc_target_info(&target_triple);
+                let binfile = object_file::create_metadata_file(
+                    &target_info,
+                    &target_triple,
+                    &contents,
+                    "AUDITABLE_VERSION_INFO",
+                );
+                // Place the audit data in the output dir.
+                // We can place it anywhere really, the only concern is clutter and name collisions,
+                // and the target dir is locked so we're probably good
+                let filename = format!("{}_audit_data.o", args.crate_name);
+                let path = args.out_dir.join(filename);
+                std::fs::write(&path, binfile).expect("Unable to write output file");
 
-        // Only inject audit data into crate types 'bin' and 'cdylib'
-        if args.crate_types.contains(&"bin".to_owned())
-            || args.crate_types.contains(&"cdylib".to_owned())
-        {
-            // Get the audit data to embed
-            let target_triple = args.target.clone().unwrap_or_else(rustc_host_target_triple);
-            let contents: Vec<u8> =
-                collect_audit_data::compressed_dependency_list(&args, &target_triple);
-            // write the audit info to an object file
-            let target_info = target_info::rustc_target_info(&target_triple);
-            let binfile = object_file::create_metadata_file(
-                &target_info,
-                &target_triple,
-                &contents,
-                "AUDITABLE_VERSION_INFO",
-            );
-            // Place the audit data in the output dir.
-            // We can place it anywhere really, the only concern is clutter and name collisions,
-            // and the target dir is locked so we're probably good
-            let filename = format!("{}_audit_data.o", args.crate_name);
-            let path = args.out_dir.join(filename);
-            std::fs::write(&path, binfile).expect("Unable to write output file");
-
-            // Modify the rustc command to link the object file with audit data
-            let mut linker_command = OsString::from("-Clink-arg=");
-            linker_command.push(&path);
-            command.arg(linker_command);
-            // Prevent the symbol from being removed as unused by the linker
-            if target_triple.contains("-apple-") {
-                command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
-            } else {
-                command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                // Modify the rustc command to link the object file with audit data
+                let mut linker_command = OsString::from("-Clink-arg=");
+                linker_command.push(&path);
+                command.arg(linker_command);
+                // Prevent the symbol from being removed as unused by the linker
+                if target_triple.contains("-apple-") {
+                    command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+                } else {
+                    command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                }
             }
         }
     }
