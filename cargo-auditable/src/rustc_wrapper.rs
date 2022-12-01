@@ -1,4 +1,4 @@
-use std::{env, ffi::OsString, process::Command};
+use std::{env, ffi::{OsString, OsStr}, process::Command};
 
 use crate::{collect_audit_data, object_file, rustc_arguments, target_info};
 
@@ -10,9 +10,7 @@ pub fn main() {
     // Binaries and C dynamic libraries are not built as non-primary packages,
     // so this should not cause issues with Cargo caches.
     if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
-        // If we fail to extract the necessary rustc args then just proceed.
-        // This may occur when running with sccache as that may run
-        // `/path/to/cargo-auditable rustc -vV` to determine compiler information.
+        let arg_parsing_result = rustc_arguments::parse_args();
         if let Ok(args) = rustc_arguments::parse_args() {
             // Only inject audit data into crate types 'bin' and 'cdylib'
             if args.crate_types.contains(&"bin".to_owned())
@@ -48,6 +46,25 @@ pub fn main() {
                     command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
                 }
             }
+        } else {
+            // Failed to parse rustc arguments.
+
+            // This may be due to a `rustc -vV` call, or similar non-compilation command.
+            // This never happens with Cargo - it does call `rustc -vV`,
+            // but either bypasses the wrapper or doesn't set CARGO_PRIMARY_PACKAGE=true.
+            // However it does happen with `sccache`:
+            // https://github.com/rust-secure-code/cargo-auditable/issues/87
+            // This is probably a bug in `sccache`, but it's easier to fix here.
+
+            // There are many non-compilation flags (and they can be compound),
+            // so parsing them properly adds a lot of complexity.
+            // So we just check if `--crate-name` is passed and if not,
+            // assume that it's a non-compilation command.
+            if env::args_os().skip(2).any(|arg| arg == OsStr::new("--crate-name")) {
+                // this was a compilation command, bail
+                arg_parsing_result.unwrap();
+            }
+            // for commands like `rustc --version` we just pass on the arguments without changes
         }
     }
 
