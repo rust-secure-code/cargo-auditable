@@ -354,6 +354,11 @@ fn test_runtime_then_build_dep() {
 #[test]
 fn test_workspace_member_version_info() {
     // Test that `/path/to/cargo-auditable rustc -vV works when compiling a workspace member
+    //
+    // Never happens with Cargo - it does call `rustc -vV`,
+    // but either bypasses the wrapper or doesn't set CARGO_PRIMARY_PACKAGE=true.
+    // However it does happen with `sccache`:
+    // https://github.com/rust-secure-code/cargo-auditable/issues/87
     let mut command = Command::new(EXE);
     command.env("CARGO_PRIMARY_PACKAGE", "true");
     command.args(["rustc", "-vV"]);
