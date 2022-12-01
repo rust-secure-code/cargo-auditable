@@ -1,4 +1,8 @@
-use std::{env, ffi::{OsString, OsStr}, process::Command};
+use std::{
+    env,
+    ffi::{OsStr, OsString},
+    process::Command,
+};
 
 use crate::{collect_audit_data, object_file, rustc_arguments, target_info};
 
@@ -60,7 +64,10 @@ pub fn main() {
             // so parsing them properly adds a lot of complexity.
             // So we just check if `--crate-name` is passed and if not,
             // assume that it's a non-compilation command.
-            if env::args_os().skip(2).any(|arg| arg == OsStr::new("--crate-name")) {
+            if env::args_os()
+                .skip(2)
+                .any(|arg| arg == OsStr::new("--crate-name"))
+            {
                 // this was a compilation command, bail
                 arg_parsing_result.unwrap();
             }
