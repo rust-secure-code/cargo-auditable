@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2022-12-01
+
+### Fixed
+
+- Long builds with `sccache` now work as expected. They require additional quirks compared to regular Cargo builds, see [#87](https://github.com/rust-secure-code/cargo-auditable/issues/87).
+
 ## [0.5.4] - 2022-11-12
 
 ### Changed
