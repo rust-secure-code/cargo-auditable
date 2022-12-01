@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Long builds with `sccache` now work as expected. They require additional quirks compared to regular Cargo builds, see [#87](https://github.com/rust-secure-code/cargo-auditable/issues/87).
+    - Note that `sccache` v0.3.1 or later is required even with this fix - earlier versions have a [bug](https://github.com/mozilla/sccache/issues/1274) that prevents them from working with `cargo auditable`.
 
 ## [0.5.4] - 2022-11-12
 
