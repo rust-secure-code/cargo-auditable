@@ -18,8 +18,7 @@ pub fn create_metadata_file(
     contents: &[u8],
     symbol_name: &str,
 ) -> Option<Vec<u8>> {
-    let mut file =
-        create_object_file(target_info, target_triple)?;
+    let mut file = create_object_file(target_info, target_triple)?;
     let section = file.add_section(
         file.segment_name(StandardSegment::Data).to_vec(),
         b".dep-v0".to_vec(),
