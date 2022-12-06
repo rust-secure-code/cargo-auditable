@@ -10,15 +10,16 @@ use object::{
 
 use crate::target_info::RustcTargetInfo;
 
+/// Returns None if the architecture is not supported
 pub fn create_metadata_file(
     // formerly `create_compressed_metadata_file` in the rustc codebase
     target_info: &RustcTargetInfo,
     target_triple: &str,
     contents: &[u8],
     symbol_name: &str,
-) -> Vec<u8> {
+) -> Option<Vec<u8>> {
     let mut file =
-        create_object_file(target_info, target_triple).expect("Unsupported architecture");
+        create_object_file(target_info, target_triple)?;
     let section = file.add_section(
         file.segment_name(StandardSegment::Data).to_vec(),
         b".dep-v0".to_vec(),
@@ -46,7 +47,7 @@ pub fn create_metadata_file(
         flags: SymbolFlags::None,
     });
 
-    file.write().unwrap()
+    Some(file.write().unwrap())
 }
 
 fn create_object_file(
