@@ -18,6 +18,13 @@ pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -
 fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     let mut metadata_command = MetadataCommand::new();
 
+    // Cargo sets the path to itself in the `CARGO` environment variable:
+    // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-3rd-party-subcommands
+    // This is also useful for using `cargo auditable` as a drop-in replacement for Cargo.
+    if let Some(path) = std::env::var_os("CARGO") {
+        metadata_command.cargo_path(path);
+    }
+
     // Point cargo-metadata to the correct Cargo.toml in a workspace.
     // CARGO_MANIFEST_DIR env var will be set by Cargo when it calls our rustc wrapper
     let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();

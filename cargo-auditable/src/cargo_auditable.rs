@@ -3,7 +3,15 @@ use std::{env, process::Command};
 
 pub fn main() {
     // set the RUSTFLAGS environment variable to inject our object and call Cargo with all the Cargo args
-    let mut command = cargo_command();
+
+    // Cargo sets the path to itself in the `CARGO` environment variable:
+    // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-3rd-party-subcommands
+    // This is also useful for using `cargo auditable` as a drop-in replacement for Cargo.
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let mut command = Command::new(cargo);
+    // Pass along all our arguments; we don't currently have any args specific to `cargo auditable`
+    // We skip argv[0] which is the path to this binary and the first argument which is 'auditable' passed by Cargo
+    command.args(env::args_os().skip(2));
     // Set the environment variable to use this binary as a rustc wrapper, that's when we do the real work
     // It's important that we set RUSTC_WORKSPACE_WRAPPER and not RUSTC_WRAPPER because only the former invalidates cache.
     // If we use RUSTC_WRAPPER, running `cargo auditable` will not trigger a rebuild.
@@ -30,14 +38,4 @@ pub fn main() {
         .status()
         .expect("Failed to invoke cargo! Make sure it's in your $PATH");
     std::process::exit(results.code().unwrap());
-}
-
-/// Creates a cargo command line and populates arguments from arguments passed to `cargo auditable`
-/// Does not read or modify environment variables.
-fn cargo_command() -> Command {
-    let mut command = Command::new("cargo");
-    // Pass along all our arguments; we don't currently have any args specific to `cargo auditable`
-    // We skip argv[0] which is the path to this binary and the first argument which is 'auditable' passed by Cargo
-    command.args(env::args_os().skip(2));
-    command
 }
