@@ -1,10 +1,10 @@
 #![forbid(unsafe_code)]
 
-use auditable_info::{Limits, json_from_file};
+use auditable_info::{json_from_file, Limits};
 use std::env::args_os;
+use std::error::Error;
 use std::io::Write;
 use std::path::PathBuf;
-use std::error::Error;
 
 const USAGE: &'static str = "\
 Usage: rust-audit-info FILE [INPUT_SIZE_LIMIT] [OUTPUT_SIZE_LIMIT]
