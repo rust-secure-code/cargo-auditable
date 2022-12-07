@@ -29,6 +29,16 @@ The only configuration option is `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environmen
 
 In a word, no. The embedded dependency list uses under 4kB even on large dependency trees with 400+ entries. This typically translates to between 1/1000 and 1/10,000 of the size of the binary.
 
+### Can I make `cargo` always build with `cargo auditable`?
+
+Yes, with the magic of shell aliases! For example, on Linux/macOS/etc add this to your `.bashrc`:
+
+```bash
+# Ask not to return error when targeting unsupported platforms, e.g. WASM
+export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="please" # anything other than "" works
+alias cargo="cargo auditable"
+```
+
 ### Is there any tooling to consume this data?
 
 #### Vulnerability reporting
@@ -43,16 +53,6 @@ When used on images or directories, Rust audit support must be enabled by adding
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
-
-### Can I make `cargo` always build with `cargo auditable`?
-
-Yes, with the magic of shell aliases! For example, on Linux/macOS/etc add this to your `.bashrc`:
-
-```bash
-# Ask not to return error when targeting unsupported platforms, e.g. WASM
-export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="please" # anything other than "" works
-alias cargo="cargo auditable"
-```
 
 ### Can I read this data using a tool written in a different language?
 
