@@ -25,7 +25,7 @@ If the `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable is set to any v
 `cargo auditable` will not cause an error when building for a platform it cannot inject audit data on.
 This option makes it possible to use `cargo auditable` as a drop-in replacement for `cargo`, e.g. on Linux this will be:
 
-```
+```bash
 export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="yes please"
 alias cargo="cargo auditable"
 ```
