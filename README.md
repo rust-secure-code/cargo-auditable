@@ -21,7 +21,7 @@ cargo audit bin target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
-The only configuration option is `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable. When set to anything other than "", it will cause the build to continue even on unsupported platforms where the audit data cannot be injected.
+The only configuration option is `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable. When set to anything other than `""`, it will cause the build to continue even on unsupported platforms where the audit data cannot be injected, such as WebAssembly.
 
 ## FAQ
 
