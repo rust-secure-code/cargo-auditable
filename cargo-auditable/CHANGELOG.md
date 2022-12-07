@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.6] - UNRELEASED
+## [0.6.0] - UNRELEASED
 
 ### Added
 
- - Added `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable. When it is set, a build targeting an unsupported architecture will proceed with a warning instead of failing with an error. Returning an error is still the default.
- - The `CARGO` environment variable is now read and honored; calls to Cargo will go through the binary specified in this variable instead of just `cargo`.
  - Added documentation on using `cargo auditable` as a drop-in replacement for `cargo`.
+
+### Changed
+
+ - A build with `cargo auditable` no longer fails when targeting an unsupported architecture. Instead a warning is printed.
+ - The `CARGO` environment variable is now read and honored; calls to Cargo will go through the binary specified in this variable instead of just `cargo`.
 
 ### Fixed
 
