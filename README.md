@@ -21,13 +21,7 @@ cargo audit bin target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
-You can use `cargo auditable` as a drop-in replacement for Cargo. On Linux, add this to your `.bashrc`:
-
-```bash
-# Ask not to return error when targeting unsupported platforms, e.g. WASM
-export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="please" # anything other than "" works
-alias cargo="cargo auditable"
-```
+The only configuration option is `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable. When set to anything other than "", it will cause the build to continue even on unsupported platforms where the audit data cannot be injected.
 
 ## FAQ
 
@@ -49,6 +43,16 @@ When used on images or directories, Rust audit support must be enabled by adding
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 
 It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
+
+### Can I make `cargo` always build with `cargo auditable`?
+
+Yes, with the magic of shell aliases! For example, on Linux/macOS/etc add this to your `.bashrc`:
+
+```bash
+# Ask not to return error when targeting unsupported platforms, e.g. WASM
+export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="please" # anything other than "" works
+alias cargo="cargo auditable"
+```
 
 ### Can I read this data using a tool written in a different language?
 
