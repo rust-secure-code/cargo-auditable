@@ -23,7 +23,10 @@ fn main() {
         // It's important to read it because it can be overridden via env vars or config files.
         // In order to distinguish that from someone running the binary directly by mistake,
         // we check if the env var we set earlier is still present.
-        else if std::env::var_os("CARGO_AUDITABLE_ORIG_ARGS").is_some() {
+        // The "rustc" special-case is purely to accommodate the weird things `sccache` does:
+        // https://github.com/rust-secure-code/cargo-auditable/issues/87
+        // We should push back and make it sccache's problem if this ever causes issues.
+        else if arg == "rustc" || std::env::var_os("CARGO_AUDITABLE_ORIG_ARGS").is_some() {
             rustc_wrapper::main(&arg)
         } else {
             shoo();
