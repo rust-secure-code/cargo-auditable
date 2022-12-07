@@ -55,18 +55,8 @@ pub fn main(rustc_path: &OsStr) {
                     }
                 } else {
                     // create_metadata_file() returned None, indicating an unsupported architecture
-                    match std::env::var_os("CARGO_AUDITABLE_IGNORE_UNSUPPORTED") {
-                        Some(v) if v != "" => {
-                            eprintln!("WARNING: target '{target_triple}' is not supported by 'cargo auditable'!\n\
-                            The build will continue, but no audit data will be injected into the binary.")
-                        }
-                        _ => {
-                            eprintln!("ERROR: target '{target_triple}' is not supported by 'cargo auditable'!\n\
-                            You can set the CARGO_AUDITABLE_IGNORE_UNSUPPORTED environment variable to keep going,\n\
-                            but in that case no audit data will be injected into the binary.");
-                            std::process::exit(1);
-                        }
-                    }
+                    eprintln!("WARNING: target '{target_triple}' is not supported by 'cargo auditable'!\n\
+                    The build will continue, but no audit data will be injected into the binary.");
                 }
             }
         } else {
