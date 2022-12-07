@@ -21,12 +21,11 @@ cargo audit bin target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
-If the `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable is set to any value other than an empty string,
-`cargo auditable` will not cause an error when building for a platform it cannot inject audit data on.
-This option makes it possible to use `cargo auditable` as a drop-in replacement for `cargo`, e.g. on Linux this will be:
+You can use `cargo auditable` as a drop-in replacement for Cargo. On Linux, add this to your `.bashrc`:
 
 ```bash
-export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="yes please"
+# Ask not to return error when targeting unsupported platforms, e.g. WASM
+export CARGO_AUDITABLE_IGNORE_UNSUPPORTED="please" # anything other than "" works
 alias cargo="cargo auditable"
 ```
 
