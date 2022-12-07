@@ -19,7 +19,11 @@ const EXE: &str = env!("CARGO_BIN_EXE_cargo-auditable");
 /// Run cargo auditable with --manifest-path <cargo_toml_path arg> and extra args,
 /// returning of map of workspace member names -> produced binaries (bin and cdylib)
 /// Reads the AUDITABLE_TEST_TARGET environment variable to determine the target to compile for
-fn run_cargo_auditable<P>(cargo_toml_path: P, args: &[&str], env: &[(&str, &OsStr)]) -> HashMap<String, Vec<Utf8PathBuf>>
+fn run_cargo_auditable<P>(
+    cargo_toml_path: P,
+    args: &[&str],
+    env: &[(&str, &OsStr)],
+) -> HashMap<String, Vec<Utf8PathBuf>>
 where
     P: AsRef<OsStr>,
 {
@@ -162,7 +166,7 @@ fn test_cargo_auditable_workspaces() {
     let bins = run_cargo_auditable(
         &workspace_cargo_toml,
         &["--features", "binary_and_cdylib_crate"],
-        &[]
+        &[],
     );
     // crate_with_features should now have three dependencies, library_crate binary_and_cdylib_crate and crate_with_features,
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
@@ -364,7 +368,11 @@ fn test_custom_rustc_path() {
     // locate rustc
     let rustc_path = which::which("rustc").unwrap();
     // Run in workspace root with a custom path to rustc
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[("RUSTC".into(), rustc_path.as_ref())]);
+    let bins = run_cargo_auditable(
+        &workspace_cargo_toml,
+        &[],
+        &[("RUSTC".into(), rustc_path.as_ref())],
+    );
     eprintln!("Test fixture binary map: {:?}", bins);
 
     // check that the build types are propagated correctly

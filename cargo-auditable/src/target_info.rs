@@ -1,4 +1,4 @@
-use std::{io::BufRead, ffi::OsStr};
+use std::{ffi::OsStr, io::BufRead};
 
 pub type RustcTargetInfo = std::collections::HashMap<String, String>;
 

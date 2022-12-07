@@ -21,7 +21,10 @@ pub fn main(rustc_path: &OsStr) {
                 || args.crate_types.contains(&"cdylib".to_owned())
             {
                 // Get the audit data to embed
-                let target_triple = args.target.clone().unwrap_or_else(|| rustc_host_target_triple(rustc_path));
+                let target_triple = args
+                    .target
+                    .clone()
+                    .unwrap_or_else(|| rustc_host_target_triple(rustc_path));
                 let contents: Vec<u8> =
                     collect_audit_data::compressed_dependency_list(&args, &target_triple);
                 // write the audit info to an object file
