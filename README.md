@@ -29,11 +29,13 @@ In a word, no. The embedded dependency list uses under 4kB even on large depende
 
 ### Can I make `cargo` always build with `cargo auditable`?
 
-Yes, with the magic of shell aliases! For example, on Linux/macOS/etc add this to your `.bashrc`:
+Yes! For example, on Linux/macOS/etc add this to your `.bashrc`:
 
 ```bash
 alias cargo="cargo auditable"
 ```
+
+If you're using a shell other than bash, or if using an alias is not an option, [see here.](REPLACING_CARGO.md)
 
 ### Is there any tooling to consume this data?
 
