@@ -17,14 +17,23 @@ fn main() {
     if let Some(arg) = first_arg {
         if arg == "auditable" {
             cargo_auditable::main()
-        } else if arg == "rustc" {
-            rustc_wrapper::main()
+        }
+        // When this binary is called as a rustc wrapper, the first argument is the path to rustc:
+        // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-reads
+        // It's important to read it because it can be overridden via env vars or config files.
+        // In order to distinguish that from someone running the binary directly by mistake,
+        // we check if the env var we set earlier is still present.
+        else if std::env::var_os("CARGO_AUDITABLE_ORIG_ARGS").is_some() {
+            rustc_wrapper::main(&arg)
         } else {
-            eprintln!("Unrecognized command: {arg:?}");
-            exit(1);
+            shoo();
         }
     } else {
-        eprintln!("'cargo auditable' should be invoked through Cargo");
-        exit(1);
+        shoo();
     }
+}
+
+fn shoo() -> ! {
+    eprintln!("'cargo auditable' should be invoked through Cargo");
+    exit(1);
 }

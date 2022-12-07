@@ -1,10 +1,10 @@
-use std::io::BufRead;
+use std::{io::BufRead, ffi::OsStr};
 
 pub type RustcTargetInfo = std::collections::HashMap<String, String>;
 
-pub fn rustc_target_info(target_triple: &str) -> RustcTargetInfo {
+pub fn rustc_target_info(rustc_path: &OsStr, target_triple: &str) -> RustcTargetInfo {
     // this is hand-rolled because the relevant piece of Cargo is hideously complex for some reason
-    parse_rustc_target_info(&std::process::Command::new("rustc")
+    parse_rustc_target_info(&std::process::Command::new(rustc_path)
         .arg("--print=cfg")
         .arg(format!("--target={}", target_triple)) //not being parsed by the shell, so not a vulnerability
         .output()

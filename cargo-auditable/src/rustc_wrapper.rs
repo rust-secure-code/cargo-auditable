@@ -8,8 +8,8 @@ use crate::{collect_audit_data, object_file, rustc_arguments, target_info};
 
 use std::io::BufRead;
 
-pub fn main() {
-    let mut command = rustc_command();
+pub fn main(rustc_path: &OsStr) {
+    let mut command = rustc_command(rustc_path);
 
     // Binaries and C dynamic libraries are not built as non-primary packages,
     // so this should not cause issues with Cargo caches.
@@ -21,11 +21,11 @@ pub fn main() {
                 || args.crate_types.contains(&"cdylib".to_owned())
             {
                 // Get the audit data to embed
-                let target_triple = args.target.clone().unwrap_or_else(rustc_host_target_triple);
+                let target_triple = args.target.clone().unwrap_or_else(|| rustc_host_target_triple(rustc_path));
                 let contents: Vec<u8> =
                     collect_audit_data::compressed_dependency_list(&args, &target_triple);
                 // write the audit info to an object file
-                let target_info = target_info::rustc_target_info(&target_triple);
+                let target_info = target_info::rustc_target_info(rustc_path, &target_triple);
                 let binfile = object_file::create_metadata_file(
                     &target_info,
                     &target_triple,
@@ -99,17 +99,18 @@ pub fn main() {
 }
 
 /// Creates a rustc command line and populates arguments from arguments passed to us.
-fn rustc_command() -> Command {
-    let mut command = Command::new("rustc");
+fn rustc_command(rustc_path: &OsStr) -> Command {
+    let mut command = Command::new(rustc_path);
     // Pass along all the arguments that Cargo meant to pass to rustc
-    // We skip the path to our binary as well as the first argument passed by Cargo which is always "rustc"
+    // We skip the path to our binary as well as the first argument passed by Cargo,
+    // which is the path to rustc to use (or just "rustc")
     command.args(env::args_os().skip(2));
     command
 }
 
 /// Returns the default target triple for the rustc we're running
-fn rustc_host_target_triple() -> String {
-    Command::new("rustc")
+fn rustc_host_target_triple(rustc_path: &OsStr) -> String {
+    Command::new(rustc_path)
         .arg("-vV")
         .output()
         .expect("Failed to invoke rustc! Is it in your $PATH?")
