@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Added `CARGO_AUDITABLE_IGNORE_UNSUPPORTED` environment variable. When it is set, a build targeting an unsupported architecture will proceed with a warning instead of failing with an error. Returning an error is still the default.
  - The `CARGO` environment variable is now read and honored; calls to Cargo will go through the binary specified in this variable instead of just `cargo`.
+ - Added documentation on using `cargo auditable` as a drop-in replacement for `cargo`.
 
 ### Fixed
 
