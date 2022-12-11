@@ -24,6 +24,7 @@ pub fn create_metadata_file(
         b".dep-v0".to_vec(),
         SectionKind::ReadOnlyData,
     );
+    #[allow(clippy::single_match)]
     match file.format() {
         BinaryFormat::Elf => {
             // Explicitly set no flags to avoid SHF_ALLOC default for data section.

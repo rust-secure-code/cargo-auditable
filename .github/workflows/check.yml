@@ -15,7 +15,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --locked
+      - name: Run cargo check
+        run: cargo check --locked
+      - name: Run cargo clippy
+        run: cargo clippy -- -D warnings
+      - name: Check format
+        run: cargo fmt -- --check
