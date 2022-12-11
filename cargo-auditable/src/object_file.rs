@@ -24,13 +24,9 @@ pub fn create_metadata_file(
         b".dep-v0".to_vec(),
         SectionKind::ReadOnlyData,
     );
-    #[allow(clippy::single_match)]
-    match file.format() {
-        BinaryFormat::Elf => {
-            // Explicitly set no flags to avoid SHF_ALLOC default for data section.
-            file.section_mut(section).flags = SectionFlags::Elf { sh_flags: 0 };
-        }
-        _ => {}
+    if let BinaryFormat::Elf = file.format() {
+        // Explicitly set no flags to avoid SHF_ALLOC default for data section.
+        file.section_mut(section).flags = SectionFlags::Elf { sh_flags: 0 };
     };
     let offset = file.append_section_data(section, contents, 1);
 
