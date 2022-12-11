@@ -24,6 +24,6 @@ fn do_work() -> Result<(), Box<dyn Error>> {
 
 fn main() {
     if let Err(error) = do_work() {
-        println!("{}", error);
+        println!("{error}");
     }
 }

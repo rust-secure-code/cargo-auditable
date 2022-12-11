@@ -17,12 +17,12 @@ impl std::fmt::Display for Error {
             Error::NoAuditData => write!(f, "No audit data found in the binary! Was it built with 'cargo auditable'?"),
             Error::InputLimitExceeded => write!(f, "The input file is too large. Increase the input size limit to scan it."),
             Error::OutputLimitExceeded => write!(f, "Audit data size is over the specified limit. Increase the output size limit to scan it."),
-            Error::Io(e) => write!(f, "Failed to read the binary: {}", e),
-            Error::BinaryParsing(e) => write!(f, "Failed to parse the binary: {}", e),
-            Error::Decompression(e) => write!(f, "Failed to decompress audit data: {}", e),
+            Error::Io(e) => write!(f, "Failed to read the binary: {e}"),
+            Error::BinaryParsing(e) => write!(f, "Failed to parse the binary: {e}"),
+            Error::Decompression(e) => write!(f, "Failed to decompress audit data: {e}"),
             #[cfg(feature = "serde")]
-            Error::Json(e) => write!(f, "Failed to deserialize audit data from JSON: {}", e),
-            Error::Utf8(e) => write!(f, "Invalid UTF-8 in audit data: {}", e),
+            Error::Json(e) => write!(f, "Failed to deserialize audit data from JSON: {e}"),
+            Error::Utf8(e) => write!(f, "Invalid UTF-8 in audit data: {e}"),
         }
     }
 }

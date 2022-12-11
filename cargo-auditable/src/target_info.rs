@@ -6,9 +6,9 @@ pub fn rustc_target_info(rustc_path: &OsStr, target_triple: &str) -> RustcTarget
     // this is hand-rolled because the relevant piece of Cargo is hideously complex for some reason
     parse_rustc_target_info(&std::process::Command::new(rustc_path)
         .arg("--print=cfg")
-        .arg(format!("--target={}", target_triple)) //not being parsed by the shell, so not a vulnerability
+        .arg(format!("--target={target_triple}")) //not being parsed by the shell, so not a vulnerability
         .output()
-        .unwrap_or_else(|_| panic!("Failed to invoke rustc; make sure it's in $PATH and that '{}' is a valid target triple", target_triple))
+        .unwrap_or_else(|_| panic!("Failed to invoke rustc; make sure it's in $PATH and that '{target_triple}' is a valid target triple"))
         .stdout)
 }
 

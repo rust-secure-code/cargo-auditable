@@ -18,8 +18,6 @@ use auditable_extract::raw_auditable_data;
 #[cfg(feature = "serde")]
 use auditable_serde::VersionInfo;
 use miniz_oxide::inflate::decompress_to_vec_zlib_with_limit;
-#[cfg(feature = "serde")]
-use serde_json;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
@@ -137,7 +135,7 @@ pub fn json_from_slice(
     input_binary: &[u8],
     decompressed_json_size_limit: usize,
 ) -> Result<String, Error> {
-    let compressed_audit_data = raw_auditable_data(&input_binary)?;
+    let compressed_audit_data = raw_auditable_data(input_binary)?;
     if compressed_audit_data.len() > decompressed_json_size_limit {
         Err(Error::OutputLimitExceeded)?;
     }

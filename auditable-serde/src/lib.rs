@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![allow(clippy::redundant_field_names)]
 
 //! Parses and serializes the JSON dependency tree embedded in executables by the
 //! [`cargo auditable`](https://github.com/rust-secure-code/cargo-auditable).
@@ -309,7 +310,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                     let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
                     let dep_kind = min(dep_kind, parent_dep_kind);
                     let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
-                    if dep_kind_on_previous_visit == None
+                    if dep_kind_on_previous_visit.is_none()
                         || &dep_kind > dep_kind_on_previous_visit.unwrap()
                     {
                         // if we haven't visited this node in dependency graph yet
@@ -378,7 +379,7 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
             .map(|p| Package {
                 name: p.name.to_owned(),
                 version: p.version.clone(),
-                source: p.source.as_ref().map_or(Source::Local, |s| Source::from(s)),
+                source: p.source.as_ref().map_or(Source::Local, Source::from),
                 kind: (*metadata_package_dep_kind(p).unwrap()).into(),
                 dependencies: Vec::new(),
                 root: p.id.repr == toplevel_crate_id,
