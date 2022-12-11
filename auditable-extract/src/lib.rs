@@ -103,7 +103,7 @@ impl std::fmt::Display for Error {
             Error::SectionIsMissing => "Section is missing from executable",
             Error::UnexpectedSectionType => "Unexpected executable section type",
         };
-        write!(f, "{}", message)
+        write!(f, "{message}")
     }
 }
 

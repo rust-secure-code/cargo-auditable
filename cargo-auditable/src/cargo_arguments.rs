@@ -59,11 +59,11 @@ mod tests {
             "net.git-fetch-with-cli=true",
             "--offline",
         ];
-        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let raw_args = input.iter().map(OsString::from).collect();
         let args = CargoArgs::from_args_vec(raw_args);
-        assert_eq!(args.locked, true);
-        assert_eq!(args.offline, true);
-        assert_eq!(args.frozen, false);
+        assert!(args.locked);
+        assert!(args.offline);
+        assert!(!args.frozen);
         assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
     }
 
@@ -82,11 +82,11 @@ mod tests {
             "--offline",
             "--ignore-rust-version",
         ];
-        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let raw_args = input.iter().map(OsString::from).collect();
         let args = CargoArgs::from_args_vec(raw_args);
-        assert_eq!(args.locked, true);
-        assert_eq!(args.offline, true);
-        assert_eq!(args.frozen, false);
+        assert!(args.locked);
+        assert!(args.offline);
+        assert!(!args.frozen);
         assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
     }
 
@@ -102,9 +102,9 @@ mod tests {
             "--",
             "--offline",
         ];
-        let raw_args = input.iter().map(|s| OsString::from(s)).collect();
+        let raw_args = input.iter().map(OsString::from).collect();
         let args = CargoArgs::from_args_vec(raw_args);
-        assert_eq!(args.offline, false);
+        assert!(!args.offline);
         assert_eq!(args.config, vec!["net.git-fetch-with-cli=true"]);
     }
 }

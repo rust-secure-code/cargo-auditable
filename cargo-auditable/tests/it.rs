@@ -123,7 +123,7 @@ fn test_cargo_auditable_workspaces() {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/workspace/Cargo.toml");
     // Run in workspace root with default features
     let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    eprintln!("Test fixture binary map: {bins:?}");
     // No binaries for library_crate
     assert!(bins.get("library_crate").is_none());
 
@@ -132,13 +132,13 @@ fn test_cargo_auditable_workspaces() {
     match std::env::var("AUDITABLE_TEST_TARGET") {
         // musl targets do not produce cdylibs by default: https://github.com/rust-lang/cargo/issues/8607
         // So when targeting musl, we only check that the binary has been built, not the cdylib.
-        Ok(target) if target.contains("musl") => assert!(binary_and_cdylib_crate_bins.len() >= 1),
+        Ok(target) if target.contains("musl") => assert!(!binary_and_cdylib_crate_bins.is_empty()),
         // everything else should build both the binary and cdylib
         _ => assert_eq!(binary_and_cdylib_crate_bins.len(), 2),
     }
     for binary in binary_and_cdylib_crate_bins {
         let dep_info = get_dependency_info(binary);
-        eprintln!("{} dependency info: {:?}", binary, dep_info);
+        eprintln!("{binary} dependency info: {dep_info:?}");
         // binary_and_cdylib_crate should have two dependencies, library_crate and itself
         assert!(dep_info.packages.len() == 2);
         assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
@@ -150,11 +150,8 @@ fn test_cargo_auditable_workspaces() {
 
     // crate_with_features should create a binary with two dependencies, library_crate and itself
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
-    let dep_info = get_dependency_info(&crate_with_features_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        crate_with_features_bin, dep_info
-    );
+    let dep_info = get_dependency_info(crate_with_features_bin);
+    eprintln!("{crate_with_features_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 2);
     assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
     assert!(dep_info
@@ -171,10 +168,7 @@ fn test_cargo_auditable_workspaces() {
     // crate_with_features should now have three dependencies, library_crate binary_and_cdylib_crate and crate_with_features,
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
     let dep_info = get_dependency_info(crate_with_features_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        crate_with_features_bin, dep_info
-    );
+    eprintln!("{crate_with_features_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 3);
     assert!(dep_info.packages.iter().any(|p| p.name == "library_crate"));
     assert!(dep_info
@@ -191,10 +185,7 @@ fn test_cargo_auditable_workspaces() {
     // crate_with_features should now only depend on itself
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
     let dep_info = get_dependency_info(crate_with_features_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        crate_with_features_bin, dep_info
-    );
+    eprintln!("{crate_with_features_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info
         .packages
@@ -209,13 +200,13 @@ fn test_self_hosting() {
     let workspace_cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../rust-audit-info/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Self-hosting binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Self-hosting binary map: {bins:?}");
 
     // verify that the dependency info is present at all
     let bin = &bins.get("rust-audit-info").unwrap()[0];
     let dep_info = get_dependency_info(bin);
-    eprintln!("{} dependency info: {:?}", bin, dep_info);
+    eprintln!("{bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() > 1);
     assert!(dep_info
         .packages
@@ -229,13 +220,13 @@ fn test_lto() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lto_binary_crate/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--release"], &[]);
-    eprintln!("LTO binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &["--release"], &[]);
+    eprintln!("LTO binary map: {bins:?}");
 
     // lto_binary_crate should only depend on itself
     let lto_binary_crate_bin = &bins.get("lto_binary_crate").unwrap()[0];
     let dep_info = get_dependency_info(lto_binary_crate_bin);
-    eprintln!("{} dependency info: {:?}", lto_binary_crate_bin, dep_info);
+    eprintln!("{lto_binary_crate_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info
         .packages
@@ -249,13 +240,13 @@ fn test_bin_and_lib_in_one_crate() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lib_and_bin_crate/Cargo.toml");
 
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--bin=some_binary"], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &["--bin=some_binary"], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     // lib_and_bin_crate should only depend on itself
     let lib_and_bin_crate_bin = &bins.get("lib_and_bin_crate").unwrap()[0];
     let dep_info = get_dependency_info(lib_and_bin_crate_bin);
-    eprintln!("{} dependency info: {:?}", lib_and_bin_crate_bin, dep_info);
+    eprintln!("{lib_and_bin_crate_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info
         .packages
@@ -271,16 +262,13 @@ fn test_build_script() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/crate_with_build_script/Cargo.toml");
 
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     // crate_with_build_script should only depend on itself
     let crate_with_build_script_bin = &bins.get("crate_with_build_script").unwrap()[0];
     let dep_info = get_dependency_info(crate_with_build_script_bin);
-    eprintln!(
-        "{} dependency info: {:?}",
-        crate_with_build_script_bin, dep_info
-    );
+    eprintln!("{crate_with_build_script_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 1);
     assert!(dep_info
         .packages
@@ -294,16 +282,16 @@ fn test_platform_specific_deps() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/platform_specific_deps/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     let test_target = std::env::var("AUDITABLE_TEST_TARGET");
     if test_target.is_err() || !test_target.unwrap().starts_with("m68k") {
         // 'with_platform_dep' should only depend on 'should_not_be_included' on m68k processors
         // and we're not building for those, so it should be omitted
         let bin = &bins.get("with_platform_dep").unwrap()[0];
-        let dep_info = get_dependency_info(&bin);
-        eprintln!("{} dependency info: {:?}", bin, dep_info);
+        let dep_info = get_dependency_info(bin);
+        eprintln!("{bin} dependency info: {dep_info:?}");
         assert!(dep_info.packages.len() == 1);
         assert!(!dep_info
             .packages
@@ -318,13 +306,13 @@ fn test_build_then_runtime_dep() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/build_then_runtime_dep/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
     let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
     let dep_info = get_dependency_info(toplevel_crate_bin);
-    eprintln!("{} dependency info: {:?}", toplevel_crate_bin, dep_info);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 3);
     assert!(dep_info
         .packages
@@ -342,13 +330,13 @@ fn test_runtime_then_build_dep() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/runtime_then_build_dep/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
     let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
     let dep_info = get_dependency_info(toplevel_crate_bin);
-    eprintln!("{} dependency info: {:?}", toplevel_crate_bin, dep_info);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 3);
     assert!(dep_info
         .packages
@@ -368,17 +356,13 @@ fn test_custom_rustc_path() {
     // locate rustc
     let rustc_path = which::which("rustc").unwrap();
     // Run in workspace root with a custom path to rustc
-    let bins = run_cargo_auditable(
-        &workspace_cargo_toml,
-        &[],
-        &[("RUSTC".into(), rustc_path.as_ref())],
-    );
-    eprintln!("Test fixture binary map: {:?}", bins);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[("RUSTC", rustc_path.as_ref())]);
+    eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
     let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
     let dep_info = get_dependency_info(toplevel_crate_bin);
-    eprintln!("{} dependency info: {:?}", toplevel_crate_bin, dep_info);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
     assert!(dep_info.packages.len() == 3);
     assert!(dep_info
         .packages
