@@ -87,7 +87,7 @@ mod tests {
             source: Source::Local,
             kind: DependencyKind::Build,
             dependencies: deps,
-            root,
+            root: root,
         }
     }
 

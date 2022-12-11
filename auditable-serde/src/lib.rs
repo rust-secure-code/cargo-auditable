@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![allow(clippy::redundant_field_names)]
 
 //! Parses and serializes the JSON dependency tree embedded in executables by the
 //! [`cargo auditable`](https://github.com/rust-secure-code/cargo-auditable).
@@ -481,7 +482,7 @@ impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
         }
         Ok(cargo_lock::Lockfile {
             version: cargo_lock::ResolveVersion::V2,
-            packages,
+            packages: packages,
             root: root_package,
             metadata: std::collections::BTreeMap::new(),
             patch: cargo_lock::Patch { unused: Vec::new() },
