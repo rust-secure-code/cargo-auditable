@@ -6,7 +6,7 @@
 //!
 //! ```rust, ignore
 //! // Uses the default limits: 1GiB input file size, 8MiB audit data size
-//! let info = audit_info_from_file("path/to/file", Default::default())?;
+//! let info = audit_info_from_file(&PathBuf::from("path/to/file"), Default::default())?;
 //! ```
 //! Functions to load the data from a `Read` instance or from `&[u8]` are also provided.
 //!
@@ -32,7 +32,7 @@ pub use crate::error::Error;
 ///
 /// ```rust, ignore
 /// // Uses the default limits: 1GiB input file size, 8MiB audit data size
-/// let info = audit_info_from_file("path/to/file", Default::default())?;
+/// let info = audit_info_from_file(&PathBuf::from("path/to/file"), Default::default())?;
 /// ```
 ///
 /// The data is validated to only have a single root package and not contain any circular dependencies.
