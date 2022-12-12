@@ -12,9 +12,9 @@ Deserializes them to a JSON string or Rust data structures, at your option.
 
 ### Usage
 
-```rust, ignore
+```rust
 // Uses the default limits: 1GiB input file size, 8MiB audit data size
-let info = audit_info_from_file("path/to/file", Default::default())?;
+let info = audit_info_from_file(&PathBuf::from("path/to/file"), Default::default())?;
 ```
 Functions to load the data from a `Read` instance or from `&[u8]` are also provided,
 see the [documentation](https://docs.rs/auditable-info).
