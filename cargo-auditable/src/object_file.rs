@@ -1,5 +1,5 @@
 //! Shamelessly copied from rustc codebase:
-//! https://github.com/rust-lang/rust/blob/3b186511f62b0ce20e72ede0e8e13f8787155f02/compiler/rustc_codegen_ssa/src/back/metadata.rs#L260-L298
+//! https://github.com/rust-lang/rust/blob/dcca6a375bd4eddb3deea7038ebf29d02af53b48/compiler/rustc_codegen_ssa/src/back/metadata.rs#L97-L206
 //! and butchered ever so slightly
 
 use object::write::{self, StandardSegment, Symbol, SymbolSection};
@@ -60,7 +60,13 @@ fn create_object_file(
     };
     let architecture = match info["target_arch"].as_str() {
         "arm" => Architecture::Arm,
-        "aarch64" => Architecture::Aarch64,
+        "aarch64" => {
+            if info["target_pointer_width"].as_str() == "32" {
+                Architecture::Aarch64_Ilp32
+            } else {
+                Architecture::Aarch64
+            }
+        }
         "x86" => Architecture::I386,
         "s390x" => Architecture::S390x,
         "mips" => Architecture::Mips,
@@ -89,18 +95,29 @@ fn create_object_file(
     };
 
     let mut file = write::Object::new(binary_format, architecture, endianness);
-    match architecture {
+    let e_flags = match architecture {
         Architecture::Mips => {
-            // copied from `mipsel-linux-gnu-gcc foo.c -c` and
-            // inspecting the resulting `e_flags` field.
-            let e_flags = elf::EF_MIPS_CPIC
-                | elf::EF_MIPS_PIC
-                | if target_triple.contains("r6") {
-                    elf::EF_MIPS_ARCH_32R6 | elf::EF_MIPS_NAN2008
-                } else {
-                    elf::EF_MIPS_ARCH_32R2
-                };
-            file.flags = FileFlags::Elf { e_flags };
+            // the original code matches on info we don't have to support pre-1999 MIPS variants:
+            // https://github.com/rust-lang/rust/blob/dcca6a375bd4eddb3deea7038ebf29d02af53b48/compiler/rustc_codegen_ssa/src/back/metadata.rs#L144C3-L153
+            // We can't support them, so this part was was modified significantly.
+            let arch = if target_triple.contains("r6") {
+                elf::EF_MIPS_ARCH_32R6
+            } else {
+                elf::EF_MIPS_ARCH_32R2
+            };
+            // end of modified part
+
+            // The only ABI LLVM supports for 32-bit MIPS CPUs is o32.
+            let mut e_flags = elf::EF_MIPS_CPIC | elf::EF_MIPS_ABI_O32 | arch;
+            // commented out: insufficient info to support this outside rustc
+            // if sess.target.options.relocation_model != RelocModel::Static {
+            //     e_flags |= elf::EF_MIPS_PIC;
+            // }
+            if target_triple.contains("r6") {
+                e_flags |= elf::EF_MIPS_NAN2008;
+            }
+            e_flags
+
         }
         Architecture::Mips64 => {
             // copied from `mips64el-linux-gnuabi64-gcc foo.c -c`
@@ -111,29 +128,52 @@ fn create_object_file(
                 } else {
                     elf::EF_MIPS_ARCH_64R2
                 };
-            file.flags = FileFlags::Elf { e_flags };
+            e_flags
         }
-        Architecture::Riscv64 if has_riscv_double_precision_float_abi(target_triple) => {
-            // copied from `riscv64-linux-gnu-gcc foo.c -c`, note though
-            // that the `+d` target feature represents whether the double
-            // float abi is enabled.
-            let e_flags = elf::EF_RISCV_RVC | elf::EF_RISCV_FLOAT_ABI_DOUBLE;
-            file.flags = FileFlags::Elf { e_flags };
+        Architecture::Riscv32 | Architecture::Riscv64 => {
+            // Source: https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/079772828bd10933d34121117a222b4cc0ee2200/riscv-elf.adoc
+            let mut e_flags: u32 = 0x0;
+            let features = riscv_features(target_triple);
+            // Check if compressed is enabled
+            if features.contains("c") {
+                e_flags |= elf::EF_RISCV_RVC;
+            }
+
+            // Select the appropriate floating-point ABI
+            if features.contains("d") {
+                e_flags |= elf::EF_RISCV_FLOAT_ABI_DOUBLE;
+            } else if features.contains("f") {
+                e_flags |= elf::EF_RISCV_FLOAT_ABI_SINGLE;
+            } else {
+                e_flags |= elf::EF_RISCV_FLOAT_ABI_SOFT;
+            }
+            e_flags
         }
-        _ => {}
+        _ => 0
     };
+    // adapted from LLVM's `MCELFObjectTargetWriter::getOSABI`
+    let os_abi = match info["target_os"].as_str() {
+        "hermit" => elf::ELFOSABI_STANDALONE,
+        "freebsd" => elf::ELFOSABI_FREEBSD,
+        "solaris" => elf::ELFOSABI_SOLARIS,
+        _ => elf::ELFOSABI_NONE,
+    };
+    let abi_version = 0;
+    file.flags = FileFlags::Elf { os_abi, abi_version, e_flags };
     Some(file)
 }
 
 // This function was not present in the original rustc code, which simply used
-// `sess.target.options.features.contains("+d")`
-// We do not have access to compiler internals, so we have to reimplement the check
-// for double-precision floating-point ABI.
-fn has_riscv_double_precision_float_abi(target_triple: &str) -> bool {
+// `sess.target.options.features`
+// We do not have access to compiler internals, so we have to reimplement this function.
+fn riscv_features(target_triple: &str) -> String {
     let arch = target_triple.split('-').next().unwrap();
     assert_eq!(&arch[..5], "riscv");
-    let extensions = &arch[7..];
-    extensions.contains('g') || extensions.contains('d')
+    let mut extensions = arch[7..].to_owned();
+    if extensions.contains('g') {
+        extensions.push_str(&"imadf");
+    }
+    extensions
 }
 
 #[cfg(test)]
@@ -144,17 +184,25 @@ mod tests {
     #[test]
     fn test_riscv_abi_detection() {
         // real-world target with double floats
-        assert!(has_riscv_double_precision_float_abi(
-            "riscv64gc-unknown-linux-gnu"
-        ));
-        // real-world target without double floats
-        assert!(!has_riscv_double_precision_float_abi(
-            "riscv32imac-unknown-none-elf"
-        ));
-        // made-up target with double floats but without atomics
-        assert!(has_riscv_double_precision_float_abi(
-            "riscv64imd-unknown-none-elf"
-        ));
+        let features = riscv_features("riscv64gc-unknown-linux-gnu");
+        assert!(features.contains('c'));
+        assert!(features.contains('d'));
+        assert!(features.contains('f'));
+        // real-world target without floats
+        let features = riscv_features("riscv32imac-unknown-none-elf");
+        assert!(features.contains('c'));
+        assert!(!features.contains('d'));
+        assert!(!features.contains('f'));
+        // real-world target without floats or compression
+        let features = riscv_features("riscv32i-unknown-none-elf");
+        assert!(!features.contains('c'));
+        assert!(!features.contains('d'));
+        assert!(!features.contains('f'));
+        // made-up target without compression and with single floats
+        let features = riscv_features("riscv32if-unknown-none-elf");
+        assert!(!features.contains('c'));
+        assert!(!features.contains('d'));
+        assert!(features.contains('f'));
     }
 
     #[test]
