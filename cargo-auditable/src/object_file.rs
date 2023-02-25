@@ -134,14 +134,14 @@ fn create_object_file(
             let mut e_flags: u32 = 0x0;
             let features = riscv_features(target_triple);
             // Check if compressed is enabled
-            if features.contains("c") {
+            if features.contains('c') {
                 e_flags |= elf::EF_RISCV_RVC;
             }
 
             // Select the appropriate floating-point ABI
-            if features.contains("d") {
+            if features.contains('d') {
                 e_flags |= elf::EF_RISCV_FLOAT_ABI_DOUBLE;
-            } else if features.contains("f") {
+            } else if features.contains('f') {
                 e_flags |= elf::EF_RISCV_FLOAT_ABI_SINGLE;
             } else {
                 e_flags |= elf::EF_RISCV_FLOAT_ABI_SOFT;
@@ -174,7 +174,7 @@ fn riscv_features(target_triple: &str) -> String {
     assert_eq!(&arch[..5], "riscv");
     let mut extensions = arch[7..].to_owned();
     if extensions.contains('g') {
-        extensions.push_str(&"imadf");
+        extensions.push_str("imadf");
     }
     extensions
 }
