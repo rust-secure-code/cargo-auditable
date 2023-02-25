@@ -120,7 +120,7 @@ fn create_object_file(
         }
         Architecture::Mips64 => {
             // copied from `mips64el-linux-gnuabi64-gcc foo.c -c`
-            #[allow(clippy::let_and_return)] // for keeping the code as close to upstream as possible
+            #[allow(clippy::let_and_return)] // for staying as close to upstream as possible
             let e_flags = elf::EF_MIPS_CPIC
                 | elf::EF_MIPS_PIC
                 | if target_triple.contains("r6") {
