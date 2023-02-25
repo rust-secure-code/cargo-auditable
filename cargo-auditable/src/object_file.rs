@@ -117,7 +117,6 @@ fn create_object_file(
                 e_flags |= elf::EF_MIPS_NAN2008;
             }
             e_flags
-
         }
         Architecture::Mips64 => {
             // copied from `mips64el-linux-gnuabi64-gcc foo.c -c`
@@ -149,7 +148,7 @@ fn create_object_file(
             }
             e_flags
         }
-        _ => 0
+        _ => 0,
     };
     // adapted from LLVM's `MCELFObjectTargetWriter::getOSABI`
     let os_abi = match info["target_os"].as_str() {
@@ -159,7 +158,11 @@ fn create_object_file(
         _ => elf::ELFOSABI_NONE,
     };
     let abi_version = 0;
-    file.flags = FileFlags::Elf { os_abi, abi_version, e_flags };
+    file.flags = FileFlags::Elf {
+        os_abi,
+        abi_version,
+        e_flags,
+    };
     Some(file)
 }
 
