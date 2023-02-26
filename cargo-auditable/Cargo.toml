@@ -24,3 +24,7 @@ serde = "1.0.147"
 cargo_metadata = "0.15"
 auditable-info = {version = "0.6.0", path = "../auditable-info"}
 which = "4.3.0"
+
+[build-dependencies]
+man = "0.3"
+anyhow = "1"
