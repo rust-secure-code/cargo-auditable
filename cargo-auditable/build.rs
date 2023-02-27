@@ -1,4 +1,4 @@
-use std::{io::prelude::*};
+use std::io::prelude::*;
 
 fn generate_man_page() -> String {
     man::prelude::Manual::new("cargo-auditable")
@@ -99,4 +99,3 @@ fn generate_man_page_file() -> Result<(), Box<dyn std::error::Error>> {
 fn main() {
     generate_man_page_file().unwrap();
 }
-
