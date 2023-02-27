@@ -1,5 +1,4 @@
 use std::{io::prelude::*};
-use anyhow::Result;
 
 fn generate_man_page() -> String {
     man::prelude::Manual::new("cargo-auditable")
@@ -83,12 +82,8 @@ Cargo itself is currently in a feature freeze.
         .render()
 }
 
-fn generate_man_page_file() -> Result<()> {
-    let mut dest_path = std::env::current_exe()?;
-    dest_path.pop();
-    dest_path.pop();
-    dest_path.pop();
-    dest_path.pop();
+fn generate_man_page_file() -> Result<(), Box<dyn std::error::Error>> {
+    let mut dest_path = std::path::PathBuf::from(std::env::var("OUT_DIR")?);
     dest_path.push("man-page");
     dest_path.push("cargo-auditable");
     std::fs::create_dir_all(&dest_path)?;

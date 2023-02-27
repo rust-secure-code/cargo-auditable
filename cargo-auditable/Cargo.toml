@@ -27,4 +27,3 @@ which = "4.3.0"
 
 [build-dependencies]
 man = "0.3"
-anyhow = "1"
