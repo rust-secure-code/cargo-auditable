@@ -84,6 +84,14 @@ On older versions it's already there in the debug info. On Unix you can run `str
 
 Good question. I don't think they are exposed in any reasonable way right now. Would be a great addition, but not required for the initial launch. We can add it later in a backwards-compatible way. Adopting [the `-src` crate convention](https://internals.rust-lang.org/t/statically-linked-c-c-libraries/17175?u=shnatsel) would make it happen naturally, and will have other benefits as well, so that's probably the best route.
 
+### Does this protect against supply chain attacks?
+
+No. Use [`cargo-vet`](https://github.com/mozilla/cargo-vet) or [`cargo-crev`](https://github.com/crev-dev/cargo-crev) for that.
+
+[Software Bills of Materials](https://en.wikipedia.org/wiki/Software_supply_chain) (SBOMs) do not prevent supply chain attacks. They cannot even be used to assess the impact of such an attack after it is discovered, because any malicious library worth its bytes will remove itself from the SBOM. This applies to nearly every language and build system, not just Rust and Cargo.
+
+Do not rely on SBOMs when dealing with supply chain attacks!
+
 ### What is blocking uplifting this into Cargo?
 
 Cargo itself is [currently in a feature freeze](https://blog.rust-lang.org/inside-rust/2022/03/31/cargo-team-changes.html).
