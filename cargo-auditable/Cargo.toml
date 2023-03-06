@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-secure-code/cargo-auditable"
 description = "Make production Rust binaries auditable"
 categories = ["development-tools::cargo-plugins", "encoding"]
-keywords = ["security", "supply chain", "sbom", "vulnerabilities"]
+keywords = ["security", "supply-chain", "sbom", "vulnerabilities"]
 readme = "../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
