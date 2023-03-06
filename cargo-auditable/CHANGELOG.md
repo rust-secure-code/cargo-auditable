@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2022-12-07
+
+### Added
+ - A Unix manpage
+ - An explanation of how the project relates to supply chain attacks to the README
+ - Keywords to the Cargo manifest to make discovering the project easier
+
+### Changed
+ - Updated to `object` crate version 0.30 to enable packaging for Debian
+ - Synced to the latest object writing code from the Rust compiler. This should improve support for very obscure architectures.
+
 ## [0.6.0] - 2022-12-07
 
 ### Changed
