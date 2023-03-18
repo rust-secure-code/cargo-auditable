@@ -18,9 +18,9 @@ pub fn main(rustc_path: &OsStr) {
         if let Ok(args) = rustc_arguments::parse_args() {
             // Only inject audit data into crate types 'bin' and 'cdylib',
             // and only if --print is not specified (which disables compilation)
-            if args.print.is_empty() &&
-             (args.crate_types.contains(&"bin".to_owned())
-                || args.crate_types.contains(&"cdylib".to_owned()))
+            if args.print.is_empty()
+                && (args.crate_types.contains(&"bin".to_owned())
+                    || args.crate_types.contains(&"cdylib".to_owned()))
             {
                 // Get the audit data to embed
                 let target_triple = args
