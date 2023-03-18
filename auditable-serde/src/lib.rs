@@ -57,7 +57,7 @@ use cargo_lock;
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-use std::str::FromStr;
+use std::{str::FromStr, default};
 #[cfg(feature = "from_metadata")]
 #[cfg(feature = "from_metadata")]
 use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
@@ -186,20 +186,15 @@ impl From<&cargo_metadata::Source> for Source {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Default)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum DependencyKind {
     // The values are ordered from weakest to strongest so that casting to integer would make sense
     #[serde(rename = "build")]
     Build,
+    #[default]
     #[serde(rename = "runtime")]
     Runtime,
-}
-
-impl Default for DependencyKind {
-    fn default() -> Self {
-        DependencyKind::Runtime
-    }
 }
 
 /// The values are ordered from weakest to strongest so that casting to integer would make sense
