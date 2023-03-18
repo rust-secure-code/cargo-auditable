@@ -57,7 +57,7 @@ use cargo_lock;
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-use std::{str::FromStr, default};
+use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
 #[cfg(feature = "from_metadata")]
 use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
