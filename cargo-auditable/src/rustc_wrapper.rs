@@ -16,9 +16,11 @@ pub fn main(rustc_path: &OsStr) {
     if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
         let arg_parsing_result = rustc_arguments::parse_args();
         if let Ok(args) = rustc_arguments::parse_args() {
-            // Only inject audit data into crate types 'bin' and 'cdylib'
-            if args.crate_types.contains(&"bin".to_owned())
-                || args.crate_types.contains(&"cdylib".to_owned())
+            // Only inject audit data into crate types 'bin' and 'cdylib',
+            // and only if --print is not specified (which disables compilation)
+            if args.print.is_empty() &&
+             (args.crate_types.contains(&"bin".to_owned())
+                || args.crate_types.contains(&"cdylib".to_owned()))
             {
                 // Get the audit data to embed
                 let target_triple = args
