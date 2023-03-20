@@ -186,20 +186,15 @@ impl From<&cargo_metadata::Source> for Source {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Default)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum DependencyKind {
     // The values are ordered from weakest to strongest so that casting to integer would make sense
     #[serde(rename = "build")]
     Build,
+    #[default]
     #[serde(rename = "runtime")]
     Runtime,
-}
-
-impl Default for DependencyKind {
-    fn default() -> Self {
-        DependencyKind::Runtime
-    }
 }
 
 /// The values are ordered from weakest to strongest so that casting to integer would make sense

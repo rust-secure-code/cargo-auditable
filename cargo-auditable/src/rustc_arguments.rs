@@ -18,6 +18,7 @@ pub struct RustcArgs {
     pub cfg: Vec<String>,
     pub out_dir: PathBuf,
     pub target: Option<String>,
+    pub print: Vec<String>,
 }
 
 impl RustcArgs {
@@ -46,5 +47,6 @@ pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
             Ok(PathBuf::from(s))
         })?,
         target: parser.opt_value_from_str("--target")?,
+        print: parser.values_from_str("--print")?,
     })
 }
