@@ -87,9 +87,17 @@ pub fn main(rustc_path: &OsStr) {
     }
 
     // Invoke rustc
-    let results = command
-        .status()
-        .expect("Failed to invoke rustc! Make sure it's in your $PATH");
+    let results = command.status().unwrap_or_else(|err| {
+        let mut command_with_args: Vec<&OsStr> = vec![command.get_program()];
+        command_with_args.extend(command.get_args());
+        eprintln!(
+            "Failed to invoke rustc! Make sure it's in your $PATH\n\
+                The error was: {}\n\
+                The attempted call was: {:?}",
+            err, command_with_args,
+        );
+        std::process::exit(1);
+    });
     std::process::exit(results.code().unwrap());
 }
 
