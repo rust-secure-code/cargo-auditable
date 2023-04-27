@@ -14,7 +14,7 @@ readme = "../README.md"
 
 [dependencies]
 object = {version = "0.30", default-features = false, features = ["write"]}
-auditable-serde = {version = "=0.6.0-pre", path = "../auditable-serde", features = ["from_metadata"]}
+auditable-serde = {version = "0.6.0", path = "../auditable-serde", features = ["from_metadata"]}
 miniz_oxide = {version = "0.5.0"}
 serde_json = "1.0.57"
 cargo_metadata = "0.15"
@@ -23,5 +23,5 @@ serde = "1.0.147"
 
 [dev-dependencies]
 cargo_metadata = "0.15"
-auditable-info = {version = "0.6.0", path = "../auditable-info"}
+auditable-info = {version = "0.7.0", path = "../auditable-info"}
 which = "4.3.0"
