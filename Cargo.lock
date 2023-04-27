@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-info"
-version = "0.6.2"
+version = "0.7.0"
 dependencies = [
  "auditable-extract",
  "auditable-serde",
@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-serde"
-version = "0.6.0-pre"
+version = "0.6.0"
 dependencies = [
  "cargo-lock",
  "cargo_metadata",
