@@ -31,8 +31,8 @@ jobs:
           override: true
           target: "x86_64-pc-windows-gnu"
       - name: "Test on the native x86_64-pc-windows-mscv"
-        run: cargo test --all-features
+        run: cargo test --all-features --workspace
       - name: "Test when cross-compiling to x86_64-pc-windows-gnu"
         env:
           AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
-        run: cargo test --all-features
+        run: cargo test --all-features --workspace
