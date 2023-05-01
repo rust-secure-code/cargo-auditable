@@ -1,0 +1,34 @@
+name: Windows MSVC
+
+on:
+  pull_request: {}
+  push:
+    branches: master
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        platform:
+          - windows-latest
+        toolchain:
+          - stable
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-msvc-cargo-registry-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache@v1
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-msvc-cargo-index-${{ hashFiles('Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          override: true
+          target: "x86_64-pc-windows-msvc"
+      - name: "Test on x86_64-pc-windows-msvc"
+        run: cargo test --all-features
