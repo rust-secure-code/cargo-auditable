@@ -36,8 +36,9 @@ where
     let status = Command::new(CARGO)
         .arg("clean")
         .arg("--manifest-path")
-        .arg(&cargo_toml_path).status().unwrap();
-
+        .arg(&cargo_toml_path)
+        .status()
+        .unwrap();
     assert!(status.success(), "Failed to invoke `cargo clean`!");
 
     let mut command = Command::new(EXE);
