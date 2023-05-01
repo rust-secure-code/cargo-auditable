@@ -29,4 +29,4 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-      - run: cargo test --all-features
+      - run: cargo test --all-features --workspace

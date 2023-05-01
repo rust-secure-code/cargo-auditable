@@ -16,6 +16,9 @@ use cargo_metadata::{
 // Path to cargo-auditable binary under test
 const EXE: &str = env!("CARGO_BIN_EXE_cargo-auditable");
 
+// Path to Cargo itself
+const CARGO: &str = env!("CARGO");
+
 /// Run cargo auditable with --manifest-path <cargo_toml_path arg> and extra args,
 /// returning of map of workspace member names -> produced binaries (bin and cdylib)
 /// Reads the AUDITABLE_TEST_TARGET environment variable to determine the target to compile for
@@ -27,12 +30,23 @@ fn run_cargo_auditable<P>(
 where
     P: AsRef<OsStr>,
 {
+    // run `cargo clean` before performing the build,
+    // otherwise already built binaries will be used
+    // and we won't actually test the *current* version of `cargo auditable`
+    let status = Command::new(CARGO)
+        .arg("clean")
+        .arg("--manifest-path")
+        .arg(&cargo_toml_path)
+        .status()
+        .unwrap();
+    assert!(status.success(), "Failed to invoke `cargo clean`!");
+
     let mut command = Command::new(EXE);
     command
         .arg("auditable")
         .arg("build")
         .arg("--manifest-path")
-        .arg(cargo_toml_path)
+        .arg(&cargo_toml_path)
         // We'll parse these to get binary paths
         .arg("--message-format=json")
         .args(args);
