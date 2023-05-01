@@ -31,4 +31,4 @@ jobs:
           override: true
           target: "x86_64-pc-windows-gnu"
       - name: "Test on x86_64-pc-windows-gnu"
-        run: cargo test --all-features
+        run: cargo test --all-features --workspace
