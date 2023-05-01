@@ -52,6 +52,9 @@ pub fn main(rustc_path: &OsStr) {
                     // Prevent the symbol from being removed as unused by the linker
                     if target_triple.contains("-apple-") {
                         command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+                    } else if target_triple.ends_with("-msvc") {
+                        // https://learn.microsoft.com/en-us/cpp/build/reference/include-force-symbol-references?view=msvc-170
+                        command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
                     } else {
                         command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
                     }
