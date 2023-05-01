@@ -41,20 +41,20 @@ pub fn main(rustc_path: &OsStr) {
                     // Place the audit data in the output dir.
                     // We can place it anywhere really, the only concern is clutter and name collisions,
                     // and the target dir is locked so we're probably good
-                    let filename = format!("{}_audit_data.o", args.crate_name);
-                    let path = args.out_dir.join(filename);
-                    std::fs::write(&path, file).expect("Unable to write output file");
+                    // let filename = format!("{}_audit_data.o", args.crate_name);
+                    // let path = args.out_dir.join(filename);
+                    // std::fs::write(&path, file).expect("Unable to write output file");
 
-                    // Modify the rustc command to link the object file with audit data
-                    let mut linker_command = OsString::from("-Clink-arg=");
-                    linker_command.push(&path);
-                    command.arg(linker_command);
-                    // Prevent the symbol from being removed as unused by the linker
-                    if target_triple.contains("-apple-") {
-                        command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
-                    } else {
-                        command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
-                    }
+                    // // Modify the rustc command to link the object file with audit data
+                    // let mut linker_command = OsString::from("-Clink-arg=");
+                    // linker_command.push(&path);
+                    // command.arg(linker_command);
+                    // // Prevent the symbol from being removed as unused by the linker
+                    // if target_triple.contains("-apple-") {
+                    //     command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+                    // } else {
+                    //     command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                    // }
                 } else {
                     // create_metadata_file() returned None, indicating an unsupported architecture
                     eprintln!("WARNING: target '{target_triple}' is not supported by 'cargo auditable'!\n\
