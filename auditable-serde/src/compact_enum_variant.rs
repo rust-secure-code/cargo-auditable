@@ -53,11 +53,12 @@ impl<S: Into<String>, E> EnumVariant<S, E> {
     }
 }
 
-impl<S: Into<String>, E> Into<String> for EnumVariant<S, E> {
-    fn into(self) -> String {
-        self.0.into()
+impl<S: Into<String>, E> From<EnumVariant<S,E>> for String {
+    fn from(value: EnumVariant<S,E>) -> Self {
+        value.0.into()
     }
 }
+
 impl<E> From<&'static str> for EnumVariant<&'static str, E> {
     fn from(value: &'static str) -> Self {
         EnumVariant::new(value)
@@ -111,7 +112,7 @@ where
     'de: 's,
 {
     let compact: VariantRepr<&'s str, ENUM, VARIANT> = Deserialize::deserialize(deserializer)?;
-    let variant = VARIANT::try_from(compact).map_err(|e| serde::de::Error::custom(e))?;
+    let variant = VARIANT::try_from(compact).map_err(serde::de::Error::custom)?;
 
     Ok(variant)
 }

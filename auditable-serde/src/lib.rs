@@ -266,18 +266,15 @@ impl From<&cargo_metadata::Source> for Source {
                         if let Some(url_params) = url.split('?').nth(1) {
                             let mut git = GitSource::default();
 
-                            url_params.split('&').into_iter().for_each(|kv| {
+                            url_params.split('&').for_each(|kv| {
                                 if let Some((key, value)) = kv.split_once('=') {
-                                    match key {
-                                        "rev" => {
-                                            let mut value = value.to_owned();
-                                            if let Some(idx) = value.find('#') {
-                                                value.truncate(idx);
-                                            }
-
-                                            git.rev = Some(value.to_owned());
+                                    if key == "rev" {
+                                        let mut value = value.to_owned();
+                                        if let Some(idx) = value.find('#') {
+                                            value.truncate(idx);
                                         }
-                                        _ => {}
+
+                                        git.rev = Some(value.to_owned());
                                     }
                                 }
                             });
