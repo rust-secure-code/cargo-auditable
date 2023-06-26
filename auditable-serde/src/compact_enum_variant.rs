@@ -1,49 +1,54 @@
 //! A new enum representation for serde built on generics. Using it requires some extra attributes and impls.
 //!
-//! This new representation of enum variants makes it much simpler to use much
-//! more compact representation of simple string whenever possible e.g. when 
-//! all the fields of the variant can be inferred from the implementation of
-//! the `Defualt` trait.
+//! This new representation of enum variants makes it much simpler to
+//! deserialize variant from a string and fill in the missing fields using e.g.
+//! [`Default::default`] or to deserialize from a struct which is tagged and
+//! allows overrifing the default values.
 //!
 //! It is built on the `VariantRepr` type. It is not recommended to use this
 //! type directly. Instead for a selected type that appears within a "newtype"
-//! variant of an enum certain traits should be implemented.
+//! variant of an enum (a variant which wraps a single type) certain traits
+//! should be implemented.
 //!
-//! The traits one should implement before using this module within serde's
-//! `with` attribute:
-//! - `IsEnumVariant<&str, ENUM>` for `VARIANT`
-//! - `Into<VariantRepr<&'static str, ENUM, VARIANT>>` for `VARIANT`
-//! - `TryFrom<VariantRepr<&'static str, ENUM, VARIANT>>` for `VARIANT`
+//! The traits one should implement before using this module are
+//! - `IsEnumVariant<&str, ENUM>` for `VARIANT`,
+//! - `Into<VariantRepr<&'static str, ENUM, VARIANT>>` for `VARIANT`,
+//! - `TryFrom<VariantRepr<&'static str, ENUM, VARIANT>>` for `VARIANT`,
+//! where __`ENUM`__ is the __enum type__ containing the variant which
+//! serialization we would like to change and __`VARIANT`__ is the type
+//! __wrapped by the variant__.
 //!
 //! Once those are implemented and the module in which this struct resides is
 //! used in serde's attribute as follows:
 //! ```rust,ignore
-//! #[
-//! // ...    
-//! ]
+//! #[derive(Serialize, Deserialize, JsonSchema)]
 //! #[serde(untagged)]
 //! pub enum Source {
-//! // ...
-//! #[serde(with = "compact_enum_variant")]
-//! #[cfg_attr(
-//!     feature = "schema",
-//!     schemars(schema_with = "compact_enum_variant::schema::<Source, GitSource>",)
-//! )]
-//! Git(GitSource), // Source is ENUM and GitSource is VARIANT
-//! // ...
+//!     /// `Source` is the __ENUM__ and `GitSource` is the __VARIANT__ type
+//!     #[serde(with = "compact_enum_variant")]
+//!     #[schemars(schema_with = "compact_enum_variant::schema::<Source, GitSource>")]
+//!     Git(GitSource),
 //! }
 //! ```
+//!
+//! Changing a unit variant of an enum to wrap a type and use this module for
+//! the serialization can be made to be a backwards compatible change. 
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{convert::TryFrom, fmt::Display, marker::PhantomData};
 
+/// Marks a string or other type that can be converted to a string as a label
+/// for an variant of type `ENUM`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(transparent)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "schema", schemars(bound = "S: schemars::JsonSchema"))]
 pub struct EnumVariant<S: Into<String>, ENUM>(S, PhantomData<fn() -> ENUM>);
 
+/// Establishes a relation with the implementing type and an enum `ENUM`.
 pub trait IsEnumVariant<S: Into<String>, ENUM> {
+    /// Returns a label identifying the type as belonging to one of possible
+    /// types stored in the enum `ENUM`.
     fn variant() -> EnumVariant<S, ENUM>;
 }
 
@@ -80,8 +85,8 @@ impl<E> From<&str> for EnumVariant<String, E> {
 )]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum VariantRepr<S: Into<String>, ENUM, INNER> {
-    // Short stringly-typed representation of enum variant which assumes all fields
-    // are set to their defualts.
+    // Short stringly-typed representation of the enum variant - a label -
+    // which assumes all fields are set to their defualts.
     Kind(EnumVariant<S, ENUM>),
     // Longer representation that describes changes to default contents.
     Struct {
@@ -118,7 +123,7 @@ where
 }
 
 
-/// Enriches the schema generated for `VariantRepr` wtih const values adequate
+/// Enriches the schema generated for `VariantRepr` with const values adequate
 /// to the selected variant of an enum.
 #[cfg(feature = "schema")]
 pub fn schema<
