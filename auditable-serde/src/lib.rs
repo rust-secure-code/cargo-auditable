@@ -53,8 +53,6 @@ use validation::RawVersionInfo;
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "toml")]
-use cargo_lock;
 #[cfg(any(feature = "from_metadata", feature = "toml"))]
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]

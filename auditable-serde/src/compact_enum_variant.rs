@@ -140,12 +140,12 @@ pub fn schema<
     let mut schema =
         <VariantRepr<&'static str, ENUM, VARIANT> as JsonSchema>::json_schema(gen).into_object();
 
-    (&mut schema
-        .subschemas)
+    schema
+        .subschemas
         .as_mut()
         .and_then(|subschemas| subschemas.any_of.as_mut())
-        .and_then(|subschemas| {
-            let new_subschemas = subschemas.into_iter().map(|schema| {
+        .map(|subschemas| {
+            let new_subschemas = subschemas.iter_mut().map(|schema| {
                 let mut schema = schema.clone().into_object();
                 let typ = &schema
                     .instance_type
@@ -175,7 +175,7 @@ pub fn schema<
                 }
             }).collect();
             *subschemas = new_subschemas;
-            Some(subschemas)
+            subschemas
         });
         
     schemars::schema::Schema::Object(schema)
