@@ -32,7 +32,7 @@
 //! ```
 //!
 //! Changing a unit variant of an enum to wrap a type and use this module for
-//! the serialization can be made to be a backwards compatible change. 
+//! the serialization can be made to be a backwards compatible change.
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{convert::TryFrom, fmt::Display, marker::PhantomData};
@@ -58,8 +58,8 @@ impl<S: Into<String>, E> EnumVariant<S, E> {
     }
 }
 
-impl<S: Into<String>, E> From<EnumVariant<S,E>> for String {
-    fn from(value: EnumVariant<S,E>) -> Self {
+impl<S: Into<String>, E> From<EnumVariant<S, E>> for String {
+    fn from(value: EnumVariant<S, E>) -> Self {
         value.0.into()
     }
 }
@@ -122,7 +122,6 @@ where
     Ok(variant)
 }
 
-
 /// Enriches the schema generated for `VariantRepr` with const values adequate
 /// to the selected variant of an enum.
 #[cfg(feature = "schema")]
@@ -162,14 +161,14 @@ pub fn schema<
                         let mut kind_property_object =  kind_property.clone().into_object();
                         kind_property_object.const_value = Some(serde_json::Value::String(VARIANT::variant().into()));
                         *kind_property = schemars::schema::Schema::Object(kind_property_object);
-                        
+
                         schemars::schema::Schema::Object(schema)
                     },
                     schemars::schema::InstanceType::String => {
                         schema.const_value = Some(serde_json::Value::String(VARIANT::variant().into()));
                         schema.string = None;
-                        
-                        schemars::schema::Schema::Object(schema)                        
+
+                        schemars::schema::Schema::Object(schema)
                     },
                     _ => panic!("the schema using compact enum variant representation should allow only string or object instances"),
                 }
@@ -177,6 +176,6 @@ pub fn schema<
             *subschemas = new_subschemas;
             subschemas
         });
-        
+
     schemars::schema::Schema::Object(schema)
 }
