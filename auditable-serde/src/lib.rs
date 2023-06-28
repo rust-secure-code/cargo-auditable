@@ -45,22 +45,23 @@
 //! }
 //! ```
 
+mod compact_enum_variant;
 mod validation;
 
+use compact_enum_variant::{EnumVariant, IsEnumVariant, VariantRepr};
 use validation::RawVersionInfo;
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "toml")]
-use cargo_lock;
 #[cfg(any(feature = "from_metadata", feature = "toml"))]
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
 #[cfg(feature = "from_metadata")]
-use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
+use std::{
+    cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display, str::FromStr,
+};
 
 /// Dependency tree embedded in the binary.
 ///
@@ -112,7 +113,7 @@ pub struct Package {
     /// The package's version in the [semantic version](https://semver.org) format.
     #[cfg_attr(feature = "schema", schemars(with = "String"))]
     pub version: semver::Version,
-    /// Currently "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
+    /// The description of package's source.
     pub source: Source,
     /// "build" or "runtime". May be omitted if set to "runtime".
     /// If it's both a build and a runtime dependency, "runtime" is recorded.
@@ -133,17 +134,36 @@ pub struct Package {
     pub root: bool,
 }
 
-/// Serializes to "git", "local", "crates.io" or "registry". Designed to be extensible with other revision control systems, etc.
+/// Serializes to "git", "local", "crates.io", "registry" or a more complex
+/// struct with any of those values in the `kind` field. Designed to be
+/// extensible with other revision control systems, etc.
+//
+// The abundance of schemars attributes was introduced to fix an unexpected
+// way of representing untagged enums that is inconsistent with serde. Without
+// extra `with` attributes the generated schema assigns null types to instances
+// of the enum's variants which are unit types instead of using string type.
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-#[serde(from = "&str")]
-#[serde(into = "String")]
+#[serde(rename_all = "snake_case", untagged)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub enum Source {
+    /// "crates.io"
+    #[serde(rename = "crates.io")]
+    #[cfg_attr(feature = "schema", schemars(with = "String"))]
     CratesIo,
-    Git,
+    /// "local"
+    #[cfg_attr(feature = "schema", schemars(with = "String"))]
     Local,
+    /// "registry"
+    #[cfg_attr(feature = "schema", schemars(with = "String"))]
     Registry,
+    #[serde(with = "compact_enum_variant")]
+    #[cfg_attr(
+        feature = "schema",
+        schemars(schema_with = "compact_enum_variant::schema::<Source, GitSource>",)
+    )]
+    Git(GitSource),
+    /// Any other source
     Other(String),
 }
 
@@ -151,7 +171,7 @@ impl From<&str> for Source {
     fn from(s: &str) -> Self {
         match s {
             "crates.io" => Self::CratesIo,
-            "git" => Self::Git,
+            "git" => Self::Git(GitSource::default()),
             "local" => Self::Local,
             "registry" => Self::Registry,
             other_str => Self::Other(other_str.to_string()),
@@ -160,13 +180,66 @@ impl From<&str> for Source {
 }
 
 impl From<Source> for String {
+    /// Provides a lossy conversion for variants with values different than the default
     fn from(s: Source) -> String {
         match s {
             Source::CratesIo => "crates.io".to_owned(),
-            Source::Git => "git".to_owned(),
+            Source::Git(_) => "git".to_owned(),
             Source::Local => "local".to_owned(),
             Source::Registry => "registry".to_owned(),
             Source::Other(string) => string,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Default)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+pub struct GitSource {
+    /// Commit hash pointing to specific revision
+    #[serde(skip_serializing_if = "is_default", default)]
+    pub rev: Option<String>,
+}
+
+impl IsEnumVariant<&str, Source> for GitSource {
+    fn variant() -> EnumVariant<&'static str, Source> {
+        EnumVariant::new("git")
+    }
+}
+
+impl From<GitSource> for VariantRepr<&'static str, Source, GitSource> {
+    fn from(value: GitSource) -> Self {
+        if is_default(&value) {
+            VariantRepr::Kind(GitSource::variant())
+        } else {
+            VariantRepr::Struct {
+                kind: GitSource::variant(),
+                strct: value,
+            }
+        }
+    }
+}
+
+impl TryFrom<VariantRepr<&str, Source, GitSource>> for GitSource {
+    type Error = &'static str;
+
+    fn try_from(value: VariantRepr<&str, Source, GitSource>) -> Result<Self, Self::Error> {
+        use compact_enum_variant::*;
+
+        match value {
+            VariantRepr::Kind(kind) => {
+                if kind != Self::variant() {
+                    Err("cannot construct expected variant from provided value")
+                } else {
+                    Ok(Self::default())
+                }
+            }
+            VariantRepr::Struct { kind, strct } => {
+                if kind != Self::variant() {
+                    Err("cannot construct expected variant from provided value")
+                } else {
+                    Ok(strct)
+                }
+            }
         }
     }
 }
@@ -176,12 +249,42 @@ impl From<&cargo_metadata::Source> for Source {
     fn from(meta_source: &cargo_metadata::Source) -> Self {
         match meta_source.repr.as_str() {
             "registry+https://github.com/rust-lang/crates.io-index" => Source::CratesIo,
-            source => Source::from(
-                source
-                    .split('+')
+            source => {
+                let mut source_components = source.split('+');
+                let starts_with = source_components
                     .next()
-                    .expect("Encoding of source strings in `cargo metadata` has changed!"),
-            ),
+                    .expect("Encoding of source strings in `cargo metadata` has changed!");
+
+                match starts_with {
+                    "git" => {
+                        let url = source_components.next().expect(
+                            "Encoding of git source strings in `cargo metadata` has changed!",
+                        );
+
+                        if let Some(url_params) = url.split('?').nth(1) {
+                            let mut git = GitSource::default();
+
+                            url_params.split('&').for_each(|kv| {
+                                if let Some((key, value)) = kv.split_once('=') {
+                                    if key == "rev" {
+                                        let mut value = value.to_owned();
+                                        if let Some(idx) = value.find('#') {
+                                            value.truncate(idx);
+                                        }
+
+                                        git.rev = Some(value.to_owned());
+                                    }
+                                }
+                            });
+
+                            Source::Git(git)
+                        } else {
+                            Source::Git(GitSource::default())
+                        }
+                    }
+                    _ => Source::from(starts_with),
+                }
+            }
         }
     }
 }
@@ -491,6 +594,46 @@ mod tests {
     use super::*;
     use std::fs;
     use std::{convert::TryInto, path::PathBuf};
+
+    #[test]
+    fn deserialize_source_with_detailed_git_source() {
+        let package_source_str = r#"{ "kind": "git", "rev": "abc" }"#;
+        let package_source: Source =
+            serde_json::from_str(package_source_str).expect("deserialization failure");
+        match package_source {
+            Source::Git(git) => {
+                assert!(git.rev.unwrap() == "abc")
+            }
+            _ => panic!("expected git variant"),
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_deserializing_invalid_git_source_variant() {
+        let package_source_str = r#"{ "kind": "abc", "rev": "abc" }"#;
+        serde_json::from_str(package_source_str).expect("deserialization failure")
+    }
+
+    #[test]
+    fn deserialize_source_with_simple_git_source() {
+        let package_source_str = r#""git""#;
+        let package_source: Source = serde_json::from_str(package_source_str).unwrap();
+        assert!(package_source == Source::Git(GitSource::default()));
+    }
+
+    #[test]
+    fn allow_any_other_unkown_sources_as_source_variant() {
+        let package_source_str = r#""unknown""#;
+        let package_source: Source =
+            serde_json::from_str(package_source_str).expect("deserialization failure");
+        match package_source {
+            Source::Other(unknown) => {
+                assert!(unknown == "unknown")
+            }
+            _ => panic!("expected Other(unknown) variant"),
+        }
+    }
 
     #[cfg(feature = "toml")]
     #[cfg(feature = "from_metadata")]
