@@ -7,6 +7,8 @@ use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
+    let vars: Vec<_> = std::env::vars().collect();
+    dbg!(vars);
     let metadata = get_metadata(rustc_args, target_triple, true);
     let version_info = VersionInfo::try_from(&metadata).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
@@ -109,5 +111,6 @@ fn get_metadata(args: &RustcArgs, target_triple: &str, set_features: bool) -> Me
 
 fn current_package(metadata: &Metadata) -> &cargo_metadata::Package {
     let root_id = metadata.resolve.as_ref().unwrap().root.as_ref().unwrap();
+    dbg!(&root_id);
     metadata.packages.iter().find(|p| &p.id == root_id).unwrap()
 }

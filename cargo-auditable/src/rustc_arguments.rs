@@ -37,6 +37,7 @@ impl RustcArgs {
 
 pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
     let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
+    dbg!(&raw_args);
     let mut parser = pico_args::Arguments::from_vec(raw_args);
 
     Ok(RustcArgs {
