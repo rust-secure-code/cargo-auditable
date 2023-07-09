@@ -1,7 +1,7 @@
 use auditable_serde::VersionInfo;
 use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use std::{convert::TryFrom, str::from_utf8, collections::HashSet};
+use std::{convert::TryFrom, str::from_utf8, collections::BTreeSet};
 
 use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
 
@@ -41,7 +41,7 @@ fn get_metadata(args: &RustcArgs, target_triple: &str, set_features: bool) -> Me
         // Query all existing features
         let metadata = get_metadata(args, target_triple, false);
         let current_package = current_package(&metadata);
-        let all_existing_features: HashSet<String> = current_package.features.keys().cloned().collect();
+        let all_existing_features: BTreeSet<String> = current_package.features.keys().cloned().collect();
 
         // Query the features currently set (may contain some invalid ones)
         let mut enabled_features = args.enabled_features();
