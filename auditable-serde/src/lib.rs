@@ -388,10 +388,15 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 // dev-dependencies are not included
                 let package: &mut Package = &mut packages[id_to_index[package_id]];
                 // Dependencies
-                for dep in node.dependencies.iter() {
-                    // omit package if it is a development-only dependency
-                    let dep_id = dep.repr.as_str();
-                    if id_to_dep_kind[dep_id] != PrivateDepKind::Development {
+                for dep in node.deps.iter() {
+                    // Omit the graph edge if this is a development dependency
+                    // to fix https://github.com/rustsec/rustsec/issues/1043
+                    // It is possible that something that we depend on normally
+                    // is also a dev-dependency for something,
+                    // and dev-dependencies are allowed to have cycles,
+                    // so we may end up encoding cyclic graph if we don't handle that.
+                    let dep_id = dep.pkg.repr.as_str();
+                    if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development {
                         package.dependencies.push(id_to_index[dep_id]);
                     }
                 }
