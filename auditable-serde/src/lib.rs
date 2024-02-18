@@ -57,10 +57,10 @@ use cargo_lock;
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
 #[cfg(feature = "from_metadata")]
 use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
+use std::{default, str::FromStr};
 
 /// Dependency tree embedded in the binary.
 ///
@@ -207,15 +207,34 @@ enum PrivateDepKind {
 }
 
 #[cfg(feature = "from_metadata")]
-impl From<PrivateDepKind> for DependencyKind {
-    fn from(priv_kind: PrivateDepKind) -> Self {
+impl TryFrom<PrivateDepKind> for DependencyKind {
+    type Error = DepKindConversionError;
+    fn try_from(priv_kind: PrivateDepKind) -> Result<Self, DepKindConversionError> {
         match priv_kind {
-            PrivateDepKind::Development => {
-                panic!("Cannot convert development dependency to serializable format")
-            }
-            PrivateDepKind::Build => DependencyKind::Build,
-            PrivateDepKind::Runtime => DependencyKind::Runtime,
+            PrivateDepKind::Development => Err(DepKindConversionError::default()),
+            PrivateDepKind::Build => Ok(DependencyKind::Build),
+            PrivateDepKind::Runtime => Ok(DependencyKind::Runtime),
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+enum DepKindConversionError {
+    #[default]
+    DevDependency,
+}
+
+impl std::fmt::Display for DepKindConversionError {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        // Write strictly the first element into the supplied output
+        // stream: `f`. Returns `fmt::Result` which indicates whether the
+        // operation succeeded or failed. Note that `write!` uses syntax which
+        // is very similar to `println!`.
+        write!(
+            f,
+            "Cannot convert development dependency to serializable format"
+        )
     }
 }
 
@@ -289,12 +308,13 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
         // Moreover, `cargo metadata` doesn't propagate dependency information:
         // A runtime dependency of a build dependency of your package should be recorded
         // as *build* dependency, but Cargo flags it as a runtime dependency.
+        // Also, dev-dependencies can form cycles, so we need to filter those out.
         // Hoo boy, here I go hand-rolling BFS again!
         let nodes = &metadata.resolve.as_ref().unwrap().nodes;
         let id_to_node: HashMap<&str, &cargo_metadata::Node> =
             nodes.iter().map(|n| (n.id.repr.as_str(), n)).collect();
-        let mut id_to_dep_kind: HashMap<&str, PrivateDepKind> = HashMap::new();
-        id_to_dep_kind.insert(toplevel_crate_id, PrivateDepKind::Runtime);
+        let mut id_to_dep_kind: HashMap<&str, DependencyKind> = HashMap::new();
+        id_to_dep_kind.insert(toplevel_crate_id, DependencyKind::Runtime);
         let mut current_queue: Vec<&cargo_metadata::Node> = vec![id_to_node[toplevel_crate_id]];
         let mut next_step_queue: Vec<&cargo_metadata::Node> = Vec::new();
         while !current_queue.is_empty() {
@@ -302,17 +322,22 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 let parent_dep_kind = id_to_dep_kind[parent.id.repr.as_str()];
                 for child in &parent.deps {
                     let child_id = child.pkg.repr.as_str();
-                    let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
-                    let dep_kind = min(dep_kind, parent_dep_kind);
-                    let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
-                    if dep_kind_on_previous_visit.is_none()
-                        || &dep_kind > dep_kind_on_previous_visit.unwrap()
-                    {
-                        // if we haven't visited this node in dependency graph yet
-                        // or if we've visited it with a weaker dependency type,
-                        // records its new dependency type and add it to the queue to visit its dependencies
-                        id_to_dep_kind.insert(child_id, dep_kind);
-                        next_step_queue.push(id_to_node[child_id]);
+                    let maybe_dev_dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
+                    // dev-dependencies will fail this conversion and will not be traversed.
+                    // This is required so that we don't add dev-dependency edges to the graph,
+                    // which may result in cycles.
+                    if let Ok(dep_kind) = DependencyKind::try_from(maybe_dev_dep_kind) {
+                        let dep_kind = min(dep_kind, parent_dep_kind);
+                        let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
+                        if dep_kind_on_previous_visit.is_none()
+                            || &dep_kind > dep_kind_on_previous_visit.unwrap()
+                        {
+                            // if we haven't visited this node in dependency graph yet
+                            // or if we've visited it with a weaker dependency type,
+                            // records its new dependency type and add it to the queue to visit its dependencies
+                            id_to_dep_kind.insert(child_id, dep_kind);
+                            next_step_queue.push(id_to_node[child_id]);
+                        }
                     }
                 }
             }
@@ -329,11 +354,11 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
             .packages
             .iter()
             .filter(|p| {
-                let dep_kind = metadata_package_dep_kind(p);
                 // Dependencies that are present in the workspace but not used by the current root crate
                 // will not be in the map we've built by traversing the root crate's dependencies.
-                // In this case they will not be in the map at all. We skip them, along with dev-dependencies.
-                dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
+                // In this case they will not be in the map at all. We skip them, along with dev-dependencies,
+                // which the BFS pass above has also not included in the map.
+                metadata_package_dep_kind(p).is_some()
             })
             .collect();
 
@@ -391,7 +416,8 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 for dep in node.dependencies.iter() {
                     // omit package if it is a development-only dependency
                     let dep_id = dep.repr.as_str();
-                    if id_to_dep_kind[dep_id] != PrivateDepKind::Development {
+                    if id_to_dep_kind.contains_key(dep_id) {
+                        // TODO: is this still needed?
                         package.dependencies.push(id_to_index[dep_id]);
                     }
                 }
