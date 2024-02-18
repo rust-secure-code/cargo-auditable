@@ -388,10 +388,15 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                 // dev-dependencies are not included
                 let package: &mut Package = &mut packages[id_to_index[package_id]];
                 // Dependencies
-                for dep in node.dependencies.iter() {
-                    // omit package if it is a development-only dependency
-                    let dep_id = dep.repr.as_str();
-                    if id_to_dep_kind[dep_id] != PrivateDepKind::Development {
+                for dep in node.deps.iter() {
+                    // Omit the graph edge if this is a development dependency
+                    // to fix https://github.com/rustsec/rustsec/issues/1043
+                    // It is possible that something that we depend on normally
+                    // is also a dev-dependency for something,
+                    // and dev-dependencies are allowed to have cycles,
+                    // so we may end up encoding cyclic graph if we don't handle that.
+                    let dep_id = dep.pkg.repr.as_str();
+                    if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development {
                         package.dependencies.push(id_to_index[dep_id]);
                     }
                 }
@@ -490,23 +495,36 @@ mod tests {
     #![allow(unused_imports)] // otherwise conditional compilation emits warnings
     use super::*;
     use std::fs;
-    use std::{convert::TryInto, path::PathBuf};
+    use std::{
+        convert::TryInto,
+        path::{Path, PathBuf},
+    };
 
-    #[cfg(feature = "toml")]
     #[cfg(feature = "from_metadata")]
-    fn load_own_metadata() -> cargo_metadata::Metadata {
+    fn load_metadata(cargo_toml_path: &Path) -> cargo_metadata::Metadata {
         let mut cmd = cargo_metadata::MetadataCommand::new();
-        let cargo_toml_path =
-            PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
         cmd.manifest_path(cargo_toml_path);
         cmd.exec().unwrap()
+    }
+
+    #[test]
+    #[cfg(feature = "from_metadata")]
+    fn dependency_cycle() {
+        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
+        let metadata = load_metadata(&cargo_toml_path);
+        let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
+        let json = serde_json::to_string(&version_info_struct).unwrap();
+        VersionInfo::from_str(&json).unwrap(); // <- the part we care about succeeding
     }
 
     #[test]
     #[cfg(feature = "toml")]
     #[cfg(feature = "from_metadata")]
     fn to_toml() {
-        let metadata = load_own_metadata();
+        let cargo_toml_path =
+            PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
+        let metadata = load_metadata(&cargo_toml_path);
         let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
         let _lockfile_struct: cargo_lock::Lockfile = (&version_info_struct).try_into().unwrap();
     }

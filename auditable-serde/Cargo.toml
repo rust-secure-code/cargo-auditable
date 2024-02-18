@@ -29,3 +29,7 @@ schemars = {version = "0.8.10", optional = true }
 [[example]]
 name = "json-to-toml"
 required-features = ["toml"]
+
+[[example]]
+name = "from-metadata"
+required-features = ["from_metadata"]
