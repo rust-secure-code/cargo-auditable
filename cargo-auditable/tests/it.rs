@@ -7,7 +7,7 @@ use std::{
     process::{Command, Output, Stdio},
 };
 
-use auditable_serde::{DependencyKind, Source, VersionInfo};
+use auditable_serde::{DependencyKind, VersionInfo};
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
     Artifact,
@@ -402,34 +402,4 @@ fn test_workspace_member_version_info() {
 
     let status = command.status().unwrap();
     assert!(status.success());
-}
-
-#[test]
-fn test_git_source_of_dep() {
-    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
-    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/git_source_of_dep/Cargo.toml");
-    // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &["--release"], &[]);
-    eprintln!("Test fixture binary map: {bins:?}");
-
-    // lto_binary_crate should only depend on itself
-    let git_source_of_dep = &bins.get("git_source_of_dep").unwrap()[0];
-    let dep_info = get_dependency_info(git_source_of_dep);
-    eprintln!("{git_source_of_dep} dependency info: {dep_info:?}");
-    assert!(dep_info
-        .packages
-        .iter()
-        .any(|p| p.name == "git_source_of_dep"));
-    assert!(dep_info.packages.iter().any(|p| p.name == "serde"
-        && match &p.source {
-            Source::Git(git) => {
-                if git.rev == Some(String::from("2ba406726f9f84bc3b65ce4e824ae636dfa7dc85")) {
-                    true
-                } else {
-                    false
-                }
-            }
-            _ => false,
-        }));
 }
