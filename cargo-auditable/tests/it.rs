@@ -366,7 +366,7 @@ fn test_runtime_then_build_dep() {
 fn test_custom_rustc_path() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/runtime_then_build_dep/Cargo.toml");
+        .join("tests/fixtures/custom_rustc_path/Cargo.toml");
     // locate rustc
     let rustc_path = which::which("rustc").unwrap();
     // Run in workspace root with a custom path to rustc
