@@ -510,7 +510,7 @@ mod tests {
         let metadata = load_metadata(&cargo_toml_path);
         let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
         let json = serde_json::to_string(&version_info_struct).unwrap();
-        VersionInfo::from_str(&json).unwrap();
+        VersionInfo::from_str(&json).unwrap(); // <- the part we care about suceeeding
     }
 
     #[test]
