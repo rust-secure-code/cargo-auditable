@@ -5,5 +5,5 @@ members = [
     "auditable-extract",
     "auditable-serde",
     "cargo-auditable",
-    "auditable-cyclonedx",
+    "auditable-cyclonedx", "auditable2cdx",
 ]
