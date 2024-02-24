@@ -4,16 +4,23 @@ pub use auditable_serde;
 use auditable_serde::Package;
 pub use cyclonedx_bom;
 
-use cyclonedx_bom::models::{component::Classification, component::Component, metadata::Metadata};
+use cyclonedx_bom::models::{
+    component::Classification,
+    component::Component,
+    dependency::{Dependencies, Dependency},
+    metadata::Metadata,
+};
 use cyclonedx_bom::prelude::*;
 
 /// Converts the metadata embedded by `cargo auditable` to a minimal CycloneDX document
 /// that is heavily optimized to reduce the size
 pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
     let mut bom = Bom::default();
+
     // Clear the serial number which would mess with reproducible builds
     // and also take up valuable space
     bom.serial_number = None;
+
     // The toplevel component goes into its own field, as per the spec:
     // https://cyclonedx.org/docs/1.5/json/#metadata_component
     let (root_idx, root_pkg) = root_package(input);
@@ -21,6 +28,7 @@ pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
     let mut metadata = Metadata::default();
     metadata.component = Some(root_component);
     bom.metadata = Some(metadata);
+
     // Fill in the component list, excluding the toplevel component (already encoded)
     let components: Vec<Component> = input
         .packages
@@ -31,7 +39,21 @@ pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
         .collect();
     let components = Components(components);
     bom.components = Some(components);
-    // TODO: dependency tree
+
+    // Populate the dependency tree. Actually really easy, it's the same format as ours!
+    let dependencies: Vec<Dependency> = input
+        .packages
+        .iter()
+        .enumerate()
+        .map(|(idx, pkg)| Dependency {
+            dependency_ref: idx.to_string(),
+            dependencies: pkg.dependencies.iter().map(|idx| idx.to_string()).collect(),
+        })
+        .collect();
+    let dependencies = Dependencies(dependencies);
+    bom.dependencies = Some(dependencies);
+
+    // Validate the generated SBOM if running in debug mode (or release with debug assertions)
     if cfg!(debug_assertions) {
         assert_eq!(bom.validate(), ValidationResult::Passed);
     }
