@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub use auditable_serde;
 use auditable_serde::Package;
 pub use cyclonedx_bom;
