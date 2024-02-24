@@ -11,6 +11,9 @@ use cyclonedx_bom::prelude::*;
 /// that is heavily optimized to reduce the size
 pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
     let mut bom = Bom::default();
+    // Clear the serial number which would mess with reproducible builds
+    // and also take up valuable space
+    bom.serial_number = None;
     // The toplevel component goes into its own field, as per the spec:
     // https://cyclonedx.org/docs/1.5/json/#metadata_component
     let (root_idx, root_pkg) = root_package(input);
