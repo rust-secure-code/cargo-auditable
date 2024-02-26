@@ -6,6 +6,7 @@ pub use auditable_serde;
 use auditable_serde::{Package, Source};
 pub use cyclonedx_bom;
 
+use cyclonedx_bom::models::property::{Properties, Property};
 use cyclonedx_bom::prelude::*;
 use cyclonedx_bom::{
     external_models::uri::Purl,
@@ -84,7 +85,15 @@ fn pkg_to_component(pkg: &auditable_serde::Package, idx: usize) -> Component {
     let purl = purl(&pkg);
     let purl = Purl::from_str(&purl).unwrap();
     result.purl = Some(purl);
-    // TODO: dependency kind
+    // Record the dependency kind
+    match pkg.kind {
+        // `Runtime` is the default and does not need to be recorded.
+        auditable_serde::DependencyKind::Runtime => (),
+        auditable_serde::DependencyKind::Build => {
+            let p = Property::new("cdx:rustc:dependency_kind".to_owned(), "build".into());
+            result.properties = Some(Properties(vec![p]));
+        }
+    }
     result
 }
 
