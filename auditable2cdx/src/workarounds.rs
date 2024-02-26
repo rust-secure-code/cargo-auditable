@@ -8,6 +8,13 @@ pub fn minify_bom(bom: &[u8]) -> String {
     let toplevel = json.as_object_mut().unwrap();
     toplevel.remove("version");
     toplevel.remove("serialNumber");
+    // clear components field if empty
+    if let Some(components) = toplevel.get_mut("dependencies") {
+        let components = components.as_array().unwrap();
+        if components.is_empty() {
+            toplevel.remove("dependencies");
+        }
+    }
     // clear empty arrays in dependencies
     if let Some(deps) = toplevel.get_mut("dependencies") {
         let deps = deps.as_array_mut().unwrap();
