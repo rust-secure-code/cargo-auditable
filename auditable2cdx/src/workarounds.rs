@@ -9,10 +9,10 @@ pub fn minify_bom(bom: &[u8]) -> String {
     toplevel.remove("version");
     toplevel.remove("serialNumber");
     // clear components field if empty
-    if let Some(components) = toplevel.get_mut("dependencies") {
+    if let Some(components) = toplevel.get_mut("components") {
         let components = components.as_array().unwrap();
         if components.is_empty() {
-            toplevel.remove("dependencies");
+            toplevel.remove("components");
         }
     }
     // clear empty arrays in dependencies
