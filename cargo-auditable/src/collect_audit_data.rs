@@ -3,15 +3,19 @@ use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
 use std::{convert::TryFrom, str::from_utf8};
 
-use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
+use crate::{cargo_arguments::CargoArgs, cdx_workarounds, rustc_arguments::RustcArgs};
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
     let metadata = get_metadata(rustc_args, target_triple);
     let version_info = VersionInfo::try_from(&metadata).unwrap();
-    let json = serde_json::to_string(&version_info).unwrap();
+    // convert to CycloneDX
+    let cyclonedx = auditable_cyclonedx::auditable_to_minimal_cdx(&version_info);
+    let mut json_bytes: Vec<u8> = Vec::new();
+    cyclonedx.output_as_json_v1_3(&mut json_bytes).unwrap();
+    let min_json = cdx_workarounds::minify_bom(&json_bytes);
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
-    let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
+    let compressed_json = compress_to_vec_zlib(min_json.as_bytes(), 7);
     compressed_json
 }
 

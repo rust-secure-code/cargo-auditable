@@ -2,6 +2,7 @@
 
 mod cargo_arguments;
 mod cargo_auditable;
+mod cdx_workarounds;
 mod collect_audit_data;
 mod object_file;
 mod rustc_arguments;
