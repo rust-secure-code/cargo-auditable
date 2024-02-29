@@ -1,0 +1,15 @@
+[package]
+name = "auditable-cyclonedx"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rust-secure-code/cargo-auditable"
+description = "Convert data encoded by `cargo auditable` to CycloneDX format"
+categories = ["encoding"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cyclonedx-bom = "0.5.0"
+auditable-serde = {version = "0.6.1", path = "../auditable-serde"}
