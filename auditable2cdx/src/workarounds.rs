@@ -1,5 +1,3 @@
-use serde_json;
-
 /// Accepts BOM in JSON and minifies it,
 /// working around https://github.com/CycloneDX/cyclonedx-rust-cargo/issues/628
 pub fn minify_bom(bom: &[u8]) -> String {

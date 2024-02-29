@@ -21,18 +21,19 @@ use cyclonedx_bom::{
 /// Converts the metadata embedded by `cargo auditable` to a minimal CycloneDX document
 /// that is heavily optimized to reduce the size
 pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
-    let mut bom = Bom::default();
-
-    // Clear the serial number which would mess with reproducible builds
-    // and also take up valuable space
-    bom.serial_number = None;
+    let mut bom = Bom {
+        serial_number: None, // the serial number would mess with reproducible builds
+        ..Default::default()
+    };
 
     // The toplevel component goes into its own field, as per the spec:
     // https://cyclonedx.org/docs/1.5/json/#metadata_component
     let (root_idx, root_pkg) = root_package(input);
     let root_component = pkg_to_component(root_pkg, root_idx);
-    let mut metadata = Metadata::default();
-    metadata.component = Some(root_component);
+    let metadata = Metadata {
+        component: Some(root_component),
+        ..Default::default()
+    };
     bom.metadata = Some(metadata);
 
     // Fill in the component list, excluding the toplevel component (already encoded)
@@ -82,7 +83,7 @@ fn pkg_to_component(pkg: &auditable_serde::Package, idx: usize) -> Component {
         Some(bom_ref),
     );
     // PURL encodes the package origin (registry, git, local) - sort of, anyway
-    let purl = purl(&pkg);
+    let purl = purl(pkg);
     let purl = Purl::from_str(&purl).unwrap();
     result.purl = Some(purl);
     // Record the dependency kind
@@ -90,7 +91,7 @@ fn pkg_to_component(pkg: &auditable_serde::Package, idx: usize) -> Component {
         // `Runtime` is the default and does not need to be recorded.
         auditable_serde::DependencyKind::Runtime => (),
         auditable_serde::DependencyKind::Build => {
-            let p = Property::new("cdx:rustc:dependency_kind".to_owned(), "build".into());
+            let p = Property::new("cdx:rustc:dependency_kind".to_owned(), "build");
             result.properties = Some(Properties(vec![p]));
         }
     }
