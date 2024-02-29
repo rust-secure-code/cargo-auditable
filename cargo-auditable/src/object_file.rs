@@ -21,7 +21,7 @@ pub fn create_metadata_file(
     let mut file = create_object_file(target_info, target_triple)?;
     let section = file.add_section(
         file.segment_name(StandardSegment::Data).to_vec(),
-        b".dep-v0".to_vec(),
+        b".cdxbom".to_vec(),
         SectionKind::ReadOnlyData,
     );
     if let BinaryFormat::Elf = file.format() {
