@@ -110,9 +110,26 @@ where
             binaries
         })
         .for_each(|(package, binary)| {
-            bins.entry(package).or_insert(Vec::new()).push(binary);
+            bins.entry(pkgid_to_bin_name(&package))
+                .or_insert(Vec::new())
+                .push(binary);
         });
     bins
+}
+
+fn pkgid_to_bin_name(pkgid: &str) -> String {
+    // the input is string in the format such as
+    // "path+file:///home/shnatsel/Code/cargo-auditable/cargo-auditable/tests/fixtures/lib_and_bin_crate#0.1.0"
+    // (for full docs see `cargo pkgid`)
+    // and we need just the crate name, e.g. "lib_and_bin_crate"
+    pkgid
+        .rsplit_once(std::path::MAIN_SEPARATOR)
+        .unwrap()
+        .1
+        .split_once('#')
+        .unwrap()
+        .0
+        .to_owned()
 }
 
 fn ensure_build_succeeded(output: &Output) {
