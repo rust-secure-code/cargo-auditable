@@ -121,9 +121,10 @@ fn pkgid_to_bin_name(pkgid: &str) -> String {
     // the input is string in the format such as
     // "path+file:///home/shnatsel/Code/cargo-auditable/cargo-auditable/tests/fixtures/lib_and_bin_crate#0.1.0"
     // (for full docs see `cargo pkgid`)
-    // and we need just the crate name, e.g. "lib_and_bin_crate"
+    // and we need just the crate name, e.g. "lib_and_bin_crate".
+    // Weirdly it doesn't use OS path separator, it always uses '/'
     pkgid
-        .rsplit_once(std::path::MAIN_SEPARATOR)
+        .rsplit_once('/')
         .unwrap()
         .1
         .split_once('#')
