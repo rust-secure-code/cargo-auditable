@@ -426,13 +426,19 @@ fn test_workspace_member_version_info() {
 #[test]
 fn test_wasm() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
-    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/wasm_crate/Cargo.toml");
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/wasm_crate/Cargo.toml");
     // Run in workspace root with default features
-    run_cargo_auditable(workspace_cargo_toml, &["--target=wasm32-unknown-unknown"], &[]);
+    run_cargo_auditable(
+        workspace_cargo_toml,
+        &["--target=wasm32-unknown-unknown"],
+        &[],
+    );
 
     // check that the build types are propagated correctly
-    let dep_info = get_dependency_info("tests/fixtures/wasm_crate/target/wasm32-unknown-unknown/release/wasm_crate.wasm".into());
+    let dep_info = get_dependency_info(
+        "tests/fixtures/wasm_crate/target/wasm32-unknown-unknown/release/wasm_crate.wasm".into(),
+    );
     eprintln!("wasm_crate.wasm dependency info: {dep_info:?}");
     assert_eq!(dep_info.packages.len(), 18);
 }
