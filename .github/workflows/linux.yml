@@ -27,6 +27,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
+          target: "wasm32-unknown-unknown"
           profile: minimal
           override: true
       # multiple additional targets are not supported, so we invoke the action multiple times
