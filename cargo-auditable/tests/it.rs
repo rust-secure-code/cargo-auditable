@@ -53,7 +53,9 @@ where
         .args(args);
 
     if let Ok(target) = std::env::var("AUDITABLE_TEST_TARGET") {
-        command.arg(format!("--target={target}"));
+        if args.iter().all(|arg| !arg.starts_with("--target")) {
+            command.arg(format!("--target={target}"));
+        }
     }
 
     for (name, value) in env {
