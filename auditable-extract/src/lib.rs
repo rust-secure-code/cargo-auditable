@@ -47,8 +47,6 @@ mod wasm;
 
 use binfarce::Format;
 
-use crate::wasm::raw_auditable_data_wasm;
-
 /// Extracts the Zlib-compressed dependency info from an executable.
 ///
 /// This function does not allocate any memory on the heap and can be safely given untrusted input.
@@ -82,12 +80,17 @@ pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
         Format::Unknown => {
             if data.starts_with(b"\0asm") {
                 // This is a WebAssembly module
-                raw_auditable_data_wasm(data)
+                wasm::raw_auditable_data_wasm(data)
             } else {
                 Err(Error::NotAnExecutable)
             }
         }
     }
+}
+
+#[cfg(fuzzing)]
+pub fn raw_auditable_data_wasm_for_fuzz(input: &[u8]) -> Result<&[u8], Error> {
+    wasm::raw_auditable_data_wasm(input)
 }
 
 #[derive(Debug, Copy, Clone)]
