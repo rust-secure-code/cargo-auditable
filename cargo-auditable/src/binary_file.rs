@@ -15,7 +15,7 @@ pub fn create_binary_file(
     symbol_name: &str,
 ) -> Option<Vec<u8>> {
     if is_wasm(target_info) {
-        Some(create_wasm_file(target_info, contents, symbol_name))
+        Some(create_wasm_file(target_info, contents))
     } else {
         object_file::create_metadata_file(target_info, target_triple, contents, symbol_name)
     }
@@ -25,7 +25,6 @@ pub fn create_wasm_file(
     // formerly `create_compressed_metadata_file` in the rustc codebase
     target_info: &RustcTargetInfo,
     contents: &[u8],
-    symbol_name: &str,
 ) -> Vec<u8> {
     assert_eq!(target_info["target_family"], "wasm");
 
@@ -38,6 +37,6 @@ pub fn create_wasm_file(
     // https://github.com/WebAssembly/tool-conventions/blob/master/Linking.md
     wasm_gen::write_custom_section(&mut result, "linking", &[2]);
 
-    wasm_gen::write_custom_section(&mut result, symbol_name, contents);
+    wasm_gen::write_custom_section(&mut result, ".dep-v0", contents);
     result
 }
