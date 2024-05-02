@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod binary_file;
 mod cargo_arguments;
 mod cargo_auditable;
 mod collect_audit_data;
