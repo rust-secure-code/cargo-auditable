@@ -29,4 +29,5 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
+          target: "wasm32-unknown-unknown"
       - run: cargo test --all-features --workspace
