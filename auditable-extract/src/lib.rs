@@ -43,6 +43,7 @@
 //! }
 //! ```
 
+#[cfg(feature = "wasm")]
 mod wasm;
 
 use binfarce::Format;
@@ -78,17 +79,17 @@ pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
         Format::Unknown => {
+            #[cfg(feature = "wasm")]
             if data.starts_with(b"\0asm") {
-                // This is a WebAssembly module
-                wasm::raw_auditable_data_wasm(data)
-            } else {
-                Err(Error::NotAnExecutable)
+                return wasm::raw_auditable_data_wasm(data)
             }
+
+            Err(Error::NotAnExecutable)
         }
     }
 }
 
-#[cfg(fuzzing)]
+#[cfg(all(fuzzing, feature = "wasm"))]
 pub fn raw_auditable_data_wasm_for_fuzz(input: &[u8]) -> Result<&[u8], Error> {
     wasm::raw_auditable_data_wasm(input)
 }

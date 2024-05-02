@@ -12,6 +12,7 @@ libfuzzer-sys = "0.4"
 
 [dependencies.auditable-extract]
 path = ".."
+features = ["wasm"]
 
 # Prevent this from interfering with workspaces
 [workspace]
