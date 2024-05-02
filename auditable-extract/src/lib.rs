@@ -81,7 +81,7 @@ pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
         Format::Unknown => {
             #[cfg(feature = "wasm")]
             if data.starts_with(b"\0asm") {
-                return wasm::raw_auditable_data_wasm(data)
+                return wasm::raw_auditable_data_wasm(data);
             }
 
             Err(Error::NotAnExecutable)
