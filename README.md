@@ -76,7 +76,7 @@ No. All URLs and file paths are redacted, but the crate names and versions are r
 
 ### What about recording the compiler version?
 
-The compiler itself [will start embedding it soon.](https://github.com/rust-lang/rust/pull/97550)
+The compiler itself [embeds it](https://github.com/rust-lang/rust/pull/97550) in v1.73 and later.
 
 On older versions it's already there in the debug info. On Unix you can run `strings your_executable | grep 'rustc version'` to see it.
 
