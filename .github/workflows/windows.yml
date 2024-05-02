@@ -30,7 +30,9 @@ jobs:
           profile: minimal
           override: true
           target: "wasm32-unknown-unknown"
-      - name: "Test on the native x86_64-pc-windows-mscv"
+      - name: "Test on the native x86_64-pc-windows-msvc"
+        env:
+          AUDITABLE_TEST_TARGET: "x86_64-pc-windows-msvc"
         run: cargo test --all-features --workspace
       - name: "Test when cross-compiling to x86_64-pc-windows-gnu"
         env:
