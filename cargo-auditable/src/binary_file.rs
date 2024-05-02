@@ -1,7 +1,7 @@
 //! Wrapper around object_file.rs to keep it as intact as possible,
 //! because it is lifted from rustc
 
-use crate::{object_file, target_info::RustcTargetInfo};
+use crate::{object_file, platform_detection::is_wasm, target_info::RustcTargetInfo};
 
 /// Creates a binary file (ELF/Mach-O/PE/WASM) with the specified contents in a given section
 /// which can be passed to the linker to include the section into the final executable.
@@ -14,7 +14,7 @@ pub fn create_binary_file(
     contents: &[u8],
     symbol_name: &str,
 ) -> Option<Vec<u8>> {
-    if target_info["target_family"] == "wasm" {
+    if is_wasm(target_info) {
         Some(create_wasm_file(target_info, contents, symbol_name))
     } else {
         object_file::create_metadata_file(target_info, target_triple, contents, symbol_name)

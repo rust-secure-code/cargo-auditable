@@ -4,7 +4,11 @@ use std::{
     process::Command,
 };
 
-use crate::{binary_file, collect_audit_data, rustc_arguments, target_info};
+use crate::{
+    binary_file, collect_audit_data,
+    platform_detection::{is_apple, is_msvc, is_wasm},
+    rustc_arguments, target_info,
+};
 
 use std::io::BufRead;
 
@@ -50,10 +54,12 @@ pub fn main(rustc_path: &OsStr) {
                     linker_command.push(&path);
                     command.arg(linker_command);
                     // Prevent the symbol from being removed as unused by the linker
-                    if target_triple.contains("-apple-") {
+                    if is_apple(&target_info) {
                         command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
-                    } else if target_triple.ends_with("-msvc") {
+                    } else if is_msvc(&target_info) {
                         command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
+                    } else if is_wasm(&target_info) {
+                        // We don't emit the symbol name in WASM, so nothing to do
                     } else {
                         command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
                     }

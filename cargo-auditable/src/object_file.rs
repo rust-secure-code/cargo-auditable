@@ -8,6 +8,7 @@ use object::{
     SymbolKind, SymbolScope,
 };
 
+use crate::platform_detection::{is_32bit, is_apple, is_windows};
 use crate::target_info::RustcTargetInfo;
 
 /// Returns None if the architecture is not supported
@@ -61,7 +62,7 @@ fn create_object_file(
     let architecture = match info["target_arch"].as_str() {
         "arm" => Architecture::Arm,
         "aarch64" => {
-            if info["target_pointer_width"].as_str() == "32" {
+            if is_32bit(info) {
                 Architecture::Aarch64_Ilp32
             } else {
                 Architecture::Aarch64
@@ -72,7 +73,7 @@ fn create_object_file(
         "mips" => Architecture::Mips,
         "mips64" => Architecture::Mips64,
         "x86_64" => {
-            if info["target_pointer_width"].as_str() == "32" {
+            if is_32bit(info) {
                 Architecture::X86_64_X32
             } else {
                 Architecture::X86_64
@@ -86,9 +87,9 @@ fn create_object_file(
         // Unsupported architecture.
         _ => return None,
     };
-    let binary_format = if info["target_vendor"] == "apple" {
+    let binary_format = if is_apple(info) {
         BinaryFormat::MachO
-    } else if info["target_os"] == "windows" {
+    } else if is_windows(info) {
         BinaryFormat::Coff
     } else {
         BinaryFormat::Elf

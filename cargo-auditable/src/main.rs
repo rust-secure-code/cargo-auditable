@@ -5,6 +5,7 @@ mod cargo_arguments;
 mod cargo_auditable;
 mod collect_audit_data;
 mod object_file;
+mod platform_detection;
 mod rustc_arguments;
 mod rustc_wrapper;
 mod target_info;
