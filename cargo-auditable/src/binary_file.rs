@@ -8,7 +8,6 @@ use crate::{object_file, platform_detection::is_wasm, target_info::RustcTargetIn
 ///
 /// Returns `None` if the architecture is not supported.
 pub fn create_binary_file(
-    // formerly `create_compressed_metadata_file` in the rustc codebase
     target_info: &RustcTargetInfo,
     target_triple: &str,
     contents: &[u8],
