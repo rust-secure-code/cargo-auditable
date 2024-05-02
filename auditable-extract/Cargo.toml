@@ -12,3 +12,4 @@ edition = "2018"
 
 [dependencies]
 binfarce = "0.2"
+wasmparser = "0.206.0"

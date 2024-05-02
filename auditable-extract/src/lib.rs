@@ -5,10 +5,10 @@
 //!
 //! This crate parses platform-specific binary formats ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format),
 //! [PE](https://en.wikipedia.org/wiki/Portable_Executable),
-//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and obtains the compressed audit data.
+//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O), [WASM](https://en.wikipedia.org/wiki/WebAssembly)) and obtains the compressed audit data.
 //!
 //! Unlike other binary parsing crates, it is specifically designed to be resilient to malicious input.
-//! It 100% safe Rust (including all dependencies) and performs no heap allocations.
+//! It 100% safe Rust and performs no heap allocations.
 //!
 //! ## Usage
 //!
@@ -43,7 +43,11 @@
 //! }
 //! ```
 
+mod wasm;
+
 use binfarce::Format;
+
+use crate::wasm::raw_auditable_data_wasm;
 
 /// Extracts the Zlib-compressed dependency info from an executable.
 ///
@@ -75,7 +79,14 @@ pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
                 .ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
-        _ => Err(Error::NotAnExecutable),
+        Format::Unknown => {
+            if data.starts_with(b"\0asm") {
+                // This is a WebAssembly module
+                raw_auditable_data_wasm(data)
+            } else {
+                Err(Error::NotAnExecutable)
+            }
+        }
     }
 }
 
