@@ -15,7 +15,7 @@
 //! [Mach-O](https://en.wikipedia.org/wiki/Mach-O) and [WebAssembly](https://en.wikipedia.org/wiki/WebAssembly).
 //! Make sure you [enable](https://doc.rust-lang.org/cargo/reference/features.html#dependency-features) the `wasm` feature
 //! if you want to parse WebAssembly.
-//! 
+//!
 //! If you need an even lower-level interface than the one provided by this crate,
 //! use the [`auditable-extract`](http://docs.rs/auditable-extract/) and
 //! [`auditable-serde`](http://docs.rs/auditable-serde/) crates.

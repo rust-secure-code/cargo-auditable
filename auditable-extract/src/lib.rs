@@ -42,14 +42,14 @@
 //!     Ok(())
 //! }
 //! ```
-//! 
+//!
 //! ## WebAssembly support
-//! 
+//!
 //! We use a third-party crate [`wasmparser`](https://crates.io/crates/wasmparser)
 //! created by Bytecode Alliance for parsing WebAssembly.
 //! It is a robust and high-quality parser, but its dependencies contain some `unsafe` code.
 //! We have manually audited it and found it to be sound.
-//! 
+//!
 //! Still, the security guarantees for it are not as ironclad as for other parsers.
 //! Because of that WebAssembly support is gated behind the optional `wasm` feature.
 //! Be sure to [enable](https://doc.rust-lang.org/cargo/reference/features.html#dependency-features)
