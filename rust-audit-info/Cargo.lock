@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-extract"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "binfarce",
  "wasmparser",
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-info"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "auditable-extract",
  "miniz_oxide",
@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "rust-audit-info"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "auditable-info",
 ]
