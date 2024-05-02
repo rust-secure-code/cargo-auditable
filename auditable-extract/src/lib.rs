@@ -15,7 +15,7 @@
 //! **Note:** this is a low-level crate that only implements binary parsing. It rarely should be used directly.
 //! You probably want the higher-level [`auditable-info`](https://docs.rs/auditable-info) crate instead.
 //!
-//! The following snippet demonstrates full extraction pipeline, including decompression
+//! The following snippet demonstrates full extraction pipeline using this crate, including decompression
 //! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and optional JSON parsing
 //! via [`auditable-serde`](http://docs.rs/auditable-serde/):
 //!
@@ -42,6 +42,18 @@
 //!     Ok(())
 //! }
 //! ```
+//! 
+//! ## WebAssembly support
+//! 
+//! We use a third-party crate [`wasmparser`](https://crates.io/crates/wasmparser)
+//! created by Bytecode Alliance for parsing WebAssembly.
+//! It is a robust and high-quality parser, but its dependencies contain some `unsafe` code.
+//! We have manually audited it and found it to be sound.
+//! 
+//! Still, the security guarantees for it are not as ironclad as for other parsers.
+//! Because of that WebAssembly support is gated behind the optional `wasm` feature.
+//! Be sure to [enable](https://doc.rust-lang.org/cargo/reference/features.html#dependency-features)
+//! the `wasm` feature if you want to parse WebAssembly.
 
 #[cfg(feature = "wasm")]
 mod wasm;
