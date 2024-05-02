@@ -86,9 +86,9 @@ fn create_object_file(
         // Unsupported architecture.
         _ => return None,
     };
-    let binary_format = if target_triple.contains("-apple-") {
+    let binary_format = if info["target_vendor"] == "apple" {
         BinaryFormat::MachO
-    } else if target_triple.contains("-windows-") {
+    } else if info["target_os"] == "windows" {
         BinaryFormat::Coff
     } else {
         BinaryFormat::Elf
