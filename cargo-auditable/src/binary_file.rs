@@ -25,7 +25,7 @@ pub fn create_wasm_file(
     target_info: &RustcTargetInfo,
     contents: &[u8],
 ) -> Vec<u8> {
-    assert_eq!(target_info["target_family"], "wasm");
+    assert!(is_wasm(target_info));
 
     // Start with the minimum valid WASM file
     let mut result: Vec<u8> = vec![0, b'a', b's', b'm', 1, 0, 0, 0];
