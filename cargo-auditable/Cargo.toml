@@ -26,3 +26,6 @@ wasm-gen = "0.1.4"
 cargo_metadata = "0.15"
 auditable-info = {version = "0.7.1", path = "../auditable-info", features = ["wasm"]}
 which = "4.3.0"
+
+[features]
+wasm = []
