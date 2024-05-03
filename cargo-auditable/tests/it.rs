@@ -426,6 +426,7 @@ fn test_workspace_member_version_info() {
 }
 
 #[test]
+#[cfg(feature = "wasm")]
 fn test_wasm() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml =
