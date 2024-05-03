@@ -8,7 +8,7 @@
 //! [Mach-O](https://en.wikipedia.org/wiki/Mach-O), [WASM](https://en.wikipedia.org/wiki/WebAssembly)) and obtains the compressed audit data.
 //!
 //! Unlike other binary parsing crates, it is specifically designed to be resilient to malicious input.
-//! It 100% safe Rust and performs no heap allocations.
+//! It 100% safe Rust (including all dependencies) and performs no heap allocations.
 //!
 //! ## Usage
 //!
