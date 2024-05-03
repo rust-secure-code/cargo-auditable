@@ -45,6 +45,7 @@ where
     command
         .arg("auditable")
         .arg("build")
+        .arg("--release")
         .arg("--manifest-path")
         .arg(&cargo_toml_path)
         // We'll parse these to get binary paths
@@ -52,7 +53,9 @@ where
         .args(args);
 
     if let Ok(target) = std::env::var("AUDITABLE_TEST_TARGET") {
-        command.arg(format!("--target={target}"));
+        if args.iter().all(|arg| !arg.starts_with("--target")) {
+            command.arg(format!("--target={target}"));
+        }
     }
 
     for (name, value) in env {
@@ -252,7 +255,7 @@ fn test_lto() {
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lto_binary_crate/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &["--release"], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
     eprintln!("LTO binary map: {bins:?}");
 
     // lto_binary_crate should only depend on itself
@@ -420,4 +423,24 @@ fn test_workspace_member_version_info() {
 
     let status = command.status().unwrap();
     assert!(status.success());
+}
+
+#[test]
+fn test_wasm() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/wasm_crate/Cargo.toml");
+    // Run in workspace root with default features
+    run_cargo_auditable(
+        workspace_cargo_toml,
+        &["--target=wasm32-unknown-unknown"],
+        &[],
+    );
+
+    // check that the build types are propagated correctly
+    let dep_info = get_dependency_info(
+        "tests/fixtures/wasm_crate/target/wasm32-unknown-unknown/release/wasm_crate.wasm".into(),
+    );
+    eprintln!("wasm_crate.wasm dependency info: {dep_info:?}");
+    assert_eq!(dep_info.packages.len(), 18);
 }

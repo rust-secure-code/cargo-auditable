@@ -1,0 +1,30 @@
+[package]
+name = "auditable-extract-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.auditable-extract]
+path = ".."
+features = ["wasm"]
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "parse_wasm"
+path = "fuzz_targets/parse_wasm.rs"
+test = false
+doc = false
+
+# The other format parsers are tested as part of the `binfarce` crate

@@ -5,7 +5,7 @@
 //!
 //! This crate parses platform-specific binary formats ([ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format),
 //! [PE](https://en.wikipedia.org/wiki/Portable_Executable),
-//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O)) and obtains the compressed audit data.
+//! [Mach-O](https://en.wikipedia.org/wiki/Mach-O), [WASM](https://en.wikipedia.org/wiki/WebAssembly)) and obtains the compressed audit data.
 //!
 //! Unlike other binary parsing crates, it is specifically designed to be resilient to malicious input.
 //! It 100% safe Rust (including all dependencies) and performs no heap allocations.
@@ -15,7 +15,7 @@
 //! **Note:** this is a low-level crate that only implements binary parsing. It rarely should be used directly.
 //! You probably want the higher-level [`auditable-info`](https://docs.rs/auditable-info) crate instead.
 //!
-//! The following snippet demonstrates full extraction pipeline, including decompression
+//! The following snippet demonstrates full extraction pipeline using this crate, including decompression
 //! using the safe-Rust [`miniz_oxide`](http://docs.rs/miniz_oxide/) and optional JSON parsing
 //! via [`auditable-serde`](http://docs.rs/auditable-serde/):
 //!
@@ -42,6 +42,22 @@
 //!     Ok(())
 //! }
 //! ```
+//!
+//! ## WebAssembly support
+//!
+//! We use a third-party crate [`wasmparser`](https://crates.io/crates/wasmparser)
+//! created by Bytecode Alliance for parsing WebAssembly.
+//! It is a robust and high-quality parser, but its dependencies contain some `unsafe` code,
+//! most of which is not actually used in our build configuration.
+//!
+//! We have manually audited it and found it to be sound.
+//! Still, the security guarantees for it are not as ironclad as for other parsers.
+//! Because of that WebAssembly support is gated behind the optional `wasm` feature.
+//! Be sure to [enable](https://doc.rust-lang.org/cargo/reference/features.html#dependency-features)
+//! the `wasm` feature if you want to parse WebAssembly.
+
+#[cfg(feature = "wasm")]
+mod wasm;
 
 use binfarce::Format;
 
@@ -75,8 +91,20 @@ pub fn raw_auditable_data(data: &[u8]) -> Result<&[u8], Error> {
                 .ok_or(Error::NoAuditData)?;
             Ok(data.get(section.range()?).ok_or(Error::UnexpectedEof)?)
         }
-        _ => Err(Error::NotAnExecutable),
+        Format::Unknown => {
+            #[cfg(feature = "wasm")]
+            if data.starts_with(b"\0asm") {
+                return wasm::raw_auditable_data_wasm(data);
+            }
+
+            Err(Error::NotAnExecutable)
+        }
     }
+}
+
+#[cfg(all(fuzzing, feature = "wasm"))]
+pub fn raw_auditable_data_wasm_for_fuzz(input: &[u8]) -> Result<&[u8], Error> {
+    wasm::raw_auditable_data_wasm(input)
 }
 
 #[derive(Debug, Copy, Clone)]

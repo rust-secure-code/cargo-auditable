@@ -4,7 +4,7 @@ Know the exact crate versions used to build your Rust executable. Audit binaries
 
 This works by embedding data about the dependency tree in JSON format into a dedicated linker section of the compiled executable.
 
-Linux, Windows and Mac OS are officially supported. All other ELF targets should work, but are not tested on CI. WASM is currently not supported, but patches are welcome.
+Linux, Windows and Mac OS are officially supported. [WebAssembly](https://en.wikipedia.org/wiki/WebAssembly) is also supported starting with v0.6.3. All other ELF targets should work, but are not tested on CI.
 
 The end goal is to get Cargo itself to encode this information in binaries. There is an RFC for an implementation within Cargo, for which this project paves the way: https://github.com/rust-lang/rfcs/pull/2801
 
