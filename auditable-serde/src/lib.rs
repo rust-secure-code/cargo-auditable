@@ -1,6 +1,5 @@
 #![forbid(unsafe_code)]
 #![allow(clippy::redundant_field_names)]
-
 #![doc = include_str!("../README.md")]
 
 mod validation;
