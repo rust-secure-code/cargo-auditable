@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2024-05-03
+
+### Added
+
+ - WebAssembly support
+
+### Fixed
+
+ - Pass the correct flag to MSVC link.exe to preserve the symbol containing audit data
+   - This is not known to cause issues in practice - the symbol was preserved anyway, even with LTO.
+ - Tests no longer fail on Rust 1.77 and later. The issue affected test code only.
+
+### Changed
+
+ - Refactored platform detection to be more robust
+
 ## [0.6.2] - 2024-02-19
 
 ### Fixed
