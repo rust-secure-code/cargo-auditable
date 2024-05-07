@@ -84,6 +84,7 @@ fn create_object_file(
         "riscv32" => Architecture::Riscv32,
         "riscv64" => Architecture::Riscv64,
         "sparc64" => Architecture::Sparc64,
+        "loongarch64" => Architecture::LoongArch64,
         // Unsupported architecture.
         _ => return None,
     };
@@ -150,6 +151,21 @@ fn create_object_file(
             }
             e_flags
         }
+        Architecture::LoongArch64 => {
+            // Source: https://github.com/loongson/la-abi-specs/blob/release/laelf.adoc#e_flags-identifies-abi-type-and-version
+            let mut e_flags: u32 = elf::EF_LARCH_OBJABI_V1;
+            let features = loongarch_features(target_triple);
+
+            // Select the appropriate floating-point ABI
+            if features.contains('d') {
+                e_flags |= elf::EF_LARCH_ABI_DOUBLE_FLOAT;
+            } else if features.contains('f') {
+                e_flags |= elf::EF_LARCH_ABI_SINGLE_FLOAT;
+            } else {
+                e_flags |= elf::EF_LARCH_ABI_SOFT_FLOAT;
+            }
+            e_flags
+        }
         _ => 0,
     };
     // adapted from LLVM's `MCELFObjectTargetWriter::getOSABI`
@@ -181,6 +197,16 @@ fn riscv_features(target_triple: &str) -> String {
     extensions
 }
 
+// This function was not present in the original rustc code, which simply used
+// `sess.target.options.features`
+// We do not have access to compiler internals, so we have to reimplement this function.
+fn loongarch_features(target_triple: &str) -> String {
+    match target_triple {
+        "loongarch64-unknown-none-softfloat" => "".to_string(),
+        _ => "f,d".to_string(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -208,6 +234,26 @@ mod tests {
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
         assert!(features.contains('f'));
+    }
+
+    #[test]
+    fn test_loongarch_abi_detection() {
+        // real-world target with double floats
+        let features = loongarch_features("loongarch64-unknown-linux-gnu");
+        assert!(features.contains('d'));
+        assert!(features.contains('f'));
+        // real-world target with double floats
+        let features = loongarch_features("loongarch64-unknown-linux-musl");
+        assert!(features.contains('d'));
+        assert!(features.contains('f'));
+        // real-world target with double floats
+        let features = loongarch_features("loongarch64-unknown-none");
+        assert!(features.contains('d'));
+        assert!(features.contains('f'));
+        // real-world target with soft floats
+        let features = loongarch_features("loongarch64-unknown-none-softfloat");
+        assert!(!features.contains('d'));
+        assert!(!features.contains('f'));
     }
 
     #[test]
