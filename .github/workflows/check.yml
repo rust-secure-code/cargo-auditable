@@ -16,7 +16,11 @@ jobs:
           toolchain: stable
           override: true
       - name: Run cargo check
-        run: cargo check --locked
+        run: cargo check --workspace --locked
+      - name: Run cargo check --no-default-features
+        run: cargo check --workspace --locked --no-default-features
+      - name: Run cargo check --all-features
+        run: cargo check --workspace --locked --all-features
       - name: Run cargo clippy
         run: cargo clippy -- -D warnings
       - name: Check format
