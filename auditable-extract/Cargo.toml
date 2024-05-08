@@ -1,6 +1,6 @@
 [package]
 name = "auditable-extract"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-secure-code/cargo-auditable"
@@ -12,7 +12,8 @@ edition = "2018"
 
 [dependencies]
 binfarce = "0.2"
-wasmparser = { version = "0.206.0", optional = true }
+wasmparser = { version = "0.207.0", default-features = false, optional = true }
 
 [features]
+default = ["wasm"]
 wasm = ["wasmparser"]

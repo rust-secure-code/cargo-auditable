@@ -23,6 +23,6 @@ see the [documentation](https://docs.rs/auditable-info).
 
 [`rust-audit-info`](https://crates.io/crates/rust-audit-info) is a command-line interface to this crate.
 
-If you need an even lower-level interface than the one provided by this crate,
+If you need a lower-level interface than the one provided by this crate,
 use the [`auditable-extract`](http://docs.rs/auditable-extract/) and
 [`auditable-serde`](http://docs.rs/auditable-serde/) crates.
