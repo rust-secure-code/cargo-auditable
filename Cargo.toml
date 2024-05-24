@@ -24,4 +24,3 @@ pr-run-mode = "plan"
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"
-lto = "thin"
