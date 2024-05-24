@@ -11,5 +11,5 @@ auditable-cyclonedx = {version = "0.1.0", path = "../auditable-cyclonedx"}
 serde_json = {version = "1.0.114", features = ["preserve_order"] } # the feature is needed for workarounds module only
 
 # Config for 'cargo dist'
-[metadata.dist]
+[package.metadata.dist]
 dist = false
