@@ -22,10 +22,6 @@ targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-
 pr-run-mode = "plan"
 # Whether to install an updater program
 install-updater = false
-# Whether cargo-dist should create a Github Release or use an existing draft
-create-release = false
-# Whether CI should trigger releases with dispatches instead of tag pushes
-dispatch-releases = true
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
