@@ -14,10 +14,10 @@ use cargo_lock;
 use std::convert::TryFrom;
 #[cfg(feature = "toml")]
 use std::convert::TryInto;
-use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
 #[cfg(feature = "from_metadata")]
 use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
+use std::{collections::HashSet, str::FromStr};
 
 /// Dependency tree embedded in the binary.
 ///
@@ -156,7 +156,7 @@ pub enum DependencyKind {
 
 /// The values are ordered from weakest to strongest so that casting to integer would make sense
 #[cfg(feature = "from_metadata")]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Hash)]
 enum PrivateDepKind {
     Development,
     Build,
@@ -252,6 +252,8 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
             nodes.iter().map(|n| (n.id.repr.as_str(), n)).collect();
         let mut id_to_dep_kind: HashMap<&str, PrivateDepKind> = HashMap::new();
         id_to_dep_kind.insert(toplevel_crate_id, PrivateDepKind::Runtime);
+        let mut visited_nodes: HashSet<(&str, PrivateDepKind)> = HashSet::new();
+        visited_nodes.insert((toplevel_crate_id, PrivateDepKind::Runtime));
         let mut current_queue: Vec<&cargo_metadata::Node> = vec![id_to_node[toplevel_crate_id]];
         let mut next_step_queue: Vec<&cargo_metadata::Node> = Vec::new();
         while !current_queue.is_empty() {
@@ -261,15 +263,22 @@ impl TryFrom<&cargo_metadata::Metadata> for VersionInfo {
                     let child_id = child.pkg.repr.as_str();
                     let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
                     let dep_kind = min(dep_kind, parent_dep_kind);
+                    // if we haven't visited this node in dependency graph yet
+                    // or if we've visited it with a weaker dependency type,
+                    // record its new dependency type
                     let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
                     if dep_kind_on_previous_visit.is_none()
                         || &dep_kind > dep_kind_on_previous_visit.unwrap()
                     {
-                        // if we haven't visited this node in dependency graph yet
-                        // or if we've visited it with a weaker dependency type,
-                        // records its new dependency type and add it to the queue to visit its dependencies
                         id_to_dep_kind.insert(child_id, dep_kind);
+                    }
+                    // If we haven't traversed this node with this dep kind yet,
+                    // add it to the queue. We need this because under Cargo resolver v2
+                    // the same package can have different dependency trees
+                    // when used as a normal and a build dependency.
+                    if !visited_nodes.contains(&(child_id, dep_kind)) {
                         next_step_queue.push(id_to_node[child_id]);
+                        visited_nodes.insert((child_id, dep_kind));
                     }
                 }
             }
