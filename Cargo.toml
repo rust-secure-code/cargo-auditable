@@ -26,3 +26,6 @@ install-updater = false
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"
+
+[patch.crates-io]
+cargo-lock = { git = "https://github.com/rustsec/rustsec/", branch = "cargo-lock/v10.0.0-pre.0" }
