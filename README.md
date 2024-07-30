@@ -50,11 +50,11 @@ If you're using a shell other than bash, or if using an alias is not an option, 
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 
-It is also interoperable with existing tooling that consumes Cargo.lock via the [JSON-to-TOML convertor](auditable-serde/examples/json-to-toml.rs). However, we recommend supporting the format natively; the format is designed to be [very easy to parse](PARSING.md), even if your language does not have a library for that yet.
-
 ### Can I read this data using a tool written in a different language?
 
 Yes. The data format is designed for interoperability with alternative implementations. In fact, parsing it only takes [5 lines of Python](PARSING.md). See [here](PARSING.md) for documentation on parsing the data.
+
+Besides that, Syft can read it and convert it to a multitude of formats. `auditable2cdx` can convert it to CycloneDX, which is understood by most tools. This conversion lets you feed this data even to tools you cannot modify.
 
 ### What is the data format, exactly?
 
