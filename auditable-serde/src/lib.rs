@@ -8,14 +8,9 @@ use validation::RawVersionInfo;
 
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "toml")]
-use cargo_lock;
-#[cfg(any(feature = "from_metadata", feature = "toml"))]
-use std::convert::TryFrom;
-#[cfg(feature = "toml")]
-use std::convert::TryInto;
-use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
+use std::convert::TryFrom;
+use std::str::FromStr;
 #[cfg(feature = "from_metadata")]
 use std::{cmp::min, cmp::Ordering::*, collections::HashMap, error::Error, fmt::Display};
 
@@ -373,80 +368,6 @@ fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
         .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
 }
 
-#[cfg(feature = "toml")]
-impl TryFrom<&Package> for cargo_lock::Dependency {
-    type Error = cargo_lock::Error;
-    fn try_from(input: &Package) -> Result<Self, Self::Error> {
-        Ok(cargo_lock::Dependency {
-            name: cargo_lock::package::Name::from_str(&input.name)?,
-            version: input.version.clone(),
-            source: (&input.source).into(),
-        })
-    }
-}
-
-#[cfg(feature = "toml")]
-impl From<&Source> for Option<cargo_lock::SourceId> {
-    fn from(source: &Source) -> Self {
-        match source {
-            Source::CratesIo => Some(
-                cargo_lock::package::SourceId::from_url(
-                    "registry+https://github.com/rust-lang/crates.io-index",
-                )
-                .unwrap(),
-            ),
-            _ => None, // we don't store enough info about other sources to reconstruct the URL
-        }
-    }
-}
-
-#[cfg(feature = "toml")]
-impl TryFrom<&VersionInfo> for cargo_lock::Lockfile {
-    type Error = cargo_lock::Error;
-    fn try_from(input: &VersionInfo) -> Result<Self, Self::Error> {
-        let mut root_package: Option<cargo_lock::Package> = None;
-        let mut packages: Vec<cargo_lock::Package> = Vec::new();
-        for pkg in input.packages.iter() {
-            let lock_pkg =
-                cargo_lock::package::Package {
-                    name: cargo_lock::package::Name::from_str(&pkg.name)?,
-                    version: pkg.version.clone(),
-                    checksum: Option::None,
-                    dependencies: {
-                        let result: Result<Vec<_>, _> =
-                            pkg.dependencies
-                                .iter()
-                                .map(|i| {
-                                    input.packages.get(*i).ok_or(cargo_lock::Error::Parse(
-                            format!("There is no dependency with index {} in the input JSON", i))
-                        )?.try_into()
-                                })
-                                .collect();
-                        result?
-                    },
-                    replace: None,
-                    source: (&pkg.source).into(),
-                };
-            if pkg.root {
-                if root_package.is_some() {
-                    return Err(cargo_lock::Error::Parse(
-                        "More than one root package specified in JSON!".to_string(),
-                    ));
-                }
-                root_package = Some(lock_pkg.clone());
-            }
-            packages.push(lock_pkg);
-        }
-        Ok(cargo_lock::Lockfile {
-            version: cargo_lock::ResolveVersion::V2,
-            packages: packages,
-            root: root_package,
-            metadata: std::collections::BTreeMap::new(),
-            patch: cargo_lock::Patch { unused: Vec::new() },
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     #![allow(unused_imports)] // otherwise conditional compilation emits warnings
@@ -473,17 +394,6 @@ mod tests {
         let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
         let json = serde_json::to_string(&version_info_struct).unwrap();
         VersionInfo::from_str(&json).unwrap(); // <- the part we care about succeeding
-    }
-
-    #[test]
-    #[cfg(feature = "toml")]
-    #[cfg(feature = "from_metadata")]
-    fn to_toml() {
-        let cargo_toml_path =
-            PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("Cargo.toml");
-        let metadata = load_metadata(&cargo_toml_path);
-        let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
-        let _lockfile_struct: cargo_lock::Lockfile = (&version_info_struct).try_into().unwrap();
     }
 
     #[cfg(feature = "schema")]
