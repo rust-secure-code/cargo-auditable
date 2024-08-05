@@ -35,6 +35,25 @@ impl CargoArgs {
         }
     }
 
+    /// Converts back to command-line arguments that can be passed to Cargo
+    pub fn to_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+        if self.offline {
+            args.push("--offline".to_owned());
+        }
+        if self.frozen {
+            args.push("--frozen".to_owned());
+        }
+        if self.locked {
+            args.push("--locked".to_owned());
+        }
+        for arg in &self.config {
+            args.push("--config".to_owned());
+            args.push(arg.clone());
+        }
+        args
+    }
+
     /// Recovers `SerializedCargoArgs` from an environment variable (if it was exported earlier)
     pub fn from_env() -> Result<Self, std::env::VarError> {
         let json_args = std::env::var("CARGO_AUDITABLE_ORIG_ARGS")?;

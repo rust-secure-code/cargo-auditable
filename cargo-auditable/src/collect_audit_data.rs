@@ -48,19 +48,7 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     // from the original CLI invocation of `cargo auditable`
     let orig_args = CargoArgs::from_env()
         .expect("Env var 'CARGO_AUDITABLE_ORIG_ARGS' set by 'cargo-auditable' is unset!");
-    if orig_args.offline {
-        other_args.push("--offline".to_owned());
-    }
-    if orig_args.frozen {
-        other_args.push("--frozen".to_owned());
-    }
-    if orig_args.locked {
-        other_args.push("--locked".to_owned());
-    }
-    for arg in orig_args.config {
-        other_args.push("--config".to_owned());
-        other_args.push(arg);
-    }
+    other_args.extend_from_slice(&orig_args.to_args());
 
     // This can only be done once, multiple calls will replace previously set options.
     metadata_command.other_options(other_args);
