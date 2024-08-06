@@ -31,7 +31,7 @@ pub fn main(rustc_path: &OsStr) {
                     .unwrap_or_else(|| rustc_host_target_triple(rustc_path));
                 // work around Cargo passing nonexistent features to rustc when the "dep:" syntax is used:
                 // https://github.com/rust-secure-code/cargo-auditable/issues/124
-                let existing_features = match list_features() {
+                let existing_features = match list_features(&args.crate_name) {
                     Ok(features) => Some(features),
                     Err(e) => {
                         eprintln!("ERROR: failed to list Cargo features for package: {e}\n\

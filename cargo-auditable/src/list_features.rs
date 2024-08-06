@@ -1,10 +1,10 @@
-use std::{collections::BTreeSet, path::Path};
+use std::collections::BTreeSet;
 
 use cargo_metadata::MetadataCommand;
 
 use crate::collect_audit_data::execute_cargo_metadata;
 
-pub fn list_features() -> Result<BTreeSet<String>, cargo_metadata::Error> {
+pub fn list_features(crate_name: &str) -> Result<BTreeSet<String>, cargo_metadata::Error> {
     let mut metadata_command = MetadataCommand::new();
 
     // Cargo sets the path to itself in the `CARGO` environment variable:
@@ -22,25 +22,9 @@ pub fn list_features() -> Result<BTreeSet<String>, cargo_metadata::Error> {
     metadata_command.other_options(options);
 
     let medatada = execute_cargo_metadata(&metadata_command)?;
-    // TODO: if workspace default members are available, use them
-    
-    // `cargo metadata` only lets us know which package we ran in on
-    // if you don't pass `--no-deps` and have it resolve the whole graph.
-    // We do pass `--no-deps`, so we need to do something else.
-    //
-    // For a discussion of trade-offs involved, see
-    // https://github.com/rust-secure-code/cargo-auditable/issues/124#issuecomment-2271216985
-    //
-    // We canonicalize the path to our current Cargo.toml
-    // and the paths to all the Cargo.toml files in the metadata,
-    // and select the package with the matching Cargo.toml path.
-    let cargo_toml_path = Path::new("Cargo.toml").canonicalize()?;
+
     let package = medatada.packages.iter().find(|pkg| {
-        if let Ok(path) = pkg.manifest_path.canonicalize() {
-            path == cargo_toml_path
-        } else {
-            false
-        }
+        pkg.name.as_str() == crate_name
     });
     if let Some(package) = package {
         Ok(package.features.keys().cloned().collect())
