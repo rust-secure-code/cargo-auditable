@@ -22,9 +22,10 @@ pub fn list_features(crate_name: &str) -> Result<BTreeSet<String>, cargo_metadat
     metadata_command.other_options(options);
 
     let medatada = execute_cargo_metadata(&metadata_command)?;
-    dbg!(crate_name);
+    //dbg!(crate_name);
     let package = medatada.packages.iter().find(|pkg| {
-        pkg.targets.iter().find(|target| target.name == crate_name).is_some()
+        //dbg!(&pkg.name);
+        pkg.targets.iter().find(|target| to_crate_name(&target.name) == crate_name).is_some()
     });
     if let Some(package) = package {
         Ok(package.features.keys().cloned().collect())
@@ -32,4 +33,8 @@ pub fn list_features(crate_name: &str) -> Result<BTreeSet<String>, cargo_metadat
         // TODO: return error
         panic!("oh no");
     }
+}
+
+fn to_crate_name(name: &str) -> String {
+    name.replace('-', "_")
 }
