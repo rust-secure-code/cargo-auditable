@@ -5,9 +5,7 @@ use std::{
 };
 
 use crate::{
-    binary_file, collect_audit_data,
-    platform_detection::{is_apple, is_msvc, is_wasm},
-    rustc_arguments, target_info,
+    binary_file, collect_audit_data, list_features::list_features, platform_detection::{is_apple, is_msvc, is_wasm}, rustc_arguments, target_info
 };
 
 use std::io::BufRead;
@@ -31,8 +29,19 @@ pub fn main(rustc_path: &OsStr) {
                     .target
                     .clone()
                     .unwrap_or_else(|| rustc_host_target_triple(rustc_path));
+                // work around Cargo passing nonexistent features to rustc when the "dep:" syntax is used:
+                // https://github.com/rust-secure-code/cargo-auditable/issues/124
+                let existing_features = match list_features() {
+                    Ok(features) => Some(features),
+                    Err(e) => {
+                        eprintln!("ERROR: failed to list Cargo features for package: {e}\n\
+                        This is a bug in cargo-auditable. Please report it!\
+                        The build will continue, but compilation might fail in rare cases.");
+                        None
+                    },
+                };
                 let contents: Vec<u8> =
-                    collect_audit_data::compressed_dependency_list(&args, &target_triple);
+                    collect_audit_data::compressed_dependency_list(&args, &target_triple, &existing_features);
                 // write the audit info to an object file
                 let target_info = target_info::rustc_target_info(rustc_path, &target_triple);
                 let binfile = binary_file::create_binary_file(

@@ -23,30 +23,30 @@ pub fn list_features() -> Result<BTreeSet<String>, cargo_metadata::Error> {
 
     let medatada = execute_cargo_metadata(&metadata_command)?;
     // TODO: if workspace default members are available, use them
-    //if medatada.workspace_default_members.len() == 1 {
-        // TODO  
-    //} else {
-    // We're running Cargo version 1.70 or earlier,
-    // or we made some faulty assumption somewhere
-    // and it's actually possible for several
-    // default workspace members to appear here.
-    // debug_assert!(medatada.workspace_default_members.is_empty());
     
     // `cargo metadata` only lets us know which package we ran in on
     // if you don't pass `--no-deps` and have it resolve the whole graph.
     // We do pass `--no-deps`, so we need to do something else.
     //
+    // For a discussion of trade-offs involved, see
+    // https://github.com/rust-secure-code/cargo-auditable/issues/124#issuecomment-2271216985
+    //
     // We canonicalize the path to our current Cargo.toml
     // and the paths to all the Cargo.toml files in the metadata,
     // and select the package with the matching Cargo.toml path.
     let cargo_toml_path = Path::new("Cargo.toml").canonicalize()?;
-    for pkg in &medatada.packages {
-
+    dbg!(&cargo_toml_path);
+    let package = medatada.packages.iter().find(|pkg| {
+        if let Ok(path) = dbg!(pkg.manifest_path.canonicalize()) {
+            path == cargo_toml_path
+        } else {
+            false
+        }
+    });
+    if let Some(package) = package {
+        Ok(package.features.keys().cloned().collect())
+    } else {
+        // TODO: return error
+        panic!("oh no");
     }
-
-    //}
-    //assert!(medatada.workspace_default_members);
-    //let features: BTreeSet<String> = 
-
-    todo!()
 }

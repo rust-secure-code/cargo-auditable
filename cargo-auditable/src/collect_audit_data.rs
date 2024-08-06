@@ -1,13 +1,13 @@
 use auditable_serde::VersionInfo;
 use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use std::{convert::TryFrom, str::from_utf8};
+use std::{collections::BTreeSet, convert::TryFrom, str::from_utf8};
 
 use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
-pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
-    let metadata = get_metadata(rustc_args, target_triple);
+pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str, known_features: &Option<BTreeSet<String>>) -> Vec<u8> {
+    let metadata = get_metadata(rustc_args, target_triple, known_features);
     let version_info = VersionInfo::try_from(&metadata).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
@@ -15,7 +15,7 @@ pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -
     compressed_json
 }
 
-fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
+fn get_metadata(args: &RustcArgs, target_triple: &str, known_features: &Option<BTreeSet<String>>) -> Metadata {
     let mut metadata_command = MetadataCommand::new();
 
     // Cargo sets the path to itself in the `CARGO` environment variable:
@@ -37,7 +37,14 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     } else {
         metadata_command.features(cargo_metadata::CargoOpt::NoDefaultFeatures);
     }
-    let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
+    let mut owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
+    // Cargo passes nonexistent features to `rustc` when the `dep:` syntax is used:
+    // https://github.com/rust-secure-code/cargo-auditable/issues/124
+    // We work around that by filtering the list Cargo passed to rustc against the list of known features,
+    // if available.
+    if let Some(known_features) = known_features {
+        owned_features.retain(|f| known_features.contains(f));
+    };
     metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
 
     // Restrict the dependency resolution to just the platform the binary is being compiled for.
