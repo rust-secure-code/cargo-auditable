@@ -4,6 +4,7 @@ mod binary_file;
 mod cargo_arguments;
 mod cargo_auditable;
 mod collect_audit_data;
+mod list_features;
 mod object_file;
 mod platform_detection;
 mod rustc_arguments;

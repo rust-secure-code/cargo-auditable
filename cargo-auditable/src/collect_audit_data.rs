@@ -78,5 +78,7 @@ pub fn execute_cargo_metadata(
         .lines()
         .find(|line| line.starts_with('{'))
         .ok_or(cargo_metadata::Error::NoJson)?;
+    // TODO: check if workspace_default_members is available
+    // to work around https://github.com/oli-obk/cargo_metadata/issues/254
     MetadataCommand::parse(stdout)
 }
