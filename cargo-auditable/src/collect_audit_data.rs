@@ -53,24 +53,30 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     // This can only be done once, multiple calls will replace previously set options.
     metadata_command.other_options(other_args);
 
-    // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
-    // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
-    // The alternative would be modifying the environment of our own process,
-    // which is sketchy and discouraged on POSIX because it's not thread-safe:
-    // https://doc.rust-lang.org/stable/std/env/fn.remove_var.html
-    let mut metadata_command = metadata_command.cargo_command();
-    metadata_command.env_remove("RUSTC_WORKSPACE_WRAPPER");
-    let output = metadata_command.output().unwrap();
+    execute_cargo_metadata(&metadata_command).unwrap()
+}
+
+/// Re-implements `MetadataCommand::exec` to clear `RUSTC_WORKSPACE_WRAPPER`
+/// in the child process to avoid recursion.
+/// The alternative would be modifying the environment of our own process,
+/// which is sketchy and discouraged on POSIX because it's not thread-safe:
+/// https://doc.rust-lang.org/stable/std/env/fn.remove_var.html
+pub fn execute_cargo_metadata(
+    command: &MetadataCommand,
+) -> Result<Metadata, cargo_metadata::Error> {
+    let mut command = command.cargo_command();
+    // this line is the only custom addition
+    command.env_remove("RUSTC_WORKSPACE_WRAPPER");
+    // end of custom code
+    let output = command.output()?;
     if !output.status.success() {
-        panic!(
-            "cargo metadata failure: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
+        return Err(cargo_metadata::Error::CargoMetadata {
+            stderr: String::from_utf8(output.stderr)?,
+        });
     }
-    let stdout = from_utf8(&output.stdout)
-        .expect("cargo metadata output not utf8")
+    let stdout = from_utf8(&output.stdout)?
         .lines()
         .find(|line| line.starts_with('{'))
-        .expect("cargo metadata output not json");
-    MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output")
+        .ok_or(cargo_metadata::Error::NoJson)?;
+    MetadataCommand::parse(stdout)
 }
