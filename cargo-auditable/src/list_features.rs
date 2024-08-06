@@ -35,9 +35,8 @@ pub fn list_features() -> Result<BTreeSet<String>, cargo_metadata::Error> {
     // and the paths to all the Cargo.toml files in the metadata,
     // and select the package with the matching Cargo.toml path.
     let cargo_toml_path = Path::new("Cargo.toml").canonicalize()?;
-    dbg!(&cargo_toml_path);
     let package = medatada.packages.iter().find(|pkg| {
-        if let Ok(path) = dbg!(pkg.manifest_path.canonicalize()) {
+        if let Ok(path) = pkg.manifest_path.canonicalize() {
             path == cargo_toml_path
         } else {
             false
