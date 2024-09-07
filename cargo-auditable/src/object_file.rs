@@ -194,6 +194,12 @@ fn riscv_features(target_triple: &str) -> String {
     if extensions.contains('g') {
         extensions.push_str("imadf");
     }
+    // Most but not all riscv targets declare target features.
+    // A notable exception is `riscv64-linux-android`.
+    // We assume that all Linux-capable targets are -gc.
+    if target_triple.contains("linux") {
+        extensions.push_str("imadfc");
+    }
     extensions
 }
 
@@ -233,6 +239,11 @@ mod tests {
         let features = riscv_features("riscv32if-unknown-none-elf");
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
+        assert!(features.contains('f'));
+        // real-world Android riscv target
+        let features = riscv_features("riscv64-linux-android");
+        assert!(features.contains('c'));
+        assert!(features.contains('d'));
         assert!(features.contains('f'));
     }
 
