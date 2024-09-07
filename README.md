@@ -25,7 +25,7 @@ cargo audit bin target/release/your-project
 
 Microsoft uses `cargo auditable` internally and maintains the [data extraction library for Go](https://github.com/microsoft/go-rustaudit).
 
-[NixOS](https://nixos.org/) and [Void Linux](https://voidlinux.org/) build all their Rust packages with `cargo auditable`. If you install packages from Nix, you can audit them!
+Multiple Linux distributions build their Rust packages with `cargo auditable`: [Alpine Linux](https://www.alpinelinux.org/), [NixOS](https://nixos.org/), [Void Linux](https://voidlinux.org/) and [Chimera Linux](https://chimera-linux.org/). If you install packages from their repositories, you can audit them!
 
 ## FAQ
 
