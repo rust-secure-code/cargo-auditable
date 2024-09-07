@@ -21,6 +21,12 @@ cargo audit bin target/release/your-project
 
 `cargo auditable` works with any Cargo command. All arguments are passed to `cargo` as-is.
 
+## Adoption
+
+Microsoft uses `cargo auditable` internally and maintains the [data extraction library for Go](https://github.com/microsoft/go-rustaudit).
+
+Multiple Linux distributions build their Rust packages with `cargo auditable`: [Alpine Linux](https://www.alpinelinux.org/), [NixOS](https://nixos.org/), [Void Linux](https://voidlinux.org/) and [Chimera Linux](https://chimera-linux.org/). If you install packages from their repositories, you can audit them!
+
 ## FAQ
 
 ### Doesn't this bloat my binary?
