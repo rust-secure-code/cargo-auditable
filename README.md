@@ -100,4 +100,4 @@ Do not rely on SBOMs when dealing with supply chain attacks!
 
 ### What is blocking uplifting this into Cargo?
 
-Cargo itself is [currently in a feature freeze](https://blog.rust-lang.org/inside-rust/2022/03/31/cargo-team-changes.html).
+The [RFC for this functionality in Cargo itself](https://github.com/rust-lang/rfcs/pull/2801) has been [postponed](https://github.com/rust-lang/rfcs/pull/2801#issuecomment-2122880841) by the Cargo team until the [more foundational SBOM RFC](https://github.com/rust-lang/rfcs/pull/3553) is implemented.
