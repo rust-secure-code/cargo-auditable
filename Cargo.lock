@@ -39,7 +39,7 @@ dependencies = [
 
 [[package]]
 name = "auditable-extract"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "binfarce",
  "wasmparser",
