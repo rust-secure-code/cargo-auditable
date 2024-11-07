@@ -12,7 +12,7 @@ edition = "2018"
 
 [dependencies]
 auditable-extract = {version = "0.3.4", path = "../auditable-extract", default-features = false }
-miniz_oxide = { version = "0.6.2", features = ["std"] }
+miniz_oxide = { version = "0.8.0", features = ["std"] }
 auditable-serde = {version = "0.7.0", path = "../auditable-serde", optional = true}
 serde_json = { version = "1.0.57", optional = true }
 
