@@ -219,33 +219,40 @@ fn loongarch_features(target_triple: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
     use crate::target_info::parse_rustc_target_info;
 
     #[test]
     fn test_riscv_abi_detection() {
         // real-world target with double floats
-        let features = riscv_features("riscv64gc-unknown-linux-gnu");
+        let info = HashMap::from([("target_os".to_owned(), "linux".to_owned())]);
+        let features = riscv_features("riscv64gc-unknown-linux-gnu", &info);
         assert!(features.contains('c'));
         assert!(features.contains('d'));
         assert!(features.contains('f'));
         // real-world target without floats
-        let features = riscv_features("riscv32imac-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32imac-unknown-none-elf", &info);
         assert!(features.contains('c'));
         assert!(!features.contains('d'));
         assert!(!features.contains('f'));
         // real-world target without floats or compression
-        let features = riscv_features("riscv32i-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32i-unknown-none-elf", &info);
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
         assert!(!features.contains('f'));
         // made-up target without compression and with single floats
-        let features = riscv_features("riscv32if-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32if-unknown-none-elf", &info);
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
         assert!(features.contains('f'));
         // real-world Android riscv target
-        let features = riscv_features("riscv64-linux-android");
+        let info = HashMap::from([("target_os".to_owned(), "android".to_owned())]);
+        let features = riscv_features("riscv64-linux-android", &info);
         assert!(features.contains('c'));
         assert!(features.contains('d'));
         assert!(features.contains('f'));
