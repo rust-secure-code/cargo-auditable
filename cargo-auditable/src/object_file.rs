@@ -135,7 +135,7 @@ fn create_object_file(
         Architecture::Riscv32 | Architecture::Riscv64 => {
             // Source: https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/079772828bd10933d34121117a222b4cc0ee2200/riscv-elf.adoc
             let mut e_flags: u32 = 0x0;
-            let features = riscv_features(target_triple);
+            let features = riscv_features(target_triple, info);
             // Check if compressed is enabled
             if features.contains('c') {
                 e_flags |= elf::EF_RISCV_RVC;
@@ -187,7 +187,10 @@ fn create_object_file(
 // This function was not present in the original rustc code, which simply used
 // `sess.target.options.features`
 // We do not have access to compiler internals, so we have to reimplement this function.
-fn riscv_features(target_triple: &str) -> String {
+// And `rustc --print=cfg` doesn't expose some of the features we care about,
+// specifically the 'd' and 'f' features.
+// Hence this function, which is not as robust as I would like.
+fn riscv_features(target_triple: &str, info: &RustcTargetInfo) -> String {
     let arch = target_triple.split('-').next().unwrap();
     assert_eq!(&arch[..5], "riscv");
     let mut extensions = arch[7..].to_owned();
@@ -197,8 +200,9 @@ fn riscv_features(target_triple: &str) -> String {
     // Most but not all riscv targets declare target features.
     // A notable exception is `riscv64-linux-android`.
     // We assume that all Linux-capable targets are -gc.
-    if target_triple.contains("linux") {
-        extensions.push_str("imadfc");
+    match info["target_os"].as_str() {
+        "linux" | "android" => extensions.push_str("imadfc"),
+        _ => (),
     }
     extensions
 }
@@ -215,33 +219,40 @@ fn loongarch_features(target_triple: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
     use crate::target_info::parse_rustc_target_info;
 
     #[test]
     fn test_riscv_abi_detection() {
         // real-world target with double floats
-        let features = riscv_features("riscv64gc-unknown-linux-gnu");
+        let info = HashMap::from([("target_os".to_owned(), "linux".to_owned())]);
+        let features = riscv_features("riscv64gc-unknown-linux-gnu", &info);
         assert!(features.contains('c'));
         assert!(features.contains('d'));
         assert!(features.contains('f'));
         // real-world target without floats
-        let features = riscv_features("riscv32imac-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32imac-unknown-none-elf", &info);
         assert!(features.contains('c'));
         assert!(!features.contains('d'));
         assert!(!features.contains('f'));
         // real-world target without floats or compression
-        let features = riscv_features("riscv32i-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32i-unknown-none-elf", &info);
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
         assert!(!features.contains('f'));
         // made-up target without compression and with single floats
-        let features = riscv_features("riscv32if-unknown-none-elf");
+        let info = HashMap::from([("target_os".to_owned(), "none".to_owned())]);
+        let features = riscv_features("riscv32if-unknown-none-elf", &info);
         assert!(!features.contains('c'));
         assert!(!features.contains('d'));
         assert!(features.contains('f'));
         // real-world Android riscv target
-        let features = riscv_features("riscv64-linux-android");
+        let info = HashMap::from([("target_os".to_owned(), "android".to_owned())]);
+        let features = riscv_features("riscv64-linux-android", &info);
         assert!(features.contains('c'));
         assert!(features.contains('d'));
         assert!(features.contains('f'));
