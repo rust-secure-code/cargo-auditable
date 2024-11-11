@@ -1,6 +1,6 @@
 [package]
 name = "cargo-auditable"
-version = "0.6.4"
+version = "0.6.5"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ readme = "../README.md"
 
 [dependencies]
 object = {version = "0.30", default-features = false, features = ["write"]}
-auditable-serde = {version = "0.7.0", path = "../auditable-serde"}
+auditable-serde = {version = "0.8.0", path = "../auditable-serde"}
 miniz_oxide = {version = "0.8.0"}
 serde_json = "1.0.57"
 cargo_metadata = "0.18"
@@ -24,5 +24,5 @@ wasm-gen = "0.1.4"
 
 [dev-dependencies]
 cargo_metadata = "0.18"
-auditable-info = {version = "0.8.0", path = "../auditable-info", features = ["wasm"]}
+auditable-info = {version = "0.9.0", path = "../auditable-info", features = ["wasm"]}
 which = "4.3.0"
