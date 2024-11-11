@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2024-11-11
+
+### Added
+
+ - Upgraded the `cargo_metadata` dependency to gain support for Rust 2024 edition
+
+### Fixed
+
+ - Fixed build on `riscv64-linux-android` target and certain custom RISC-V targets
+
 ## [0.6.4] - 2024-05-08
 
 ### Added
