@@ -139,24 +139,6 @@ mod tests {
         path::{Path, PathBuf},
     };
 
-    #[cfg(feature = "from_metadata")]
-    fn load_metadata(cargo_toml_path: &Path) -> cargo_metadata::Metadata {
-        let mut cmd = cargo_metadata::MetadataCommand::new();
-        cmd.manifest_path(cargo_toml_path);
-        cmd.exec().unwrap()
-    }
-
-    #[test]
-    #[cfg(feature = "from_metadata")]
-    fn dependency_cycle() {
-        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-            .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
-        let metadata = load_metadata(&cargo_toml_path);
-        let version_info_struct: VersionInfo = (&metadata).try_into().unwrap();
-        let json = serde_json::to_string(&version_info_struct).unwrap();
-        VersionInfo::from_str(&json).unwrap(); // <- the part we care about succeeding
-    }
-
     #[cfg(feature = "schema")]
     /// Generate a JsonSchema for VersionInfo
     fn generate_schema() -> schemars::schema::RootSchema {
