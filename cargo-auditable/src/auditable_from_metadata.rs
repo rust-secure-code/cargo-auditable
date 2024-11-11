@@ -214,3 +214,31 @@ fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
         .max()
         .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
 }
+
+#[cfg(test)]
+mod tests {
+    #![allow(unused_imports)] // otherwise conditional compilation emits warnings
+    use super::*;
+    use std::fs;
+    use std::{
+        convert::TryInto,
+        path::{Path, PathBuf},
+        str::FromStr,
+    };
+
+    fn load_metadata(cargo_toml_path: &Path) -> cargo_metadata::Metadata {
+        let mut cmd = cargo_metadata::MetadataCommand::new();
+        cmd.manifest_path(cargo_toml_path);
+        cmd.exec().unwrap()
+    }
+
+    #[test]
+    fn dependency_cycle() {
+        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
+        let metadata = load_metadata(&cargo_toml_path);
+        let version_info_struct: VersionInfo = encode_audit_data(&metadata).unwrap();
+        let json = serde_json::to_string(&version_info_struct).unwrap();
+        VersionInfo::from_str(&json).unwrap(); // <- the part we care about succeeding
+    }
+}
