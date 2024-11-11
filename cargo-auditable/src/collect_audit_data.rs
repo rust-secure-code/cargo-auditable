@@ -1,14 +1,16 @@
-use auditable_serde::VersionInfo;
 use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use std::{convert::TryFrom, str::from_utf8};
+use std::str::from_utf8;
 
-use crate::{cargo_arguments::CargoArgs, rustc_arguments::RustcArgs};
+use crate::{
+    auditable_from_metadata::encode_audit_data, cargo_arguments::CargoArgs,
+    rustc_arguments::RustcArgs,
+};
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
     let metadata = get_metadata(rustc_args, target_triple);
-    let version_info = VersionInfo::try_from(&metadata).unwrap();
+    let version_info = encode_audit_data(&metadata).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
