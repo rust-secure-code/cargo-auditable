@@ -83,7 +83,7 @@ pub fn json_from_reader<T: BufRead>(reader: &mut T, limits: Limits) -> Result<St
     let compressed_data = get_compressed_audit_data(reader, limits)?;
     let decompressed_data =
         decompress_to_vec_zlib_with_limit(&compressed_data, limits.decompressed_json_size)
-            .map_err(|e| DecompressError::from_miniz(e))?;
+            .map_err(DecompressError::from_miniz)?;
     Ok(String::from_utf8(decompressed_data)?)
 }
 
@@ -146,7 +146,7 @@ pub fn json_from_slice(
     }
     let decompressed_data =
         decompress_to_vec_zlib_with_limit(compressed_audit_data, decompressed_json_size_limit)
-            .map_err(|e| DecompressError::from_miniz(e))?;
+            .map_err(DecompressError::from_miniz)?;
     Ok(String::from_utf8(decompressed_data)?)
 }
 
