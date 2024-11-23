@@ -108,4 +108,27 @@ mod tests {
         assert!(should_embed_audit_data(&args));
     }
 
+    #[test]
+    fn multiple_emit_values() {
+        let raw_rustc_args = vec![
+            "--emit=dep-info,link",
+            "--emit",
+            "llvm-bc",
+            // end of interesting args, start of boilerplate
+            "--crate-name",
+            "foobar",
+            "--out-dir",
+            "/foo/bar",
+        ];
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
+        let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
+
+        let expected = vec!["dep-info", "link", "llvm-bc"];
+        let mut expected: Vec<String> = expected.into_iter().map(|s| s.into()).collect();
+
+        args.emit.sort();
+        expected.sort();
+
+        assert_eq!(args.emit, expected)
+    }
 }
