@@ -1,6 +1,9 @@
 //! Parses rustc arguments to extract the info not provided via environment variables.
 
-use std::{ffi::OsString, path::PathBuf};
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+};
 
 // We use pico-args because we only need to extract a few specific arguments out of a larger set,
 // and other parsers (rustc's `getopts`, cargo's `clap`) make that difficult.
@@ -16,6 +19,7 @@ pub struct RustcArgs {
     pub crate_name: String,
     pub crate_types: Vec<String>,
     pub cfg: Vec<String>,
+    pub emit: Vec<String>,
     pub out_dir: PathBuf,
     pub target: Option<String>,
     pub print: Vec<String>,
@@ -37,12 +41,27 @@ impl RustcArgs {
 
 pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
     let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
+    parse_args_inner(raw_args)
+}
+
+// Split into its own function for unit testing
+fn parse_args_inner(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Error> {
     let mut parser = pico_args::Arguments::from_vec(raw_args);
+
+    // --emit requires slightly more complex parsing
+    let raw_emit_args: Vec<String> = parser.values_from_str("--emit")?;
+    let mut emit: Vec<String> = Vec::new();
+    for raw_arg in raw_emit_args {
+        for item in raw_arg.split(',') {
+            emit.push(item.to_owned());
+        }
+    }
 
     Ok(RustcArgs {
         crate_name: parser.value_from_str("--crate-name")?,
         crate_types: parser.values_from_str("--crate-type")?,
         cfg: parser.values_from_str("--cfg")?,
+        emit,
         out_dir: parser.value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| {
             Ok(PathBuf::from(s))
         })?,
