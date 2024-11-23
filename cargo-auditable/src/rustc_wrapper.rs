@@ -7,7 +7,8 @@ use std::{
 use crate::{
     binary_file, collect_audit_data,
     platform_detection::{is_apple, is_msvc, is_wasm},
-    rustc_arguments, target_info,
+    rustc_arguments::{self, should_embed_audit_data},
+    target_info,
 };
 
 use std::io::BufRead;
@@ -20,12 +21,7 @@ pub fn main(rustc_path: &OsStr) {
     if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
         let arg_parsing_result = rustc_arguments::parse_args();
         if let Ok(args) = rustc_arguments::parse_args() {
-            // Only inject audit data into crate types 'bin' and 'cdylib',
-            // and only if --print is not specified (which disables compilation)
-            if args.print.is_empty()
-                && (args.crate_types.contains(&"bin".to_owned())
-                    || args.crate_types.contains(&"cdylib".to_owned()))
-            {
+            if should_embed_audit_data(&args) {
                 // Get the audit data to embed
                 let target_triple = args
                     .target
