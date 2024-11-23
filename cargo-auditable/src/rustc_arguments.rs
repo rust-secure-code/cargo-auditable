@@ -103,11 +103,9 @@ mod tests {
     #[test]
     fn cargo_c_compatibility() {
         let raw_rustc_args = vec!["--crate-name", "rustls", "--edition=2021", "src/lib.rs", "--error-format=json", "--json=diagnostic-rendered-ansi,artifacts,future-incompat", "--crate-type", "staticlib", "--crate-type", "cdylib", "--emit=dep-info,link", "-C", "embed-bitcode=no", "-C", "debuginfo=2", "-C", "link-arg=-Wl,-soname,librustls.so.0.14.0", "-Cmetadata=rustls-ffi", "--cfg", "cargo_c", "--print", "native-static-libs", "--cfg", "feature=\"aws-lc-rs\"", "--cfg", "feature=\"capi\"", "--cfg", "feature=\"default\"", "--check-cfg", "cfg(docsrs)", "--check-cfg", "cfg(feature, values(\"aws-lc-rs\", \"capi\", \"cert_compression\", \"default\", \"no_log_capture\", \"read_buf\", \"ring\"))", "-C", "metadata=b6a43041f637feb8", "--out-dir", "/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps", "--target", "x86_64-unknown-linux-gnu", "-C", "linker=clang", "-C", "incremental=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/incremental", "-L", "dependency=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps", "-L", "dependency=/home/user/Code/rustls-ffi/target/debug/deps", "--extern", "libc=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/liblibc-4fc7c9f82dda33ee.rlib", "--extern", "log=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/liblog-6f7c8f4d1d5ec422.rlib", "--extern", "rustls=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls-a93cda0ba0380929.rlib", "--extern", "pki_types=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls_pki_types-27749859644f0979.rlib", "--extern", "rustls_platform_verifier=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls_platform_verifier-bceca5cf09f3d7ba.rlib", "--extern", "webpki=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/libwebpki-bc4a16dd84e0b062.rlib", "-C", "link-arg=-fuse-ld=/home/user/mold-2.32.0-x86_64-linux/bin/mold", "-L", "native=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/build/aws-lc-sys-d52f8990d9ede41d/out"];
-        let raw_rustc_args: Vec<OsString> = raw_rustc_args
-            .into_iter()
-            .map(|s| OsString::from(s))
-            .collect();
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
         let args = RustcArgs::from_vec(raw_rustc_args).unwrap();
         assert!(should_embed_audit_data(&args));
     }
+
 }
