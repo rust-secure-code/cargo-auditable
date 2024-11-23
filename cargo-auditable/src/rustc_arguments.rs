@@ -41,11 +41,11 @@ impl RustcArgs {
 
 pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
     let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
-    parse_args_inner(raw_args)
+    parse_args_from_vec(raw_args)
 }
 
 // Split into its own function for unit testing
-fn parse_args_inner(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Error> {
+fn parse_args_from_vec(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Error> {
     let mut parser = pico_args::Arguments::from_vec(raw_args);
 
     // --emit requires slightly more complex parsing
@@ -68,4 +68,24 @@ fn parse_args_inner(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Err
         target: parser.opt_value_from_str("--target")?,
         print: parser.values_from_str("--print")?,
     })
+}
+
+pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
+    // Only inject audit data into crate types 'bin' and 'cdylib',
+    // it doesn't make sense for static libs and weird other types.
+    if !(args.crate_types.contains(&"bin".to_owned())
+        || args.crate_types.contains(&"cdylib".to_owned()))
+    {
+        return false;
+    }
+
+    //if !args.emit.is_empty() && !args.emit.contains("link".to_owned())
+
+    if ! args.print.is_empty() {
+        // --print disables compilation,
+        // UNLESS --emit is also explicitly specified
+        return false;
+    }
+
+    true
 }
