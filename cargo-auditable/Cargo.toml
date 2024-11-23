@@ -18,7 +18,7 @@ auditable-serde = {version = "0.8.0", path = "../auditable-serde"}
 miniz_oxide = {version = "0.8.0"}
 serde_json = "1.0.57"
 cargo_metadata = "0.18"
-pico-args = "0.5"
+pico-args = { version = "0.5", features = ["eq-separator"] }
 serde = "1.0.147"
 wasm-gen = "0.1.4"
 

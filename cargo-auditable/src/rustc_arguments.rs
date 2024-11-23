@@ -12,6 +12,7 @@ use std::{ffi::OsString, path::PathBuf};
 // https://github.com/rust-lang/rust/blob/26ecd44160f54395b3bd5558cc5352f49cb0a0ba/compiler/rustc_session/src/config.rs
 
 /// Includes only the rustc arguments we care about
+#[derive(Debug)]
 pub struct RustcArgs {
     pub crate_name: String,
     pub crate_types: Vec<String>,
@@ -36,35 +37,38 @@ impl RustcArgs {
     }
 }
 
-pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
-    let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
-    parse_args_from_vec(raw_args)
+impl RustcArgs {
+    // Split into its own function for unit testing
+    fn from_vec(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Error> {
+        let mut parser = pico_args::Arguments::from_vec(raw_args);
+
+        // --emit requires slightly more complex parsing
+        let raw_emit_args: Vec<String> = parser.values_from_str("--emit")?;
+        let mut emit: Vec<String> = Vec::new();
+        for raw_arg in raw_emit_args {
+            for item in raw_arg.split(',') {
+                emit.push(item.to_owned());
+            }
+        }
+
+        Ok(RustcArgs {
+            crate_name: parser.value_from_str("--crate-name")?,
+            crate_types: parser.values_from_str("--crate-type")?,
+            cfg: parser.values_from_str("--cfg")?,
+            emit,
+            out_dir: parser
+                .value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| {
+                    Ok(PathBuf::from(s))
+                })?,
+            target: parser.opt_value_from_str("--target")?,
+            print: parser.values_from_str("--print")?,
+        })
+    }
 }
 
-// Split into its own function for unit testing
-fn parse_args_from_vec(raw_args: Vec<OsString>) -> Result<RustcArgs, pico_args::Error> {
-    let mut parser = pico_args::Arguments::from_vec(raw_args);
-
-    // --emit requires slightly more complex parsing
-    let raw_emit_args: Vec<String> = parser.values_from_str("--emit")?;
-    let mut emit: Vec<String> = Vec::new();
-    for raw_arg in raw_emit_args {
-        for item in raw_arg.split(',') {
-            emit.push(item.to_owned());
-        }
-    }
-
-    Ok(RustcArgs {
-        crate_name: parser.value_from_str("--crate-name")?,
-        crate_types: parser.values_from_str("--crate-type")?,
-        cfg: parser.values_from_str("--cfg")?,
-        emit,
-        out_dir: parser.value_from_os_str::<&str, PathBuf, pico_args::Error>("--out-dir", |s| {
-            Ok(PathBuf::from(s))
-        })?,
-        target: parser.opt_value_from_str("--target")?,
-        print: parser.values_from_str("--print")?,
-    })
+pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
+    let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
+    RustcArgs::from_vec(raw_args)
 }
 
 pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
@@ -90,4 +94,20 @@ pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
     }
 
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cargo_c_compatibility() {
+        let raw_rustc_args = vec!["--crate-name", "rustls", "--edition=2021", "src/lib.rs", "--error-format=json", "--json=diagnostic-rendered-ansi,artifacts,future-incompat", "--crate-type", "staticlib", "--crate-type", "cdylib", "--emit=dep-info,link", "-C", "embed-bitcode=no", "-C", "debuginfo=2", "-C", "link-arg=-Wl,-soname,librustls.so.0.14.0", "-Cmetadata=rustls-ffi", "--cfg", "cargo_c", "--print", "native-static-libs", "--cfg", "feature=\"aws-lc-rs\"", "--cfg", "feature=\"capi\"", "--cfg", "feature=\"default\"", "--check-cfg", "cfg(docsrs)", "--check-cfg", "cfg(feature, values(\"aws-lc-rs\", \"capi\", \"cert_compression\", \"default\", \"no_log_capture\", \"read_buf\", \"ring\"))", "-C", "metadata=b6a43041f637feb8", "--out-dir", "/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps", "--target", "x86_64-unknown-linux-gnu", "-C", "linker=clang", "-C", "incremental=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/incremental", "-L", "dependency=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps", "-L", "dependency=/home/user/Code/rustls-ffi/target/debug/deps", "--extern", "libc=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/liblibc-4fc7c9f82dda33ee.rlib", "--extern", "log=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/liblog-6f7c8f4d1d5ec422.rlib", "--extern", "rustls=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls-a93cda0ba0380929.rlib", "--extern", "pki_types=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls_pki_types-27749859644f0979.rlib", "--extern", "rustls_platform_verifier=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/librustls_platform_verifier-bceca5cf09f3d7ba.rlib", "--extern", "webpki=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/deps/libwebpki-bc4a16dd84e0b062.rlib", "-C", "link-arg=-fuse-ld=/home/user/mold-2.32.0-x86_64-linux/bin/mold", "-L", "native=/home/user/Code/rustls-ffi/target/x86_64-unknown-linux-gnu/debug/build/aws-lc-sys-d52f8990d9ede41d/out"];
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args
+            .into_iter()
+            .map(|s| OsString::from(s))
+            .collect();
+        let args = RustcArgs::from_vec(raw_rustc_args).unwrap();
+        assert!(should_embed_audit_data(&args));
+    }
 }
