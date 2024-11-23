@@ -87,10 +87,8 @@ pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
     }
 
     // --print disables compilation UNLESS --emit is also specified
-    if !args.print.is_empty() {
-        if args.emit.is_empty() {
-            return false;
-        }
+    if !args.print.is_empty() && args.emit.is_empty() {
+        return false;
     }
 
     true
