@@ -1,9 +1,6 @@
 //! Parses rustc arguments to extract the info not provided via environment variables.
 
-use std::{
-    ffi::{OsStr, OsString},
-    path::PathBuf,
-};
+use std::{ffi::OsString, path::PathBuf};
 
 // We use pico-args because we only need to extract a few specific arguments out of a larger set,
 // and other parsers (rustc's `getopts`, cargo's `clap`) make that difficult.
@@ -79,12 +76,17 @@ pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
         return false;
     }
 
-    //if !args.emit.is_empty() && !args.emit.contains("link".to_owned())
-
-    if ! args.print.is_empty() {
-        // --print disables compilation,
-        // UNLESS --emit is also explicitly specified
+    // when --emit is specified explicitly, only inject audit data for --emit=link
+    // because it doesn't make sense for all other types such as llvm-ir, asm, etc.
+    if !args.emit.is_empty() && !args.emit.contains(&"link".to_owned()) {
         return false;
+    }
+
+    // --print disables compilation UNLESS --emit is also specified
+    if !args.print.is_empty() {
+        if args.emit.is_empty() {
+            return false;
+        }
     }
 
     true
