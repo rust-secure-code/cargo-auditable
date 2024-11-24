@@ -1,6 +1,6 @@
 [package]
 name = "cargo-auditable"
-version = "0.6.5"
+version = "0.6.6"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
