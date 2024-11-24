@@ -1,6 +1,6 @@
 [package]
 name = "cargo-auditable"
-version = "0.6.5"
+version = "0.6.6"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ readme = "../README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-object = {version = "0.30", default-features = false, features = ["write"]}
+object = {version = "0.36", default-features = false, features = ["write"]}
 auditable-serde = {version = "0.8.0", path = "../auditable-serde"}
 miniz_oxide = {version = "0.8.0"}
 serde_json = "1.0.57"

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.6] - 2024-11-24
+
+### Changed
+
+ - Audit data is now injected when `--print` argument is passed to `rustc` if `--emit=link` is also present in the same invocation. This adds support for `cargo c` third-party subcommand.
+ - When `--emit` argument is passed to `rustc`, audit data will only be injected if one of the values passed is `link`. This should avoid messing with modes that emit assembly or LLVM bitcode.
+ - Upgraded to `object` crate from v0.30 to v0.36 in order to reduce the dependency footprint.
+
+### Fixed
+
+ - Arguments to `rustc` in the style of `--key=value` (as opposed to `--key value`) are now parsed correctly. This was never an issue in practice because Cargo passes the arguments we care about separated by space, not `=`.
+
 ## [0.6.5] - 2024-11-11
 
 ### Added
