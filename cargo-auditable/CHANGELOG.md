@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Audit data is now injected when `--print` argument is passed to `rustc` if `--emit=link` is also present in the same invocation. This adds support for `cargo c` third-party subcommand.
  - When `--emit` argument is passed to `rustc`, audit data will only be injected if one of the values passed is `link`. This should avoid messing with modes that emit assembly or LLVM bitcode.
+ - Upgraded to `object` crate from v0.30 to v0.36 in order to reduce the dependency footprint.
 
 ### Fixed
 
