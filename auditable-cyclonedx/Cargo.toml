@@ -11,5 +11,5 @@ categories = ["encoding"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cyclonedx-bom = "0.5.0"
+cyclonedx-bom = "0.8.0"
 auditable-serde = {version = "0.8.0", path = "../auditable-serde"}

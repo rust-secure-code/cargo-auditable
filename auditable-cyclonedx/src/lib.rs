@@ -62,7 +62,7 @@ pub fn auditable_to_minimal_cdx(input: &auditable_serde::VersionInfo) -> Bom {
 
     // Validate the generated SBOM if running in debug mode (or release with debug assertions)
     if cfg!(debug_assertions) {
-        assert_eq!(bom.validate(), ValidationResult::Passed);
+        assert!(bom.validate().passed());
     }
     bom
 }
