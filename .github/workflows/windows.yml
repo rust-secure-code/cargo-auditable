@@ -24,12 +24,12 @@ jobs:
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-          target: "wasm32-unknown-unknown"
+          targets: "wasm32-unknown-unknown"
       - name: "Test on the native x86_64-pc-windows-mscv"
         run: cargo test --all-features --workspace
       - name: "Test when cross-compiling to x86_64-pc-windows-gnu"
