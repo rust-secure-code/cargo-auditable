@@ -24,7 +24,7 @@ jobs:
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           target: "wasm32-unknown-unknown"
@@ -32,12 +32,12 @@ jobs:
           override: true
       # multiple additional targets are not supported, so we invoke the action multiple times
       # Feature request: https://github.com/actions-rs/toolchain/issues/165
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           target: "i686-unknown-linux-gnu"
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
