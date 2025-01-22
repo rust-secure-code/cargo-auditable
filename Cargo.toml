@@ -5,7 +5,9 @@ members = [
     "auditable-extract",
     "auditable-serde",
     "cargo-auditable",
-    "auditable-cyclonedx", "auditable2cdx",
+    "auditable-cyclonedx",
+    "auditable2cdx",
+    "resolverver",
 ]
 
 # Config for 'cargo dist'
