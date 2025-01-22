@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Determines the Cargo resolver version for a workspace"
 license = "MIT OR Apache-2.0"
-author = "Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"
+authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 repository = "https://github.com/rust-secure-code/cargo-auditable"
 
 [dependencies]
