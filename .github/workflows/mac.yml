@@ -24,10 +24,10 @@ jobs:
         with:
           path: ~/.cargo/git
           key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
           override: true
-          target: "wasm32-unknown-unknown"
+          targets: "wasm32-unknown-unknown"
       - run: cargo test --all-features --workspace
