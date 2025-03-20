@@ -56,6 +56,7 @@ If you're using a shell other than bash, or if using an alias is not an option, 
 * [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
 When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
 * [blint](https://github.com/owasp-dep-scan/blint) v2.1.3 and later can recover this data and output it as CycloneDX.
+* [wasm-tools](https://github.com/bytecodealliance/wasm-tools) v1.227.0 and later can recover this data.
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 
 ### Can I read this data using a tool written in a different language?
