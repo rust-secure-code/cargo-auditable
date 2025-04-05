@@ -49,7 +49,7 @@ If you're using a shell other than bash, or if using an alias is not an option, 
 
 * [cargo audit](https://crates.io/crates/cargo-audit) v0.17.3+ can detect this data in binaries and report on vulnerabilities. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for details.
 * [trivy](https://github.com/aquasecurity/trivy) v0.31.0+ detects this data in binaries and reports on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
-* [osv-scanner](https://github.com/google/osv-scanner/) v2.0 (**still upcoming** as of this writing) [will include support](https://github.com/google/osv-scalibr/pull/377) for reading this data.
+* [osv-scanner](https://github.com/google/osv-scanner/) v2.0.1 [reads this data](https://github.com/google/osv-scalibr/pull/377) when scanning container images.
 
 #### Recovering the dependency list
 
