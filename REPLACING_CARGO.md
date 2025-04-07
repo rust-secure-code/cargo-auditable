@@ -20,6 +20,6 @@ In some cases using shell aliases is not an option, e.g. in certain restricted b
 
 ```bash
 #!/bin/sh
-export CARGO='/path/to/real/cargo' # replace this with your path
-cargo-auditable auditable "$@"
+REAL_CARGO='/path/to/real/cargo' # replace this with your path
+exec "$REAL_CARGO" auditable "$@"
 ```
