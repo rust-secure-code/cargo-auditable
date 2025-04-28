@@ -102,7 +102,10 @@ pub fn main(rustc_path: &OsStr) {
         );
         std::process::exit(1);
     });
-    std::process::exit(results.code().unwrap());
+    let code = results
+        .code()
+        .expect("rustc was terminated by a deadly signal");
+    std::process::exit(code);
 }
 
 /// Creates a rustc command line and populates arguments from arguments passed to us.
