@@ -37,5 +37,8 @@ pub fn main() {
     let results = command
         .status()
         .expect("Failed to invoke cargo! Make sure it's in your $PATH");
-    std::process::exit(results.code().unwrap());
+    let code = results
+        .code()
+        .expect("cargo was terminated by a deadly signal");
+    std::process::exit(code);
 }
