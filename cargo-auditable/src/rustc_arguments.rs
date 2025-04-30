@@ -21,6 +21,7 @@ pub struct RustcArgs {
     pub out_dir: Option<PathBuf>,
     pub target: Option<String>,
     pub print: Vec<String>,
+    pub codegen: Vec<String>,
 }
 
 impl RustcArgs {
@@ -62,6 +63,7 @@ impl RustcArgs {
                 })?,
             target: parser.opt_value_from_str("--target")?,
             print: parser.values_from_str("--print")?,
+            codegen: parser.values_from_str("-C")?,
         })
     }
 }
@@ -167,5 +169,24 @@ mod tests {
         expected.sort();
 
         assert_eq!(args.emit, expected)
+    }
+
+    #[test]
+    fn multiple_codegen_options() {
+        let raw_rustc_args = vec![
+            "-Clinker=clang",
+            "-C",
+            "link-arg=-fuse-ld=/usr/bin/mold",
+        ];
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
+        let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
+
+        let expected = vec!["linker=clang", "link-arg=-fuse-ld=/usr/bin/mold"];
+        let mut expected: Vec<String> = expected.into_iter().map(|s| s.into()).collect();
+
+        args.codegen.sort();
+        expected.sort();
+
+        assert_eq!(args.codegen, expected)
     }
 }
