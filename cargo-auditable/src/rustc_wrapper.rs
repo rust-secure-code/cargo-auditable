@@ -69,6 +69,8 @@ pub fn main(rustc_path: &OsStr) {
                 } else if is_wasm(&target_info) {
                     // We don't emit the symbol name in WASM, so nothing to do
                 } else {
+                    // Unrecognized platform, assume it to be unix-like
+                    #[allow(clippy::collapsible_else_if)]
                     if args.bare_linker() {
                         command.arg("-Clink-arg=--undefined=AUDITABLE_VERSION_INFO");
                     } else {
