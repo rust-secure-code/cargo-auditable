@@ -189,8 +189,7 @@ mod tests {
     fn detect_bare_linker() {
         let raw_rustc_args = vec!["-C", "linker=rust-lld"];
         let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
-        let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
-
+        let args = RustcArgs::from_vec(raw_rustc_args).unwrap();
         assert!(args.bare_linker());
     }
 
