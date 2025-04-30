@@ -153,11 +153,6 @@ mod tests {
             "--emit=dep-info,link",
             "--emit",
             "llvm-bc",
-            // end of interesting args, start of boilerplate
-            "--crate-name",
-            "foobar",
-            "--out-dir",
-            "/foo/bar",
         ];
         let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
         let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
