@@ -43,10 +43,12 @@ pub fn main(rustc_path: &OsStr) {
                 let filename = format!(
                     "{}_audit_data.o",
                     args.crate_name
+                        .as_ref()
                         .expect("rustc command is missing --crate-name")
                 );
                 let path = args
                     .out_dir
+                    .as_ref()
                     .expect("rustc command is missing --out-dir")
                     .join(filename);
                 std::fs::write(&path, file).expect("Unable to write output file");
@@ -57,13 +59,23 @@ pub fn main(rustc_path: &OsStr) {
                 command.arg(linker_command);
                 // Prevent the symbol from being removed as unused by the linker
                 if is_apple(&target_info) {
-                    command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+                    if args.bare_linker() {
+                        command.arg("-Clink-arg=-u,_AUDITABLE_VERSION_INFO");
+                    } else {
+                        command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+                    }
                 } else if is_msvc(&target_info) {
                     command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
                 } else if is_wasm(&target_info) {
                     // We don't emit the symbol name in WASM, so nothing to do
                 } else {
-                    command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                    // Unrecognized platform, assume it to be unix-like
+                    #[allow(clippy::collapsible_else_if)]
+                    if args.bare_linker() {
+                        command.arg("-Clink-arg=--undefined=AUDITABLE_VERSION_INFO");
+                    } else {
+                        command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                    }
                 }
             } else {
                 // create_binary_file() returned None, indicating an unsupported architecture

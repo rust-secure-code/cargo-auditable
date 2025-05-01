@@ -21,6 +21,7 @@ pub struct RustcArgs {
     pub out_dir: Option<PathBuf>,
     pub target: Option<String>,
     pub print: Vec<String>,
+    pub codegen: Vec<String>,
 }
 
 impl RustcArgs {
@@ -34,6 +35,29 @@ impl RustcArgs {
             }
         }
         result
+    }
+
+    /// Normally `rustc` uses a C compiler such as `cc` or `clang` as linker,
+    /// and arguments to the actual linker need to be passed prefixed with `-Wl,`.
+    /// But it is possible to configure Cargo and rustc to call a linker directly,
+    /// and the breakage it causes is subtle enough that people just roll with it
+    /// and complain when cargo-auditable doesn't support this configuration:
+    /// <https://github.com/rust-secure-code/cargo-auditable/issues/202>
+    ///
+    /// This function can tell you if a bare linker is in use
+    /// and whether you need to prepend `-Wl,` or not.
+    ///
+    /// Such setups are exceptionally rare and frankly it's a misconfiguration
+    /// that will break more than just `cargo auditable`, but I am feeling generous.
+    pub fn bare_linker(&self) -> bool {
+        let linker_flag = self.codegen.iter().find(|s| s.starts_with("linker="));
+        if let Some(linker_flag) = linker_flag {
+            let linker = linker_flag.strip_prefix("linker=").unwrap();
+            if linker.ends_with("ld") {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -62,6 +86,7 @@ impl RustcArgs {
                 })?,
             target: parser.opt_value_from_str("--target")?,
             print: parser.values_from_str("--print")?,
+            codegen: parser.values_from_str("-C")?,
         })
     }
 }
@@ -147,16 +172,7 @@ mod tests {
 
     #[test]
     fn multiple_emit_values() {
-        let raw_rustc_args = vec![
-            "--emit=dep-info,link",
-            "--emit",
-            "llvm-bc",
-            // end of interesting args, start of boilerplate
-            "--crate-name",
-            "foobar",
-            "--out-dir",
-            "/foo/bar",
-        ];
+        let raw_rustc_args = vec!["--emit=dep-info,link", "--emit", "llvm-bc"];
         let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
         let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
 
@@ -167,5 +183,30 @@ mod tests {
         expected.sort();
 
         assert_eq!(args.emit, expected)
+    }
+
+    #[test]
+    fn detect_bare_linker() {
+        let raw_rustc_args = vec!["-C", "linker=rust-lld"];
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
+        let args = RustcArgs::from_vec(raw_rustc_args).unwrap();
+        assert!(args.bare_linker());
+    }
+
+    #[test]
+    fn multiple_codegen_options() {
+        let raw_rustc_args = vec!["-Clinker=clang", "-C", "link-arg=-fuse-ld=/usr/bin/mold"];
+        let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
+        let mut args = RustcArgs::from_vec(raw_rustc_args).unwrap();
+
+        let expected = vec!["linker=clang", "link-arg=-fuse-ld=/usr/bin/mold"];
+        let mut expected: Vec<String> = expected.into_iter().map(|s| s.into()).collect();
+
+        args.codegen.sort();
+        expected.sort();
+
+        assert_eq!(args.codegen, expected);
+
+        assert!(!args.bare_linker());
     }
 }
