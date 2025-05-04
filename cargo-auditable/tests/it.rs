@@ -270,6 +270,26 @@ fn test_lto() {
 }
 
 #[test]
+fn test_lto_stripped() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/lto_stripped_binary/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Stripped binary map: {bins:?}");
+
+    // lto_stripped_binary should only depend on itself
+    let lto_stripped_binary_bin = &bins.get("lto_stripped_binary").unwrap()[0];
+    let dep_info = get_dependency_info(lto_stripped_binary_bin);
+    eprintln!("{lto_stripped_binary_bin} dependency info: {dep_info:?}");
+    assert!(dep_info.packages.len() == 1);
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "lto_stripped_binary"));
+}
+
+#[test]
 fn test_bin_and_lib_in_one_crate() {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
