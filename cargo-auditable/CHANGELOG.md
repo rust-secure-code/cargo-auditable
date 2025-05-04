@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.7] - 2025-05-04
+
+### Changed
+
+ - Made the `rustc` argument parser more lenient. This allows proc macros such as the `embed-licensing` crate that call arbitrary `rustc` commands to work with `cargo-auditable`.
+ - Added a heuristic to detect projects that use a "bare" linker. Normally `rustc` uses a C compiler as a linker, but it is possible to (mis)configure it to call a linker directly on some platforms. `cargo auditable` now tries to detect that and adjust its linker arguments accordingly on Unix-like systems. We do not recommend using this configuration, since it is likely to break things other than `cargo auditable`.
+
 ## [0.6.6] - 2024-11-24
 
 ### Changed
