@@ -12,7 +12,7 @@ edition = "2018"
 
 [dependencies]
 binfarce = "0.2"
-wasmparser = { version = "0.207.0", default-features = false, optional = true }
+wasmparser = { version = "0.230.0", default-features = false, optional = true }
 
 [features]
 default = ["wasm"]

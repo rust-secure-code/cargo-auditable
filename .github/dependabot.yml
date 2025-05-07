@@ -1,0 +1,23 @@
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#package-ecosystem-
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "cargo"
+    directories:
+      - "/"
+      - "auditable-cyclonedx"
+      - "auditable-extract"
+      - "auditable-extract/fuzz"
+      - "auditable-info"
+      - "auditable-serde"
+      - "auditable2cdx"
+      - "cargo-auditable"
+      - "cargo-auditable/gen_manpage"
+      - "resolverver"
+      - "rust-audit-info"
+      # - "cargo-auditable/tests/fixtures/**/*" # Don't update test fixtures
+    schedule:
+      interval: "weekly"
