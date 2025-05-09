@@ -462,5 +462,5 @@ fn test_wasm() {
         "tests/fixtures/wasm_crate/target/wasm32-unknown-unknown/release/wasm_crate.wasm".into(),
     );
     eprintln!("wasm_crate.wasm dependency info: {dep_info:?}");
-    assert_eq!(dep_info.packages.len(), 19);
+    assert_eq!(dep_info.packages.len(), 16);
 }
