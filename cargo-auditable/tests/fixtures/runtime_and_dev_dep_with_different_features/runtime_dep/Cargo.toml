@@ -1,0 +1,12 @@
+[package]
+name = "runtime_dep"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+optional_dep = ["optional_transitive_dep"]
+
+[dependencies]
+optional_transitive_dep = { path = "../optional_transitive_dep", optional = true }
