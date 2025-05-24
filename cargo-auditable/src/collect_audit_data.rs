@@ -93,6 +93,9 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
         cmd.args(&shared_args);
     }
 
+    // guard against `cargo tree` getting localizations in the future, just in case
+    tree_command.env("LC_ALL", "C");
+
     let output = metadata_command.output().unwrap();
     if !output.status.success() {
         panic!(
