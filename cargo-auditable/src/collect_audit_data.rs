@@ -62,10 +62,13 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     }
 
     let mut metadata_args: Vec<String> = vec!["metadata".to_owned()];
-    let mut tree_args: Vec<String> = ["tree", "-e", "normal,build"]
-        .iter()
-        .map(|s| s.to_string())
-        .collect();
+    let tree_args = [
+        "tree",
+        "--edges=normal,build",
+        "--prefix=none",
+        "--format={p}",
+    ];
+    let mut tree_args: Vec<String> = tree_args.iter().map(|s| s.to_string()).collect();
 
     // Restrict the dependency resolution to just the platform the binary is being compiled for.
     // By default `cargo metadata` resolves the dependency tree for all platforms, so it has to be passed explicitly.
