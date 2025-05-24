@@ -96,19 +96,33 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     // guard against `cargo tree` getting localizations in the future, just in case
     tree_command.env("LC_ALL", "C");
 
-    let output = metadata_command.output().unwrap();
-    if !output.status.success() {
+    let meta_out = metadata_command.output().unwrap();
+    if !meta_out.status.success() {
         panic!(
             "cargo metadata failure: {}",
-            String::from_utf8_lossy(&output.stderr)
+            String::from_utf8_lossy(&meta_out.stderr)
         );
     }
-    let stdout = from_utf8(&output.stdout)
+    let stdout = from_utf8(&meta_out.stdout)
         .expect("cargo metadata output not utf8")
         .lines()
         .find(|line| line.starts_with('{'))
         .expect("cargo metadata output not json");
-    MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output")
+    let metadata = MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output");
+
+    let tree_out = tree_command.output().unwrap();
+    if !tree_out.status.success() {
+        panic!(
+            "cargo tree failure: {}",
+            String::from_utf8_lossy(&tree_out.stderr)
+        );
+    }
+    let tree_stdout: Vec<&str> = from_utf8(&tree_out.stdout)
+        .expect("cargo tree output not utf8")
+        .lines()
+        .collect();
+
+    metadata
 }
 
 /// Sadly `cargo metadata` does not expose enough information to accurately reconstruct
