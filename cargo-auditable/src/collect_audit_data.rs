@@ -1,6 +1,6 @@
 use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use std::str::from_utf8;
+use std::{collections::HashSet, str::from_utf8};
 
 use crate::{
     auditable_from_metadata::encode_audit_data, cargo_arguments::CargoArgs,
@@ -125,6 +125,12 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
     metadata
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct CargoTreePkg {
+    name: String,
+    version: cargo_metadata::semver::Version,
+}
+
 /// Sadly `cargo metadata` does not expose enough information to accurately reconstruct
 /// the dependency tree.
 /// [Features are always resolved at workspace level, not per-crate.](https://github.com/rust-lang/cargo/issues/7754)
@@ -148,6 +154,26 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
 /// and we don't take on a great deal of complexity or risk going out of sync with complex Cargo algorithms.
 ///
 /// This implements the third option - it seems to be the least bad one available.
-fn parse_cargo_tree_output() {
-    todo!()
+fn parse_cargo_tree_output(lines: &[&str]) -> HashSet<CargoTreePkg> {
+    let mut result: HashSet<CargoTreePkg> = HashSet::new();
+    for line in lines {
+        if !line.is_empty() {
+            // cargo tree output can contain empty lines
+            result.insert(parse_cargo_tree_line(line));
+        }
+    }
+    result
+}
+
+fn parse_cargo_tree_line(line: &str) -> CargoTreePkg {
+    let parts: Vec<&str> = line.split_ascii_whitespace().collect();
+    let name = parts[0].to_owned();
+    let version_str = parts[1];
+    let version_str = version_str
+        .strip_prefix("v")
+        .expect("Failed to parse version string \"{version_str}\": does not start with 'v'");
+    // Technically this can fail because crates.io didn't always enforce semver validity, and crates with invalid semver exist.
+    // But since we're relying on the cargo_metadata crate that also parses semver, in those cases we're screwed regardless.
+    let version = cargo_metadata::semver::Version::parse(version_str).unwrap();
+    CargoTreePkg { name, version }
 }
