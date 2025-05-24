@@ -61,7 +61,8 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
         shared_args.push(arg);
     }
 
-    let mut metadata_args: Vec<String> = vec!["metadata".to_owned()];
+    let mut metadata_args: Vec<String> =
+        vec!["metadata".to_owned(), "--format-version=1".to_owned()];
     let tree_args = [
         "tree",
         "--edges=normal,build",
