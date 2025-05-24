@@ -122,6 +122,8 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
         .lines()
         .collect();
 
+    parse_cargo_tree_output(&tree_stdout);
+
     metadata
 }
 
