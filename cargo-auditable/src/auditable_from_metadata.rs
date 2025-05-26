@@ -218,10 +218,10 @@ pub fn encode_audit_data(
                 // and dev-dependencies are allowed to have cycles,
                 // so we may end up encoding cyclic graph if we don't handle that.
                 let dep_id = dep.pkg.repr.as_str();
-                if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development {
-                    if id_to_index.contains_key(dep_id) {
-                        package.dependencies.push(id_to_index[dep_id]);
-                    }
+                if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development
+                    && id_to_index.contains_key(dep_id)
+                {
+                    package.dependencies.push(id_to_index[dep_id]);
                 }
             }
             // .sort_unstable() is fine because they're all integers
