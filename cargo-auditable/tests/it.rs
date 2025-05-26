@@ -484,3 +484,18 @@ fn test_dependency_unification() {
         .iter()
         .any(|p| p.name == "optional_transitive_dep"));
 }
+
+#[test]
+fn test_dep_cycle() {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    let toplevel_crate_bin = &bins.get("cargo-audit-dep-cycle").unwrap()[0];
+    // Deserialization checks for cycles, so we only need to verify that it succeeds
+    let dep_info = get_dependency_info(toplevel_crate_bin);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
+}
