@@ -145,6 +145,13 @@ pub fn encode_audit_data(
             dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
         })
         .filter(|p| {
+            // Due to `cargo metadata` doing feature unification across all dep kinds
+            // it will over-report dependencies if a dev-dependency enables more features
+            // on a normal or build-dependency, which causes them to pull in more packages.
+            // The only stable API that Cargo currently exposes that does NOT do this
+            // is `cargo tree --edges=normal,build` so we cross-reference the package list against that.
+            // This is less robust than I'd like, but it's the least bad option I have.
+            // See the documentation on `parse_cargo_tree_output()` for more details.
             tree_pkgs.contains(&CargoTreePkg {
                 name: p.name.clone(),
                 version: p.version.clone(),
