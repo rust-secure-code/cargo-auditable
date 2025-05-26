@@ -9,15 +9,15 @@ use crate::{
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
-    let metadata = get_metadata(rustc_args, target_triple);
-    let version_info = encode_audit_data(&metadata).unwrap();
+    let (metadata, tree) = get_metadata(rustc_args, target_triple);
+    let version_info = encode_audit_data(&metadata, &tree).unwrap();
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
     compressed_json
 }
 
-fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
+fn get_metadata(args: &RustcArgs, target_triple: &str) -> (Metadata, HashSet<CargoTreePkg>) {
     // Cargo sets the path to itself in the `CARGO` environment variable:
     // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-3rd-party-subcommands
     // This is also useful for using `cargo auditable` as a drop-in replacement for Cargo.
@@ -122,15 +122,15 @@ fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
         .lines()
         .collect();
 
-    parse_cargo_tree_output(&tree_stdout);
+    let cargo_tree_pkgs = parse_cargo_tree_output(&tree_stdout);
 
-    metadata
+    (metadata, cargo_tree_pkgs)
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct CargoTreePkg {
-    name: String,
-    version: cargo_metadata::semver::Version,
+    pub name: String,
+    pub version: cargo_metadata::semver::Version,
 }
 
 /// Sadly `cargo metadata` does not expose enough information to accurately reconstruct
