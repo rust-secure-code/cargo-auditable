@@ -21,6 +21,7 @@ cargo_metadata = "0.18"
 pico-args = { version = "0.5", features = ["eq-separator", "short-space-opt"] }
 serde = "1.0.147"
 wasm-gen = "0.1.4"
+cargo-util-schemas = "0.8.1"
 
 [dev-dependencies]
 cargo_metadata = "0.18"

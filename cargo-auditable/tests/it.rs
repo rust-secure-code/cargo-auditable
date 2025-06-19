@@ -22,10 +22,12 @@ const CARGO: &str = env!("CARGO");
 /// Run cargo auditable with --manifest-path <cargo_toml_path arg> and extra args,
 /// returning of map of workspace member names -> produced binaries (bin and cdylib)
 /// Reads the AUDITABLE_TEST_TARGET environment variable to determine the target to compile for
+/// Uses `CARGO_BUILD_SBOM` environment variable to enable SBOM generation if  `sbom` is true
 fn run_cargo_auditable<P>(
     cargo_toml_path: P,
     args: &[&str],
     env: &[(&str, &OsStr)],
+    sbom: bool,
 ) -> HashMap<String, Vec<Utf8PathBuf>>
 where
     P: AsRef<OsStr>,
@@ -49,8 +51,16 @@ where
         .arg("--manifest-path")
         .arg(&cargo_toml_path)
         // We'll parse these to get binary paths
-        .arg("--message-format=json")
-        .args(args);
+        .arg("--message-format=json");
+
+    if sbom {
+        command.arg("-Z").arg("sbom");
+        command.env("CARGO_BUILD_SBOM", "true");
+        // Enable SBOM tests to run on stable rust
+        command.env("RUSTC_BOOTSTRAP", "1");
+    }
+
+    command.args(args);
 
     if let Ok(target) = std::env::var("AUDITABLE_TEST_TARGET") {
         if args.iter().all(|arg| !arg.starts_with("--target")) {
@@ -153,11 +163,16 @@ fn get_dependency_info(binary: &Utf8Path) -> VersionInfo {
 
 #[test]
 fn test_cargo_auditable_workspaces() {
+    test_cargo_auditable_workspaces_inner(false);
+    test_cargo_auditable_workspaces_inner(true);
+}
+
+fn test_cargo_auditable_workspaces_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/workspace/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
     // No binaries for library_crate
     assert!(bins.get("library_crate").is_none());
@@ -199,6 +214,7 @@ fn test_cargo_auditable_workspaces() {
         &workspace_cargo_toml,
         &["--features", "binary_and_cdylib_crate"],
         &[],
+        sbom,
     );
     // crate_with_features should now have three dependencies, library_crate binary_and_cdylib_crate and crate_with_features,
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
@@ -216,7 +232,7 @@ fn test_cargo_auditable_workspaces() {
         .any(|p| p.name == "binary_and_cdylib_crate"));
 
     // Run without default features
-    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--no-default-features"], &[]);
+    let bins = run_cargo_auditable(&workspace_cargo_toml, &["--no-default-features"], &[], sbom);
     // crate_with_features should now only depend on itself
     let crate_with_features_bin = &bins.get("crate_with_features").unwrap()[0];
     let dep_info = get_dependency_info(crate_with_features_bin);
@@ -231,11 +247,16 @@ fn test_cargo_auditable_workspaces() {
 /// This exercises a small real-world project
 #[test]
 fn test_self_hosting() {
+    test_self_hosting_inner(false);
+    test_self_hosting_inner(true);
+}
+
+fn test_self_hosting_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../rust-audit-info/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Self-hosting binary map: {bins:?}");
 
     // verify that the dependency info is present at all
@@ -251,11 +272,15 @@ fn test_self_hosting() {
 
 #[test]
 fn test_lto() {
+    test_lto_inner(false);
+    test_lto_inner(true);
+}
+fn test_lto_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lto_binary_crate/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("LTO binary map: {bins:?}");
 
     // lto_binary_crate should only depend on itself
@@ -271,11 +296,16 @@ fn test_lto() {
 
 #[test]
 fn test_lto_stripped() {
+    test_lto_stripped_inner(false);
+    test_lto_stripped_inner(true);
+}
+
+fn test_lto_stripped_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lto_stripped_binary/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Stripped binary map: {bins:?}");
 
     // lto_stripped_binary should only depend on itself
@@ -291,11 +321,15 @@ fn test_lto_stripped() {
 
 #[test]
 fn test_bin_and_lib_in_one_crate() {
+    test_bin_and_lib_in_one_crate_inner(false);
+    test_bin_and_lib_in_one_crate_inner(true);
+}
+fn test_bin_and_lib_in_one_crate_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/lib_and_bin_crate/Cargo.toml");
 
-    let bins = run_cargo_auditable(workspace_cargo_toml, &["--bin=some_binary"], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &["--bin=some_binary"], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
 
     // lib_and_bin_crate should only depend on itself
@@ -309,15 +343,17 @@ fn test_bin_and_lib_in_one_crate() {
         .any(|p| p.name == "lib_and_bin_crate"));
 }
 
-/// A previous approach had trouble with build scripts and proc macros.
-/// Verify that those still work.
 #[test]
 fn test_build_script() {
+    test_build_script_inner(false);
+    test_build_script_inner(true);
+}
+fn test_build_script_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/crate_with_build_script/Cargo.toml");
 
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
 
     // crate_with_build_script should only depend on itself
@@ -333,11 +369,15 @@ fn test_build_script() {
 
 #[test]
 fn test_platform_specific_deps() {
+    test_platform_specific_deps_inner(false);
+    test_platform_specific_deps_inner(true);
+}
+fn test_platform_specific_deps_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/platform_specific_deps/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
 
     let test_target = std::env::var("AUDITABLE_TEST_TARGET");
@@ -357,11 +397,15 @@ fn test_platform_specific_deps() {
 
 #[test]
 fn test_build_then_runtime_dep() {
+    test_build_then_runtime_dep_inner(false);
+    test_build_then_runtime_dep_inner(true);
+}
+fn test_build_then_runtime_dep_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/build_then_runtime_dep/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
@@ -381,11 +425,15 @@ fn test_build_then_runtime_dep() {
 
 #[test]
 fn test_runtime_then_build_dep() {
+    test_runtime_then_build_dep_inner(false);
+    test_runtime_then_build_dep_inner(true);
+}
+fn test_runtime_then_build_dep_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/runtime_then_build_dep/Cargo.toml");
     // Run in workspace root with default features
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[]);
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
@@ -405,13 +453,22 @@ fn test_runtime_then_build_dep() {
 
 #[test]
 fn test_custom_rustc_path() {
+    test_custom_rustc_path_inner(false);
+    test_custom_rustc_path_inner(true);
+}
+fn test_custom_rustc_path_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/custom_rustc_path/Cargo.toml");
     // locate rustc
     let rustc_path = which::which("rustc").unwrap();
     // Run in workspace root with a custom path to rustc
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[("RUSTC", rustc_path.as_ref())]);
+    let bins = run_cargo_auditable(
+        workspace_cargo_toml,
+        &[],
+        &[("RUSTC", rustc_path.as_ref())],
+        sbom,
+    );
     eprintln!("Test fixture binary map: {bins:?}");
 
     // check that the build types are propagated correctly
@@ -447,6 +504,11 @@ fn test_workspace_member_version_info() {
 
 #[test]
 fn test_wasm() {
+    test_wasm_inner(false);
+    test_wasm_inner(true);
+}
+
+fn test_wasm_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/wasm_crate/Cargo.toml");
@@ -455,6 +517,7 @@ fn test_wasm() {
         workspace_cargo_toml,
         &["--target=wasm32-unknown-unknown"],
         &[],
+        sbom,
     );
 
     // check that the build types are propagated correctly

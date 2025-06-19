@@ -9,6 +9,7 @@ mod object_file;
 mod platform_detection;
 mod rustc_arguments;
 mod rustc_wrapper;
+mod sbom_precursor;
 mod target_info;
 
 use std::process::exit;
