@@ -23,7 +23,7 @@ impl From<SbomPrecursor> for VersionInfo {
         // cargo sbom data format has more nodes than the auditable info format - if a crate is both a build
         // and runtime dependency it will appear twice in the `crates` array.
         // The `VersionInfo` format lists each package only once, with a single `kind` field
-        // (Runtime having precence over other kinds).
+        // (Runtime having precedence over other kinds).
 
         // Firstly, we deduplicate the (name, version) pairs and create a mapping from the
         // original indices in the cargo sbom array to the new index in the auditable info package array.

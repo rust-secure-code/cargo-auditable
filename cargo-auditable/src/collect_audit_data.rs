@@ -13,14 +13,11 @@ pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -
 
     // If cargo has created precursor SBOM files, use them instead of `cargo metadata`.
     let version_info = if sbom_path.as_ref().map(|p| !p.is_empty()).unwrap_or(false) {
-        let sbom_paths = std::env::split_paths(&sbom_path.unwrap()).collect::<Vec<_>>();
-        // Cargo may create multiple SBOM precursor files.
-        // We can't control per-binary (or cdylib) dependency information, just grab the first non-rlib SBOM we find.
-        let sbom_path = sbom_paths
-            .iter()
-            .find(|p| !p.ends_with(".rlib.cargo-sbom.json"))
-            .unwrap_or_else(|| &sbom_paths[0]);
-        let sbom_data: Vec<u8> = std::fs::read(sbom_path)
+        // Cargo creates an SBOM file for each output file (rlib, bin, cdylib, etc),
+        // but the SBOM file is identical for each output file in a given rustc crate compilation,
+        // so we can just use the first SBOM we find.
+        let sbom_path = std::env::split_paths(&sbom_path.unwrap()).next().unwrap();
+        let sbom_data: Vec<u8> = std::fs::read(&sbom_path)
             .unwrap_or_else(|_| panic!("Failed to read SBOM file at {}", sbom_path.display()));
         let sbom_precursor: sbom_precursor::SbomPrecursor = serde_json::from_slice(&sbom_data)
             .unwrap_or_else(|_| panic!("Failed to parse SBOM file at {}", sbom_path.display()));
