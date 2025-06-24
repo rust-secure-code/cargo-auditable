@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
 use auditable_serde::{Package, Source, VersionInfo};
-use cargo_metadata::DependencyKind;
-use cargo_util_schemas::core::{PackageIdSpec, SourceKind};
+use cargo_metadata::{
+    semver::{self, Version},
+    DependencyKind,
+};
 use serde::{Deserialize, Serialize};
 
 /// Cargo SBOM precursor format.
@@ -36,16 +38,12 @@ impl From<SbomPrecursor> for VersionInfo {
                         indices.push(*entry.get());
                     }
                     std::collections::hash_map::Entry::Vacant(entry) => {
+                        let (name, version, source) = parse_fully_qualified_package_id(&crate_.id);
                         // If the entry does not exist, we create it
                         packages.push(Package {
-                            name: crate_.id.name().to_string(),
-                            version: crate_.id.version().expect("Package to have version"),
-                            source: match crate_.id.kind() {
-                                Some(SourceKind::Path) => Source::Local,
-                                Some(SourceKind::Git(_)) => Source::Git,
-                                Some(_) => Source::Registry,
-                                None => Source::CratesIo,
-                            },
+                            name,
+                            version,
+                            source,
                             // Assume build, if we determine this is a runtime dependency we'll update later
                             kind: auditable_serde::DependencyKind::Build,
                             // We will fill this in later
@@ -98,7 +96,7 @@ impl From<SbomPrecursor> for VersionInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Crate {
     /// Package ID specification
-    pub id: PackageIdSpec,
+    pub id: String,
     /// List of target kinds
     pub kind: Vec<String>,
     /// Enabled feature flags
@@ -129,4 +127,73 @@ pub struct RustcInfo {
     pub host: String,
     /// Verbose version string: `rustc -vV`
     pub verbose_version: String,
+}
+
+const CRATES_IO_INDEX: &str = "https://github.com/rust-lang/crates.io-index";
+
+/// Parses a fully qualified package ID spec string into a tuple of (name, version, source).
+/// The package ID spec format is defined at https://doc.rust-lang.org/cargo/reference/pkgid-spec.html#package-id-specifications-1
+///
+/// The fully qualified form of a package ID spec is mentioned in the Cargo documentation,
+/// figuring it out is left as an exercise to the reader.
+///
+/// Adapting the grammar in the cargo doc, the format appears to be :
+/// ```norust
+/// fully_qualified_spec :=  kind "+" proto "://" hostname-and-path [ "?" query] "#" [ name "@" ] semver
+/// query := ( "branch" | "tag" | "rev" ) "=" ref
+/// semver := digits "." digits "." digits [ "-" prerelease ] [ "+" build ]
+/// kind := "registry" | "git" | "path"
+/// proto := "http" | "git" | "file" | ...
+/// ```
+/// where:
+/// - the name is always present except when the kind is `path` and the last segment of the path doesn't match the name
+/// - the query string is only present for git dependencies (which we can ignore since we don't record git information)
+fn parse_fully_qualified_package_id(id: &str) -> (String, Version, Source) {
+    let (kind, rest) = id.split_once('+').expect("Package ID to have a kind");
+    let (url, rest) = rest
+        .split_once('#')
+        .expect("Package ID to have version information");
+    let source = match (kind, url) {
+        ("registry", CRATES_IO_INDEX) => Source::CratesIo,
+        ("registry", _) => Source::Registry,
+        ("git", _) => Source::Git,
+        ("path", _) => Source::Local,
+        _ => Source::Other(kind.to_string()),
+    };
+
+    if source == Source::Local {
+        // For local packages, the name might be in the suffix after '#' if it has
+        // a diferent name than the last segment of the path.
+        if let Some((name, version)) = rest.split_once('@') {
+            (
+                name.to_string(),
+                semver::Version::parse(version).expect("Version to be valid SemVer"),
+                source,
+            )
+        } else {
+            // If no name is specified, use the last segment of the path as the name
+            let name = url
+                .split('/')
+                .next_back()
+                .unwrap()
+                .split('\\')
+                .next_back()
+                .unwrap();
+            (
+                name.to_string(),
+                semver::Version::parse(rest).expect("Version to be valid SemVer"),
+                source,
+            )
+        }
+    } else {
+        // For other sources, the name and version are after the '#', separated by '@'
+        let (name, version) = rest
+            .split_once('@')
+            .expect("Package ID to have a name and version");
+        (
+            name.to_string(),
+            semver::Version::parse(version).expect("Version to be valid SemVer"),
+            source,
+        )
+    }
 }

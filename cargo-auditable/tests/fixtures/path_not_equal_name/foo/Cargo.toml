@@ -1,0 +1,10 @@
+[package]
+name = "foo"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bar = { version = "0.1.0", path = "../bar" }
+baz = { version = "0.1.0", path = "../qux" }
+
+[workspace]

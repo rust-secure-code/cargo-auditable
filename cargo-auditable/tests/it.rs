@@ -527,3 +527,28 @@ fn test_wasm_inner(sbom: bool) {
     eprintln!("wasm_crate.wasm dependency info: {dep_info:?}");
     assert_eq!(dep_info.packages.len(), 16);
 }
+
+#[test]
+fn test_path_not_equal_name() {
+    test_path_not_equal_name_inner(false);
+    test_path_not_equal_name_inner(true);
+}
+
+fn test_path_not_equal_name_inner(sbom: bool) {
+    // This tests a case where a path dependency's directory name is not equal to the crate name.
+    let cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/path_not_equal_name/foo/Cargo.toml");
+    let bins = run_cargo_auditable(cargo_toml, &[], &[], sbom);
+    let foo_bin = &bins.get("foo").unwrap()[0];
+    let dep_info = get_dependency_info(foo_bin);
+    eprintln!("{foo_bin} dependency info: {dep_info:?}");
+    assert!(dep_info.packages.len() == 3);
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "bar" && p.kind == DependencyKind::Runtime));
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "baz" && p.kind == DependencyKind::Runtime));
+}
