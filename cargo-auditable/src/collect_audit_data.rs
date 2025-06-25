@@ -4,13 +4,30 @@ use std::str::from_utf8;
 
 use crate::{
     auditable_from_metadata::encode_audit_data, cargo_arguments::CargoArgs,
-    rustc_arguments::RustcArgs,
+    rustc_arguments::RustcArgs, sbom_precursor,
 };
 
 /// Calls `cargo metadata` to obtain the dependency tree, serializes it to JSON and compresses it
 pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -> Vec<u8> {
-    let metadata = get_metadata(rustc_args, target_triple);
-    let version_info = encode_audit_data(&metadata).unwrap();
+    let sbom_path = std::env::var_os("CARGO_SBOM_PATH");
+
+    // If cargo has created precursor SBOM files, use them instead of `cargo metadata`.
+    let version_info = if sbom_path.as_ref().map(|p| !p.is_empty()).unwrap_or(false) {
+        // Cargo creates an SBOM file for each output file (rlib, bin, cdylib, etc),
+        // but the SBOM file is identical for each output file in a given rustc crate compilation,
+        // so we can just use the first SBOM we find.
+        let sbom_path = std::env::split_paths(&sbom_path.unwrap()).next().unwrap();
+        let sbom_data: Vec<u8> = std::fs::read(&sbom_path)
+            .unwrap_or_else(|_| panic!("Failed to read SBOM file at {}", sbom_path.display()));
+        let sbom_precursor: sbom_precursor::SbomPrecursor = serde_json::from_slice(&sbom_data)
+            .unwrap_or_else(|_| panic!("Failed to parse SBOM file at {}", sbom_path.display()));
+        sbom_precursor.into()
+    } else {
+        // If no SBOM files are available, fall back to `cargo metadata`
+        let metadata = get_metadata(rustc_args, target_triple);
+        encode_audit_data(&metadata).unwrap()
+    };
+
     let json = serde_json::to_string(&version_info).unwrap();
     // compression level 7 makes this complete in a few milliseconds, so no need to drop to a lower level in debug mode
     let compressed_json = compress_to_vec_zlib(json.as_bytes(), 7);
