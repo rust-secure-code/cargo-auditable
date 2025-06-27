@@ -92,6 +92,8 @@ pub fn encode_audit_data(
         .repr
         .as_str();
 
+    let proc_macros = proc_macro_packages(metadata);
+
     // Walk the dependency tree and resolve dependency kinds for each package.
     // We need this because there may be several different paths to the same package
     // and we need to aggregate dependency types across all of them.
@@ -111,8 +113,14 @@ pub fn encode_audit_data(
             let parent_dep_kind = id_to_dep_kind[parent.id.repr.as_str()];
             for child in &parent.deps {
                 let child_id = child.pkg.repr.as_str();
-                let dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
-                let dep_kind = min(dep_kind, parent_dep_kind);
+                let mut dep_kind = strongest_dep_kind(child.dep_kinds.as_slice());
+                // If the parent is a build dependency that has a runtime dependency, overall dependency should be 'build'.
+                // This propagates the dependency kinds that way from parent to child.
+                dep_kind = min(dep_kind, parent_dep_kind);
+                // proc macros require special handling since cargo_metadata reports them as normal deps
+                if proc_macros.contains(child_id) {
+                    dep_kind = min(dep_kind, PrivateDepKind::Build);
+                }
                 let dep_kind_on_previous_visit = id_to_dep_kind.get(child_id);
                 if dep_kind_on_previous_visit.is_none()
                     || &dep_kind > dep_kind_on_previous_visit.unwrap()
@@ -236,4 +244,23 @@ fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {
         .map(|d| PrivateDepKind::from(&d.kind))
         .max()
         .unwrap_or(PrivateDepKind::Runtime) // for compatibility with Rust earlier than 1.41
+}
+
+fn proc_macro_packages(metadata: &cargo_metadata::Metadata) -> HashSet<&str> {
+    metadata
+        .packages
+        .iter()
+        .filter_map(|pkg| {
+            // As of Rust 1.88 a single crate cannot be both a proc macro and something else.
+            // Checking that length is 1 is purely to hedge against support for it being added in the future.
+            if pkg.targets.len() == 1
+                && pkg.targets[0].kind.len() == 1
+                && pkg.targets[0].kind[0] == "proc-macro"
+            {
+                Some(pkg.id.repr.as_str())
+            } else {
+                None
+            }
+        })
+        .collect()
 }
