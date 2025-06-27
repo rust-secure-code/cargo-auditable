@@ -552,3 +552,36 @@ fn test_path_not_equal_name_inner(sbom: bool) {
         .iter()
         .any(|p| p.name == "baz" && p.kind == DependencyKind::Runtime));
 }
+
+#[test]
+fn test_proc_macro() {
+    //test_proc_macro_inner(false); //TODO
+    test_proc_macro_inner(true);
+}
+fn test_proc_macro_inner(sbom: bool) {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/proc-macro-dependency/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    eprintln!("Proc macro binary map: {bins:?}");
+
+    // proc-macro-dependency should depend on
+    let binary = &bins.get("proc-macro-dependency").unwrap()[0];
+    let dep_info = get_dependency_info(binary);
+    eprintln!("{binary} dependency info: {dep_info:?}");
+    // locate the serde_derive proc macro package
+    let serde_derive_info = dep_info
+        .packages
+        .iter()
+        .find(|p| p.name == "serde_derive")
+        .expect("Could not find 'serde_derive' in the embedded dependency list!");
+    assert_eq!(serde_derive_info.kind, DependencyKind::Build);
+    // locate the syn package which is norm a dependency of serde-derive
+    let syn_info = dep_info
+        .packages
+        .iter()
+        .find(|p| p.name == "syn")
+        .expect("Could not find 'syn' in the embedded dependency list!");
+    assert_eq!(syn_info.kind, DependencyKind::Build);
+}
