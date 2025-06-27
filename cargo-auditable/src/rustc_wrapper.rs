@@ -93,9 +93,8 @@ pub fn main(rustc_path: &OsStr) {
         command_with_args.extend(command.get_args());
         eprintln!(
             "Failed to invoke rustc! Make sure it's in your $PATH\n\
-                The error was: {}\n\
-                The attempted call was: {:?}",
-            err, command_with_args,
+                The error was: {err}\n\
+                The attempted call was: {command_with_args:?}",
         );
         std::process::exit(1);
     });

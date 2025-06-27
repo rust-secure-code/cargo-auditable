@@ -95,7 +95,7 @@ package.edition = \"2021\"
             }),
         };
 
-        let parsed: RawTomlFields = toml::from_str(&toml).unwrap();
+        let parsed: RawTomlFields = toml::from_str(toml).unwrap();
         assert_eq!(parsed, expected);
 
         let resolved_expected = TomlFields {
@@ -132,7 +132,7 @@ resolver = \"2\"
         }),
     };
 
-    let parsed: RawTomlFields = toml::from_str(&toml).unwrap();
+    let parsed: RawTomlFields = toml::from_str(toml).unwrap();
     assert_eq!(parsed, expected);
 
     let resolved_expected = TomlFields {
@@ -160,7 +160,7 @@ edition = \"2021\"
         workspace: None,
     };
 
-    let parsed: RawTomlFields = toml::from_str(&toml).unwrap();
+    let parsed: RawTomlFields = toml::from_str(toml).unwrap();
     assert_eq!(parsed, expected);
 }
 
@@ -180,7 +180,7 @@ version = \"0.1.0\"
         workspace: None,
     };
 
-    let parsed: RawTomlFields = toml::from_str(&toml).unwrap();
+    let parsed: RawTomlFields = toml::from_str(toml).unwrap();
     assert_eq!(parsed, expected);
 
     let resolved_expected = TomlFields {
@@ -206,7 +206,7 @@ members = [\"some-package\"]
         }),
     };
 
-    let parsed: RawTomlFields = toml::from_str(&toml).unwrap();
+    let parsed: RawTomlFields = toml::from_str(toml).unwrap();
     assert_eq!(parsed, expected);
 
     let resolved_expected = TomlFields {
