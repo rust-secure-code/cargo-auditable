@@ -591,7 +591,7 @@ fn test_proc_macro_inner(sbom: bool) {
 #[test]
 fn test_dependency_unification() {
     test_dependency_unification_inner(false);
-    //test_dependency_unification_inner(true); // TODO: this fails, I wonder why?
+    //test_dependency_unification_inner(true); // TODO: this fails!
 }
 
 fn test_dependency_unification_inner(sbom: bool) {
@@ -605,12 +605,12 @@ fn test_dependency_unification_inner(sbom: bool) {
     let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
     let dep_info = get_dependency_info(toplevel_crate_bin);
     eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
-    assert!(dep_info.packages.len() == 2);
     // optional_transitive_dep should not be present, it's only reachable through dev-dependencies
     assert!(!dep_info
         .packages
         .iter()
         .any(|p| p.name == "optional_transitive_dep"));
+    assert!(dep_info.packages.len() == 2);
 }
 
 #[test]
