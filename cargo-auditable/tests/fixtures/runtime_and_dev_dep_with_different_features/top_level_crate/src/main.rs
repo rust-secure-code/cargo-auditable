@@ -1,3 +1,3 @@
 fn main() {
-    println!("Hello, world!");
+    println!("The answer is {}", runtime_dep::num());
 }
