@@ -124,7 +124,7 @@ fn purl(pkg: &auditable_serde::Package) -> String {
         Source::Local => "&download_url=redacted",
         Source::Registry => "&repository_url=redacted",
         Source::Other(_) => "&download_url=redacted",
-        unknown => panic!("Unknown source: {:?}", unknown),
+        unknown => panic!("Unknown source: {unknown:?}"),
     });
     purl
 }

@@ -10,10 +10,10 @@ impl std::fmt::Display for UnrecognizedValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             UnrecognizedValue::UnknownResolver(resolver) => {
-                write!(f, "Unrecognized resolver version: {}", resolver)
+                write!(f, "Unrecognized resolver version: {resolver}")
             }
             UnrecognizedValue::UnknownEdition(edition) => {
-                write!(f, "Unrecognized Rust edition: {}", edition)
+                write!(f, "Unrecognized Rust edition: {edition}")
             }
         }
     }
@@ -30,8 +30,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::UnrecognizedValue(msg) => write!(f, "{}", msg),
-            Error::TomlParseError(err) => write!(f, "Failed to parse Cargo.toml: {}", err),
+            Error::UnrecognizedValue(msg) => write!(f, "{msg}"),
+            Error::TomlParseError(err) => write!(f, "Failed to parse Cargo.toml: {err}"),
         }
     }
 }
