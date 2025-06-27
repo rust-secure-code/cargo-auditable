@@ -555,7 +555,7 @@ fn test_path_not_equal_name_inner(sbom: bool) {
 
 #[test]
 fn test_proc_macro() {
-    //test_proc_macro_inner(false); //TODO
+    test_proc_macro_inner(false);
     test_proc_macro_inner(true);
 }
 fn test_proc_macro_inner(sbom: bool) {
