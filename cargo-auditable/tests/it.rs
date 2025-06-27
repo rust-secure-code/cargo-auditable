@@ -587,7 +587,6 @@ fn test_proc_macro_inner(sbom: bool) {
     assert_eq!(syn_info.kind, DependencyKind::Build);
 }
 
-
 #[test]
 fn test_dependency_unification() {
     test_dependency_unification_inner(false);
