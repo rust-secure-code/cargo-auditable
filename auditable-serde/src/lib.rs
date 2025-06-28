@@ -42,9 +42,9 @@ pub struct VersionInfo {
     /// If an unknown format is encountered, it should be treated as the highest known preceding format.
     /// For example, if formats `0`, `1` and `8` are known, format `4` should be treated as if it's `1`.
     ///
-    /// ## Known formats
+    /// # Known formats
     ///
-    /// ### 0 (or the field is absent)
+    /// ## 0 (or the field is absent)
     ///
     /// Generated based on the data provided by [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html).
     ///
@@ -57,13 +57,13 @@ pub struct VersionInfo {
     /// Additionally, this format incorrectly includes [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html)
     /// and their dependencies as runtime dependencies while in reality they are build-time dependencies.
     ///
-    /// ### 1
+    /// ## 1
     ///
     /// Same as 0, but correctly records proc-macros and their dependencies as build-time dependencies.
     ///
     /// May still include slightly more dependencies than are actually used, especially in workspaces.
     ///
-    /// ### 8
+    /// ## 8
     ///
     /// Generated using Cargo's [SBOM precursor](https://doc.rust-lang.org/cargo/reference/unstable.html#sbom) as the data source.
     ///
