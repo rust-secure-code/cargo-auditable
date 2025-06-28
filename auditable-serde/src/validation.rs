@@ -1,4 +1,4 @@
-use crate::{Package, VersionInfo, is_default};
+use crate::{is_default, Package, VersionInfo};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt::Display};
 

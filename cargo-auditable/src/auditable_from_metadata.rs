@@ -218,7 +218,10 @@ pub fn encode_audit_data(
             package.dependencies.sort_unstable();
         }
     }
-    Ok(VersionInfo { packages, format: 1 })
+    Ok(VersionInfo {
+        packages,
+        format: 1,
+    })
 }
 
 fn strongest_dep_kind(deps: &[cargo_metadata::DepKindInfo]) -> PrivateDepKind {

@@ -89,7 +89,10 @@ impl From<SbomPrecursor> for VersionInfo {
             }
         }
 
-        VersionInfo { packages, format: 8 }
+        VersionInfo {
+            packages,
+            format: 8,
+        }
     }
 }
 
