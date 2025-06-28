@@ -36,7 +36,7 @@ use std::str::FromStr;
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
-    /// Format revision of the audit data.
+    /// Format revision. Identifies the data source for the audit data.
     ///
     /// Format revisions are **backwards compatible.**
     /// If an unknown format is encountered, it should be treated as the highest known preceding format.
