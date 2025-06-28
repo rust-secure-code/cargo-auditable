@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fmt::Display};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub struct RawVersionInfo {
+pub(crate) struct RawVersionInfo {
     pub packages: Vec<Package>,
     #[serde(default)]
     #[serde(skip_serializing_if = "is_default")]
