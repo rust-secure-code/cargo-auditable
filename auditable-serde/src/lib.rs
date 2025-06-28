@@ -36,6 +36,9 @@ use std::str::FromStr;
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_default")]
+    pub format: u32,
 }
 
 /// A single package in the dependency tree
@@ -117,7 +120,7 @@ pub enum DependencyKind {
     Runtime,
 }
 
-fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+pub(crate) fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     let default_value = T::default();
     value == &default_value
 }
