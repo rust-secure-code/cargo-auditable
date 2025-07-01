@@ -1,101 +1,107 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://rustsec.org/schemas/cargo-auditable.json",
-    "title": "cargo-auditable schema",
-    "description": "Describes the `VersionInfo` JSON data structure that cargo-auditable embeds into Rust binaries.",
-    "type": "object",
-    "required": [
-        "packages"
-    ],
-    "properties": {
-        "packages": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/Package"
-            }
-        }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rustsec.org/schemas/cargo-auditable.json",
+  "title": "cargo-auditable schema",
+  "description": "Describes the `VersionInfo` JSON data structure that cargo-auditable embeds into Rust binaries.",
+  "type": "object",
+  "required": [
+    "packages"
+  ],
+  "properties": {
+    "format": {
+      "description": "Format revision. Identifies the data source for the audit data.\n\nFormat revisions are **backwards compatible.** If an unknown format is encountered, it should be treated as the highest known preceding format. For example, if formats `0`, `1` and `8` are known, format `4` should be treated as if it's `1`.\n\n# Known formats\n\n## 0 (or the field is absent)\n\nGenerated based on the data provided by [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html).\n\nThere are multiple [known](https://github.com/rust-lang/cargo/issues/7754) [issues](https://github.com/rust-lang/cargo/issues/10718) with this data source, leading to the audit data sometimes including more dependencies than are really used in the build.\n\nHowever, is the only machine-readable data source available on stable Rust as of v1.88.\n\nAdditionally, this format incorrectly includes [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html) and their dependencies as runtime dependencies while in reality they are build-time dependencies.\n\n## 1\n\nSame as 0, but correctly records proc-macros and their dependencies as build-time dependencies.\n\nMay still include slightly more dependencies than are actually used, especially in workspaces.\n\n## 8\n\nGenerated using Cargo's [SBOM precursor](https://doc.rust-lang.org/cargo/reference/unstable.html#sbom) as the data source.\n\nThis data is highly accurate, but as of Rust v1.88 can only be generated using a nightly build of Cargo.",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
     },
-    "definitions": {
-        "DependencyKind": {
-            "type": "string",
-            "enum": [
-                "build",
-                "runtime"
-            ]
-        },
-        "Package": {
-            "description": "A single package in the dependency tree",
-            "type": "object",
-            "required": [
-                "name",
-                "source",
-                "version"
-            ],
-            "properties": {
-                "dependencies": {
-                    "description": "Packages are stored in an ordered array both in the `VersionInfo` struct and in JSON. Here we refer to each package by its index in the array. May be omitted if the list is empty.",
-                    "type": "array",
-                    "items": {
-                        "type": "integer",
-                        "format": "uint",
-                        "minimum": 0.0
-                    }
-                },
-                "kind": {
-                    "description": "\"build\" or \"runtime\". May be omitted if set to \"runtime\". If it's both a build and a runtime dependency, \"runtime\" is recorded.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/DependencyKind"
-                        }
-                    ]
-                },
-                "name": {
-                    "description": "Crate name specified in the `name` field in Cargo.toml file. Examples: \"libc\", \"rand\"",
-                    "type": "string"
-                },
-                "root": {
-                    "description": "Whether this is the root package in the dependency tree. There should only be one root package. May be omitted if set to `false`.",
-                    "type": "boolean"
-                },
-                "source": {
-                    "description": "Currently \"git\", \"local\", \"crates.io\" or \"registry\". Designed to be extensible with other revision control systems, etc.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Source"
-                        }
-                    ]
-                },
-                "version": {
-                    "description": "The package's version in the [semantic version](https://semver.org) format.",
-                    "type": "string"
-                }
-            }
-        },
-        "Source": {
-            "description": "Serializes to \"git\", \"local\", \"crates.io\" or \"registry\". Designed to be extensible with other revision control systems, etc.",
-            "oneOf": [
-                {
-                    "type": "string",
-                    "enum": [
-                        "CratesIo",
-                        "Git",
-                        "Local",
-                        "Registry"
-                    ]
-                },
-                {
-                    "type": "object",
-                    "required": [
-                        "Other"
-                    ],
-                    "properties": {
-                        "Other": {
-                            "type": "string"
-                        }
-                    },
-                    "additionalProperties": false
-                }
-            ]
-        }
+    "packages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Package"
+      }
     }
+  },
+  "definitions": {
+    "DependencyKind": {
+      "type": "string",
+      "enum": [
+        "build",
+        "runtime"
+      ]
+    },
+    "Package": {
+      "description": "A single package in the dependency tree",
+      "type": "object",
+      "required": [
+        "name",
+        "source",
+        "version"
+      ],
+      "properties": {
+        "dependencies": {
+          "description": "Packages are stored in an ordered array both in the `VersionInfo` struct and in JSON. Here we refer to each package by its index in the array. May be omitted if the list is empty.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          }
+        },
+        "kind": {
+          "description": "\"build\" or \"runtime\". May be omitted if set to \"runtime\". If it's both a build and a runtime dependency, \"runtime\" is recorded.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/DependencyKind"
+            }
+          ]
+        },
+        "name": {
+          "description": "Crate name specified in the `name` field in Cargo.toml file. Examples: \"libc\", \"rand\"",
+          "type": "string"
+        },
+        "root": {
+          "description": "Whether this is the root package in the dependency tree. There should only be one root package. May be omitted if set to `false`.",
+          "type": "boolean"
+        },
+        "source": {
+          "description": "Currently \"git\", \"local\", \"crates.io\" or \"registry\". Designed to be extensible with other revision control systems, etc.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Source"
+            }
+          ]
+        },
+        "version": {
+          "description": "The package's version in the [semantic version](https://semver.org) format.",
+          "type": "string"
+        }
+      }
+    },
+    "Source": {
+      "description": "Serializes to \"git\", \"local\", \"crates.io\" or \"registry\". Designed to be extensible with other revision control systems, etc.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "CratesIo",
+            "Git",
+            "Local",
+            "Registry"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "Other"
+          ],
+          "properties": {
+            "Other": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
 }

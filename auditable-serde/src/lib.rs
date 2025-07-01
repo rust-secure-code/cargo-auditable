@@ -36,6 +36,41 @@ use std::str::FromStr;
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct VersionInfo {
     pub packages: Vec<Package>,
+    /// Format revision. Identifies the data source for the audit data.
+    ///
+    /// Format revisions are **backwards compatible.**
+    /// If an unknown format is encountered, it should be treated as the highest known preceding format.
+    /// For example, if formats `0`, `1` and `8` are known, format `4` should be treated as if it's `1`.
+    ///
+    /// # Known formats
+    ///
+    /// ## 0 (or the field is absent)
+    ///
+    /// Generated based on the data provided by [`cargo metadata`](https://doc.rust-lang.org/cargo/commands/cargo-metadata.html).
+    ///
+    /// There are multiple [known](https://github.com/rust-lang/cargo/issues/7754)
+    /// [issues](https://github.com/rust-lang/cargo/issues/10718) with this data source,
+    /// leading to the audit data sometimes including more dependencies than are really used in the build.
+    ///
+    /// However, is the only machine-readable data source available on stable Rust as of v1.88.
+    ///
+    /// Additionally, this format incorrectly includes [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html)
+    /// and their dependencies as runtime dependencies while in reality they are build-time dependencies.
+    ///
+    /// ## 1
+    ///
+    /// Same as 0, but correctly records proc-macros and their dependencies as build-time dependencies.
+    ///
+    /// May still include slightly more dependencies than are actually used, especially in workspaces.
+    ///
+    /// ## 8
+    ///
+    /// Generated using Cargo's [SBOM precursor](https://doc.rust-lang.org/cargo/reference/unstable.html#sbom) as the data source.
+    ///
+    /// This data is highly accurate, but as of Rust v1.88 can only be generated using a nightly build of Cargo.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_default")]
+    pub format: u32,
 }
 
 /// A single package in the dependency tree
@@ -117,7 +152,7 @@ pub enum DependencyKind {
     Runtime,
 }
 
-fn is_default<T: Default + PartialEq>(value: &T) -> bool {
+pub(crate) fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     let default_value = T::default();
     value == &default_value
 }

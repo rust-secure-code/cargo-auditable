@@ -1,6 +1,6 @@
 [package]
 name = "auditable-cyclonedx"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -12,4 +12,4 @@ categories = ["encoding"]
 
 [dependencies]
 cyclonedx-bom = "0.8.0"
-auditable-serde = {version = "0.8.0", path = "../auditable-serde"}
+auditable-serde = {version = "0.9.0", path = "../auditable-serde"}
