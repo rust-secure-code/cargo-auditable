@@ -175,7 +175,7 @@ fn test_cargo_auditable_workspaces_inner(sbom: bool) {
     let bins = run_cargo_auditable(&workspace_cargo_toml, &[], &[], sbom);
     eprintln!("Test fixture binary map: {bins:?}");
     // No binaries for library_crate
-    assert!(bins.get("library_crate").is_none());
+    assert!(!bins.contains_key("library_crate"));
 
     // binary_and_cdylib_crate
     let binary_and_cdylib_crate_bins = bins.get("binary_and_cdylib_crate").unwrap();
