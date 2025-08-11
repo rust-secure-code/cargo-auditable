@@ -37,7 +37,7 @@ If you're not calling `cargo` directly and cannot change how it's invoked, you c
 
 ## Adoption
 
-Microsoft uses `cargo auditable` internally and maintains the [data extraction library for Go](https://github.com/microsoft/go-rustaudit).
+Microsoft uses `cargo auditable` internally and previously maintained the [data extraction library for Go](https://github.com/microsoft/go-rustaudit).
 
 [Chainguard](https://chainguard.dev/) includes `cargo auditable` in their [rust base container](https://images.chainguard.dev/directory/image/rust/overview), with a default `cargo` wrapper to always call `cargo auditable`, so that Rust applications built using this container are auditable by default.
 
