@@ -66,15 +66,16 @@ If you're using a shell other than bash, or if using an alias is not an option, 
 * [cargo audit](https://crates.io/crates/cargo-audit) v0.17.3+ can detect this data in binaries and report on vulnerabilities. See [here](https://github.com/rustsec/rustsec/tree/main/cargo-audit#cargo-audit-bin-subcommand) for details.
 * [trivy](https://github.com/aquasecurity/trivy) v0.31.0+ detects this data in binaries and reports on vulnerabilities. See the [v0.31.0 release notes](https://github.com/aquasecurity/trivy/discussions/2716) for an end-to-end example.
 * [osv-scanner](https://github.com/google/osv-scanner/) v2.0.1+ [reads this data](https://github.com/google/osv-scalibr/pull/377) when scanning container images.
+* [grype](https://github.com/anchore/grype) v0.83.0+ embeds syft, which detects this data in binaries and container images and reports on vulnerabilities.
 
 #### Recovering the dependency list
 
-* [syft](https://github.com/anchore/syft) v0.53.0+ has experimental support for detecting this data in binaries.
-When used on images or directories, Rust audit support must be enabled by adding the `--catalogers all` CLI option, e.g `syft --catalogers all <container image containing Rust auditable binary>`.
+* [syft](https://github.com/anchore/syft) v1.15.0+ has support for detecting this data in binaries, directories and container images and printing it in various formats.
 * [blint](https://github.com/owasp-dep-scan/blint) v2.1.3+ can recover this data and output it as CycloneDX.
 * [wasm-tools](https://github.com/bytecodealliance/wasm-tools) v1.227.0+ can recover this data from WebAssembly. Try `wasm-tools metadata show`.
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 * [auditable2cdx](https://crates.io/crates/auditable2cdx) recovers the dependency list from a binary and prints it in CycloneDX.
+* [docker](https://docs.docker.com/build/metadata/attestations/sbom/) supports embedding CycloneDX documents into container images. These are recovered using [BuildKit Syft scanner](https://github.com/docker/buildkit-syft-scanner), which embeds syft. If you build a container image with `docker buildx build --tag <namespace>/<image>:<version> --attest type=sbom --push .` and use `cargo auditable` to build rust binaries in the `Dockerfile`, the SBOM attestation attached to the container image will include your rust dependencies.
 
 ### Can I read this data using a tool written in a different language?
 
