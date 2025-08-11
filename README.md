@@ -73,7 +73,7 @@ If you're using a shell other than bash, or if using an alias is not an option, 
 * [wasm-tools](https://github.com/bytecodealliance/wasm-tools) v1.227.0+ can recover this data from WebAssembly. Try `wasm-tools metadata show`.
 * [rust-audit-info](https://crates.io/crates/rust-audit-info) recovers the dependency list from a binary and prints it in JSON.
 * [auditable2cdx](https://crates.io/crates/auditable2cdx) recovers the dependency list from a binary and prints it in CycloneDX.
-* [docker](https://docs.docker.com/build/metadata/attestations/sbom/) supports embedding CycloneDX documents into container images. These are recovered using [BuildKit Syft scanner](https://github.com/docker/buildkit-syft-scanner), which embeds syft.
+* [docker](https://docs.docker.com/build/metadata/attestations/sbom/) supports embedding CycloneDX documents into container images. These are recovered using [BuildKit Syft scanner](https://github.com/docker/buildkit-syft-scanner), which embeds syft. If you build a container image with `docker buildx build --tag <namespace>/<image>:<version> --attest type=sbom --push .` and use `cargo auditable` to build rust binaries in the `Dockerfile`, the SBOM attestation attached to the container image will include your rust dependencies.
 
 ### Can I read this data using a tool written in a different language?
 
