@@ -30,7 +30,7 @@ jobs:
           AUDITABLE_TEST_TARGET: "x86_64-unknown-linux-musl"
         run: cargo test --all-features --workspace
       - name: "Install the 32-bit GCC toolchain"
-        run: sudo apt-get install gcc-multilib
+        run: sudo apt-get update && sudo apt-get install gcc-multilib
       - name: "Test cross-compiling to i686-unknown-linux-gnu"
         env:
           AUDITABLE_TEST_TARGET: "i686-unknown-linux-gnu"
