@@ -24,8 +24,6 @@ targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-
 pr-run-mode = "plan"
 # Whether to install an updater program
 install-updater = false
-# Suppress dist failure because we bumped ubuntu-20.04 to ubuntu-22.04
-allow-dirty = ["ci"]
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
