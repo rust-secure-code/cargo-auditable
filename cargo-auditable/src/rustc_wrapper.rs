@@ -68,7 +68,7 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
     //
     // Binaries and C dynamic libraries are not built as non-primary packages,
     // so this should not cause issues with Cargo caches.
-    if !env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
+    if env::var_os("CARGO_PRIMARY_PACKAGE").is_none() {
         return None;
     }
     let args = rustc_arguments::parse_args().unwrap(); // descriptive enough message
