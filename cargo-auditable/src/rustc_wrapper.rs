@@ -14,78 +14,10 @@ use crate::{
 use std::io::BufRead;
 
 pub fn main(rustc_path: &OsStr) {
-    let mut command = rustc_command(rustc_path);
-
-    // Binaries and C dynamic libraries are not built as non-primary packages,
-    // so this should not cause issues with Cargo caches.
-    if env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
-        let args = rustc_arguments::parse_args().unwrap(); // descriptive enough message
-        if should_embed_audit_data(&args) {
-            // Get the audit data to embed
-            let target_triple = args
-                .target
-                .clone()
-                .unwrap_or_else(|| rustc_host_target_triple(rustc_path));
-            let contents: Vec<u8> =
-                collect_audit_data::compressed_dependency_list(&args, &target_triple);
-            // write the audit info to an object file
-            let target_info = target_info::rustc_target_info(rustc_path, &target_triple);
-            let binfile = binary_file::create_binary_file(
-                &target_info,
-                &target_triple,
-                &contents,
-                "AUDITABLE_VERSION_INFO",
-            );
-            if let Some(file) = binfile {
-                // Place the audit data in the output dir.
-                // We can place it anywhere really, the only concern is clutter and name collisions,
-                // and the target dir is locked so we're probably good
-                let filename = format!(
-                    "{}_audit_data.o",
-                    args.crate_name
-                        .as_ref()
-                        .expect("rustc command is missing --crate-name")
-                );
-                let path = args
-                    .out_dir
-                    .as_ref()
-                    .expect("rustc command is missing --out-dir")
-                    .join(filename);
-                std::fs::write(&path, file).expect("Unable to write output file");
-
-                // Modify the rustc command to link the object file with audit data
-                let mut linker_command = OsString::from("-Clink-arg=");
-                linker_command.push(&path);
-                command.arg(linker_command);
-                // Prevent the symbol from being removed as unused by the linker
-                if is_apple(&target_info) {
-                    if args.bare_linker() {
-                        command.arg("-Clink-arg=-u,_AUDITABLE_VERSION_INFO");
-                    } else {
-                        command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
-                    }
-                } else if is_msvc(&target_info) {
-                    command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
-                } else if is_wasm(&target_info) {
-                    // We don't emit the symbol name in WASM, so nothing to do
-                } else {
-                    // Unrecognized platform, assume it to be unix-like
-                    #[allow(clippy::collapsible_else_if)]
-                    if args.bare_linker() {
-                        command.arg("-Clink-arg=--undefined=AUDITABLE_VERSION_INFO");
-                    } else {
-                        command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
-                    }
-                }
-            } else {
-                // create_binary_file() returned None, indicating an unsupported architecture
-                eprintln!(
-                    "WARNING: target '{target_triple}' is not supported by 'cargo auditable'!\n\
-                The build will continue, but no audit data will be injected into the binary."
-                );
-            }
-        }
-    }
+    let mut command = match rustc_command_with_audit_data(rustc_path) {
+        Some(cmd) => cmd,
+        None => rustc_command(rustc_path), // could not construct command that injects audit data, skip it
+    };
 
     // Invoke rustc
     let results = command.status().unwrap_or_else(|err| {
@@ -126,4 +58,99 @@ fn rustc_host_target_triple(rustc_path: &OsStr) -> String {
         .find(|l| l.starts_with("host: "))
         .map(|l| l[6..].to_string())
         .expect("Failed to parse rustc output to determine the current platform. Please report this bug!")
+}
+
+fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
+    let mut command = rustc_command(rustc_path);
+
+    // Only inject audit data if CARGO_PRIMARY_PACKAGE is set.
+    // This allows linking audit data only in toplevel binaries, not intermediate artifacts.
+    //
+    // Binaries and C dynamic libraries are not built as non-primary packages,
+    // so this should not cause issues with Cargo caches.
+    if !env::var_os("CARGO_PRIMARY_PACKAGE").is_some() {
+        return None;
+    }
+    let args = rustc_arguments::parse_args().unwrap(); // descriptive enough message
+    if !should_embed_audit_data(&args) {
+        return None;
+    }
+    // Get the audit data to embed
+    let target_triple = args
+        .target
+        .clone()
+        .unwrap_or_else(|| rustc_host_target_triple(rustc_path));
+    let contents: Vec<u8> = collect_audit_data::compressed_dependency_list(&args, &target_triple);
+
+    // write the audit info to an object file
+    let target_info = target_info::rustc_target_info(rustc_path, &target_triple);
+    let binfile = binary_file::create_binary_file(
+        &target_info,
+        &target_triple,
+        &contents,
+        "AUDITABLE_VERSION_INFO",
+    );
+    if let Some(file) = binfile {
+        // Place the audit data in the output dir.
+        // We can place it anywhere really, the only concern is clutter and name collisions,
+        // and the target dir is locked so we're probably good
+        let crate_name = match args.crate_name.as_deref() {
+            Some(name) => name,
+            None => {
+                eprintln!(
+                    "WARNING: cargo-auditable: rustc command is missing --crate-name\n\
+                    Please double-check that the audit data was injected into the binary.\n\
+                    If it wasn't, please report a bug."
+                );
+                return None;
+            }
+        };
+        let out_dir = match args.out_dir.as_deref() {
+            Some(name) => name,
+            None => {
+                eprintln!(
+                    "WARNING: cargo-auditable: rustc command is missing --out-dir\n\
+                    Please double-check that the audit data was injected into the binary.\n\
+                    If it wasn't, please report a bug."
+                );
+                return None;
+            }
+        };
+        let filename = format!("{crate_name}_audit_data.o");
+        let path = out_dir.join(filename);
+        std::fs::write(&path, file).expect("Unable to write output file");
+
+        // Modify the rustc command to link the object file with audit data
+        let mut linker_command = OsString::from("-Clink-arg=");
+        linker_command.push(&path);
+        command.arg(linker_command);
+        // Prevent the symbol from being removed as unused by the linker
+        if is_apple(&target_info) {
+            if args.bare_linker() {
+                command.arg("-Clink-arg=-u,_AUDITABLE_VERSION_INFO");
+            } else {
+                command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
+            }
+        } else if is_msvc(&target_info) {
+            command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
+        } else if is_wasm(&target_info) {
+            // We don't emit the symbol name in WASM, so nothing to do
+        } else {
+            // Unrecognized platform, assume it to be unix-like
+            #[allow(clippy::collapsible_else_if)]
+            if args.bare_linker() {
+                command.arg("-Clink-arg=--undefined=AUDITABLE_VERSION_INFO");
+            } else {
+                command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+            }
+        }
+        Some(command)
+    } else {
+        // create_binary_file() returned None, indicating an unsupported architecture
+        eprintln!(
+            "WARNING: cargo-auditable: target '{target_triple}' is not supported!\n\
+            The build will continue, but no audit data will be injected into the binary."
+        );
+        None
+    }
 }
