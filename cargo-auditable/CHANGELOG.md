@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-10-19
+
+### Changed
+
+ - Turned a hard error into a warning when `rustc` is called in a compilation command without `--crate-name` or `--out-dir`, for compatibility with exotic proc macros such as `crabtime`.
+
 ## [0.7.0] - 2025-07-04
 
 ### Added
