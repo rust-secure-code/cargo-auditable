@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-10-19
+
+### Changed
+
+ - Turned a hard error into a warning when `rustc` is called in a compilation command without `--crate-name` or `--out-dir`, for compatibility with exotic proc macros such as `crabtime`.
+
+## [0.7.0] - 2025-07-04
+
+### Added
+
+ - cargo-auditable can now use [Cargo's native SBOM precursor](https://doc.rust-lang.org/cargo/reference/unstable.html#sbom) for more accurate dependency trees. This feature is nightly-only as of this writing.
+ - Introduced the `format` field to the encoded data, to let the data consumer know how the dependency tree was obtained (e.g. via the SBOM precursor or not)
+
+### Fixed
+
+ - Procedural macros are no longer erroneously reported as runtime dependencies. If the `format` field is set to 1 higher, they should be assumed to be reported correctly.
+
 ## [0.6.7] - 2025-05-04
 
 ### Changed
