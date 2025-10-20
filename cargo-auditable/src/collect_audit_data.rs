@@ -1,6 +1,6 @@
 use cargo_metadata::{Metadata, MetadataCommand};
 use miniz_oxide::deflate::compress_to_vec_zlib;
-use std::str::from_utf8;
+use std::{collections::HashSet, str::from_utf8};
 
 use crate::{
     auditable_from_metadata::encode_audit_data, cargo_arguments::CargoArgs,
@@ -23,9 +23,9 @@ pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -
             .unwrap_or_else(|_| panic!("Failed to parse SBOM file at {}", sbom_path.display()));
         sbom_precursor.into()
     } else {
-        // If no SBOM files are available, fall back to `cargo metadata`
-        let metadata = get_metadata(rustc_args, target_triple);
-        encode_audit_data(&metadata).unwrap()
+        // If no SBOM files are available, fall back to `cargo metadata` and `cargo tree`
+        let (metadata, tree) = get_metadata(rustc_args, target_triple);
+        encode_audit_data(&metadata, &tree).unwrap()
     };
 
     let json = serde_json::to_string(&version_info).unwrap();
@@ -34,74 +34,165 @@ pub fn compressed_dependency_list(rustc_args: &RustcArgs, target_triple: &str) -
     compressed_json
 }
 
-fn get_metadata(args: &RustcArgs, target_triple: &str) -> Metadata {
-    let mut metadata_command = MetadataCommand::new();
-
+fn get_metadata(args: &RustcArgs, target_triple: &str) -> (Metadata, HashSet<CargoTreePkg>) {
     // Cargo sets the path to itself in the `CARGO` environment variable:
     // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-3rd-party-subcommands
     // This is also useful for using `cargo auditable` as a drop-in replacement for Cargo.
-    if let Some(path) = std::env::var_os("CARGO") {
-        metadata_command.cargo_path(path);
-    }
+    let cargo_path = std::env::var_os("CARGO").unwrap_or("cargo".into());
 
     // Point cargo-metadata to the correct Cargo.toml in a workspace.
     // CARGO_MANIFEST_DIR env var will be set by Cargo when it calls our rustc wrapper
     let manifest_dir = std::env::var_os("CARGO_MANIFEST_DIR").unwrap();
-    metadata_command.current_dir(manifest_dir);
 
-    // Pass the features that are actually enabled for this crate to cargo-metadata
+    // Argument shared between `cargo metadata` and `cargo tree`
+    let mut shared_args: Vec<String> = Vec::new();
+
+    // Convert the features that are actually enabled for the crate into Cargo argument format
     let mut features = args.enabled_features();
     if let Some(index) = features.iter().position(|x| x == &"default") {
         features.remove(index);
     } else {
-        metadata_command.features(cargo_metadata::CargoOpt::NoDefaultFeatures);
+        shared_args.push("--no-default-features".into());
     }
-    let owned_features: Vec<String> = features.iter().map(|s| s.to_string()).collect();
-    metadata_command.features(cargo_metadata::CargoOpt::SomeFeatures(owned_features));
-
-    // Restrict the dependency resolution to just the platform the binary is being compiled for.
-    // By default `cargo metadata` resolves the dependency tree for all platforms.
-    let mut other_args = vec!["--filter-platform".to_owned(), target_triple.to_owned()];
+    // no need for special handling of --all-features, features are resolved into an explicit list when passed to rustc
+    if !features.is_empty() {
+        shared_args.push("--features".into());
+        shared_args.push(features.join(","));
+    }
 
     // Pass arguments such as `--config`, `--offline` and `--locked`
     // from the original CLI invocation of `cargo auditable`
     let orig_args = CargoArgs::from_env()
         .expect("Env var 'CARGO_AUDITABLE_ORIG_ARGS' set by 'cargo-auditable' is unset!");
     if orig_args.offline {
-        other_args.push("--offline".to_owned());
+        shared_args.push("--offline".to_owned());
     }
     if orig_args.frozen {
-        other_args.push("--frozen".to_owned());
+        shared_args.push("--frozen".to_owned());
     }
     if orig_args.locked {
-        other_args.push("--locked".to_owned());
+        shared_args.push("--locked".to_owned());
     }
     for arg in orig_args.config {
-        other_args.push("--config".to_owned());
-        other_args.push(arg);
+        shared_args.push("--config".to_owned());
+        shared_args.push(arg);
     }
 
-    // This can only be done once, multiple calls will replace previously set options.
-    metadata_command.other_options(other_args);
+    let mut metadata_args = vec!["metadata".to_string(), "--format-version=1".to_string()];
+    let tree_args = [
+        "tree",
+        "--edges=normal,build",
+        "--prefix=none",
+        "--format={p}",
+    ];
+    let mut tree_args: Vec<String> = tree_args.iter().map(|s| s.to_string()).collect();
 
-    // Get the underlying std::process::Command and re-implement MetadataCommand::exec,
-    // to clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
-    // The alternative would be modifying the environment of our own process,
-    // which is sketchy and discouraged on POSIX because it's not thread-safe:
-    // https://doc.rust-lang.org/stable/std/env/fn.remove_var.html
-    let mut metadata_command = metadata_command.cargo_command();
-    metadata_command.env_remove("RUSTC_WORKSPACE_WRAPPER");
-    let output = metadata_command.output().unwrap();
-    if !output.status.success() {
+    // Restrict the dependency resolution to just the platform the binary is being compiled for.
+    // By default `cargo metadata` resolves the dependency tree for all platforms, so it has to be passed explicitly.
+    metadata_args.extend_from_slice(&["--filter-platform".to_owned(), target_triple.to_owned()]);
+    tree_args.extend_from_slice(&["--target".to_owned(), target_triple.to_owned()]);
+
+    // Now that we've resolved the args, start assembling commands
+    let mut metadata_command = std::process::Command::new(&cargo_path);
+    let mut tree_command = std::process::Command::new(&cargo_path);
+
+    metadata_command.args(metadata_args);
+    tree_command.args(tree_args);
+
+    for cmd in [&mut metadata_command, &mut tree_command] {
+        // Clear RUSTC_WORKSPACE_WRAPPER in the child process to avoid recursion.
+        // The alternative would be modifying the environment of our own process,
+        // which is sketchy and discouraged on POSIX because it's not thread-safe:
+        // https://doc.rust-lang.org/stable/std/env/fn.remove_var.html
+        cmd.env_remove("RUSTC_WORKSPACE_WRAPPER");
+
+        cmd.current_dir(&manifest_dir);
+        cmd.args(&shared_args);
+    }
+
+    // guard against `cargo tree` getting localizations in the future, just in case
+    tree_command.env("LC_ALL", "C");
+
+    let meta_out = metadata_command.output().unwrap();
+    if !meta_out.status.success() {
         panic!(
             "cargo metadata failure: {}",
-            String::from_utf8_lossy(&output.stderr)
+            String::from_utf8_lossy(&meta_out.stderr)
         );
     }
-    let stdout = from_utf8(&output.stdout)
+    let stdout = from_utf8(&meta_out.stdout)
         .expect("cargo metadata output not utf8")
         .lines()
         .find(|line| line.starts_with('{'))
         .expect("cargo metadata output not json");
-    MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output")
+    let metadata = MetadataCommand::parse(stdout).expect("failed to parse cargo metadata output");
+
+    let tree_out = tree_command.output().unwrap();
+    if !tree_out.status.success() {
+        panic!(
+            "cargo tree failure: {}",
+            String::from_utf8_lossy(&tree_out.stderr)
+        );
+    }
+    let tree_stdout: Vec<&str> = from_utf8(&tree_out.stdout)
+        .expect("cargo tree output not utf8")
+        .lines()
+        .collect();
+
+    let cargo_tree_pkgs = parse_cargo_tree_output(&tree_stdout);
+
+    (metadata, cargo_tree_pkgs)
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct CargoTreePkg {
+    pub name: String,
+    pub version: cargo_metadata::semver::Version,
+}
+
+/// Sadly `cargo metadata` does not expose enough information to accurately reconstruct
+/// the dependency tree.
+/// [Features are always resolved at workspace level, not per-crate.](https://github.com/rust-lang/cargo/issues/7754)
+/// Features only enabled by dev-dependencies are also getting enabled in `cargo metadata` output,
+/// but not in the real build.
+///
+/// The issue is discussed in more detail here: <https://github.com/rust-secure-code/cargo-auditable/issues/66>
+///
+/// We have three ways to approach this:
+///
+/// The [Cargo native SBOM RFC](https://github.com/rust-lang/rfcs/pull/3553) would solve it,
+/// but it will be a long time (potentially years) until it's stabilized.
+///
+/// We could use [an independent reimplementation of the Cargo dependency resolution](https://docs.rs/guppy/)
+/// to fill in the gaps in `cargo metadata`, but that involves a lot of complexity,
+/// and risks getting out of sync with the actual Cargo algorithms, resulting in subtly incorrect SBOMs.
+/// This will be especially bad in LTS Linux distributions where `cargo auditable` can be years out of date.
+///
+/// The third option is to parse `cargo tree` output, which isn't meant to be machine-readable.
+/// The advantages of this is that if something goes wrong, at least it should be very noticeable,
+/// and we don't take on a great deal of complexity or risk going out of sync with complex Cargo algorithms.
+///
+/// This implements the third option - it seems to be the least bad one available.
+fn parse_cargo_tree_output(lines: &[&str]) -> HashSet<CargoTreePkg> {
+    let mut result: HashSet<CargoTreePkg> = HashSet::new();
+    for line in lines {
+        if !line.is_empty() {
+            // cargo tree output can contain empty lines
+            result.insert(parse_cargo_tree_line(line));
+        }
+    }
+    result
+}
+
+fn parse_cargo_tree_line(line: &str) -> CargoTreePkg {
+    let parts: Vec<&str> = line.split_ascii_whitespace().collect();
+    let name = parts[0].to_owned();
+    let version_str = parts[1];
+    let version_str = version_str
+        .strip_prefix("v")
+        .expect("Failed to parse version string \"{version_str}\": does not start with 'v'");
+    // Technically this can fail because crates.io didn't always enforce semver validity, and crates with invalid semver exist.
+    // But since we're relying on the cargo_metadata crate that also parses semver, in those cases we're screwed regardless.
+    let version = cargo_metadata::semver::Version::parse(version_str).unwrap();
+    CargoTreePkg { name, version }
 }

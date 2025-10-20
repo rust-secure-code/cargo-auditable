@@ -10,6 +10,8 @@ use std::{
 
 use auditable_serde::{DependencyKind, Package, Source, VersionInfo};
 
+use crate::collect_audit_data::CargoTreePkg;
+
 fn source_from_meta(meta_source: &cargo_metadata::Source) -> Source {
     match meta_source.repr.as_str() {
         "registry+https://github.com/rust-lang/crates.io-index" => Source::CratesIo,
@@ -78,6 +80,7 @@ impl Error for InsufficientMetadata {}
 
 pub fn encode_audit_data(
     metadata: &cargo_metadata::Metadata,
+    tree_pkgs: &HashSet<CargoTreePkg>,
 ) -> Result<VersionInfo, InsufficientMetadata> {
     let toplevel_crate_id = metadata
         .resolve
@@ -149,6 +152,19 @@ pub fn encode_audit_data(
             // In this case they will not be in the map at all. We skip them, along with dev-dependencies.
             dep_kind.is_some() && dep_kind.unwrap() != &PrivateDepKind::Development
         })
+        .filter(|p| {
+            // Due to `cargo metadata` doing feature unification across all dep kinds
+            // it will over-report dependencies if a dev-dependency enables more features
+            // on a normal or build-dependency, which causes them to pull in more packages.
+            // The only stable API that Cargo currently exposes that does NOT do this
+            // is `cargo tree --edges=normal,build` so we cross-reference the package list against that.
+            // This is less robust than I'd like, but it's the least bad option I have.
+            // See the documentation on `parse_cargo_tree_output()` for more details.
+            tree_pkgs.contains(&CargoTreePkg {
+                name: p.name.clone(),
+                version: p.version.clone(),
+            })
+        })
         .collect();
 
     // This function is the simplest place to introduce sorting, since
@@ -210,7 +226,9 @@ pub fn encode_audit_data(
                 // and dev-dependencies are allowed to have cycles,
                 // so we may end up encoding cyclic graph if we don't handle that.
                 let dep_id = dep.pkg.repr.as_str();
-                if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development {
+                if strongest_dep_kind(&dep.dep_kinds) != PrivateDepKind::Development
+                    && id_to_index.contains_key(dep_id)
+                {
                     package.dependencies.push(id_to_index[dep_id]);
                 }
             }
@@ -248,32 +266,4 @@ fn proc_macro_packages(metadata: &cargo_metadata::Metadata) -> HashSet<&str> {
             }
         })
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    #![allow(unused_imports)] // otherwise conditional compilation emits warnings
-    use super::*;
-    use std::fs;
-    use std::{
-        convert::TryInto,
-        path::{Path, PathBuf},
-        str::FromStr,
-    };
-
-    fn load_metadata(cargo_toml_path: &Path) -> cargo_metadata::Metadata {
-        let mut cmd = cargo_metadata::MetadataCommand::new();
-        cmd.manifest_path(cargo_toml_path);
-        cmd.exec().unwrap()
-    }
-
-    #[test]
-    fn dependency_cycle() {
-        let cargo_toml_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-            .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
-        let metadata = load_metadata(&cargo_toml_path);
-        let version_info_struct: VersionInfo = encode_audit_data(&metadata).unwrap();
-        let json = serde_json::to_string(&version_info_struct).unwrap();
-        VersionInfo::from_str(&json).unwrap(); // <- the part we care about succeeding
-    }
 }

@@ -1,0 +1,9 @@
+[workspace]
+
+resolver = "2"
+members = [
+    "top_level_crate",
+    "dev_dep",
+    "runtime_dep",
+    "optional_transitive_dep",
+]
