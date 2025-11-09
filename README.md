@@ -35,6 +35,10 @@ Due to [a bug in Cargo](https://github.com/rust-lang/cargo/issues/15695) you may
 
 If you're not calling `cargo` directly and cannot change how it's invoked, you can use `cargo auditable` as a drop-in replacement for `cargo`. See [here](REPLACING_CARGO.md) for details.
 
+### For Github releases
+
+[`cargo dist`](https://github.com/axodotdev/cargo-dist) has opt-in support for `cargo auditable`, [see here for details](https://axodotdev.github.io/cargo-dist/book/supplychain-security/index.html).
+
 ## Adoption
 
 Microsoft uses `cargo auditable` internally and previously maintained the [data extraction library for Go](https://github.com/microsoft/go-rustaudit).
