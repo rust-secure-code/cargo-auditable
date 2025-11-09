@@ -10,7 +10,7 @@ use std::{
 use auditable_serde::{DependencyKind, VersionInfo};
 use cargo_metadata::{
     camino::{Utf8Path, Utf8PathBuf},
-    Artifact,
+    Artifact, TargetKind,
 };
 
 // Path to cargo-auditable binary under test
@@ -104,7 +104,7 @@ where
                     .target
                     .kind
                     .iter()
-                    .any(|kind| kind.as_str() == "cdylib")
+                    .any(|kind| *kind == TargetKind::CDyLib)
                 {
                     // Detect files with .so (Linux), .dylib (Mac) and .dll (Windows) extensions
                     artifact
