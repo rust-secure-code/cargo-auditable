@@ -37,7 +37,7 @@ If you're not calling `cargo` directly and cannot change how it's invoked, you c
 
 ### For Github releases
 
-[`cargo dist`](https://github.com/axodotdev/cargo-dist) has opt-in support for `cargo auditable`, [see here for details](https://axodotdev.github.io/cargo-dist/book/supplychain-security/index.html).
+[`cargo dist`](https://github.com/axodotdev/cargo-dist) has opt-in support for `cargo auditable`, see [here](https://axodotdev.github.io/cargo-dist/book/supplychain-security/index.html) for details.
 
 ## Adoption
 
