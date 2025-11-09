@@ -25,4 +25,4 @@ wasm-gen = "0.1.4"
 [dev-dependencies]
 cargo_metadata = "0.23"
 auditable-info = {version = "0.10.0", path = "../auditable-info", features = ["wasm"]}
-which = "4.3.0"
+which = "8.0.0"
