@@ -12,5 +12,5 @@ serde = { version = "1.0.217", features = ["derive"] }
 toml = { version = "0.8.19", default-features = false, features = ["parse"] }
 
 [dev-dependencies]
-cargo_metadata = "0.18.1"
+cargo_metadata = "0.23"
 

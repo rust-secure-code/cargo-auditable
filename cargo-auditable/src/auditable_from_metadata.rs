@@ -9,6 +9,7 @@ use std::{
 };
 
 use auditable_serde::{DependencyKind, Package, Source, VersionInfo};
+use cargo_metadata::TargetKind;
 
 fn source_from_meta(meta_source: &cargo_metadata::Source) -> Source {
     match meta_source.repr.as_str() {
@@ -186,7 +187,7 @@ pub fn encode_audit_data(
     let mut packages: Vec<Package> = packages
         .into_iter()
         .map(|p| Package {
-            name: p.name.to_owned(),
+            name: p.name.to_string(),
             version: p.version.clone(),
             source: p.source.as_ref().map_or(Source::Local, source_from_meta),
             kind: (*metadata_package_dep_kind(p).unwrap()).into(),
@@ -240,7 +241,7 @@ fn proc_macro_packages(metadata: &cargo_metadata::Metadata) -> HashSet<&str> {
             // Checking that length is 1 is purely to hedge against support for it being added in the future.
             if pkg.targets.len() == 1
                 && pkg.targets[0].kind.len() == 1
-                && pkg.targets[0].kind[0] == "proc-macro"
+                && pkg.targets[0].kind[0] == TargetKind::ProcMacro
             {
                 Some(pkg.id.repr.as_str())
             } else {
