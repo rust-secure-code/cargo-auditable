@@ -558,6 +558,7 @@ fn test_proc_macro() {
     test_proc_macro_inner(false);
     test_proc_macro_inner(true);
 }
+
 fn test_proc_macro_inner(sbom: bool) {
     // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
     let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -584,4 +585,69 @@ fn test_proc_macro_inner(sbom: bool) {
         .find(|p| p.name == "syn")
         .expect("Could not find 'syn' in the embedded dependency list!");
     assert_eq!(syn_info.kind, DependencyKind::Build);
+}
+
+#[test]
+fn test_dependency_unification() {
+    test_dependency_unification_inner(false); // TODO: this is a shortcoming of our filtering against `cargo tree`
+    test_dependency_unification_inner(true);
+}
+
+fn test_dependency_unification_inner(sbom: bool) {
+    // Path to the toplevel crate
+    let toplevel_crate_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(
+        "tests/fixtures/runtime_and_dev_dep_with_different_features/top_level_crate/Cargo.toml",
+    );
+
+    // Run in toplevel crate directory with default features; this causes a different feature resolution than using the workspace
+    let bins = run_cargo_auditable(toplevel_crate_cargo_toml, &[], &[], sbom);
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
+    let dep_info = get_dependency_info(toplevel_crate_bin);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
+    // optional_transitive_dep should not be present, it's only reachable through dev-dependencies
+    assert!(!dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "optional_transitive_dep"));
+    assert!(dep_info.packages.len() == 2);
+
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/runtime_and_dev_dep_with_different_features/Cargo.toml");
+
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    let toplevel_crate_bin = &bins.get("top_level_crate").unwrap()[0];
+    let dep_info = get_dependency_info(toplevel_crate_bin);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
+    // optional_transitive_dep SHOULD be present, it's included because of Cargo's feature unification across a workspace
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "optional_transitive_dep"));
+    assert!(dep_info.packages.len() == 3);
+}
+
+#[test]
+fn test_dep_cycle() {
+    test_dep_cycle_inner(false);
+    test_dep_cycle_inner(true);
+}
+
+fn test_dep_cycle_inner(sbom: bool) {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/cargo-audit-dep-cycle/Cargo.toml");
+    // Run in workspace root with default features
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    let toplevel_crate_bin = &bins.get("cargo-audit-dep-cycle").unwrap()[0];
+    // Deserialization checks for cycles, so we only need to verify that it succeeds
+    let dep_info = get_dependency_info(toplevel_crate_bin);
+    eprintln!("{toplevel_crate_bin} dependency info: {dep_info:?}");
 }
