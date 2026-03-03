@@ -137,12 +137,14 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
         } else if is_wasm(&target_info) {
             // We don't emit the symbol name in WASM, so nothing to do
         } else {
-            // Unrecognized platform, assume it to be unix-like
-            #[allow(clippy::collapsible_else_if)]
+            // Unrecognized platform, assume it to be unix-like.
+            // Use POSIX `-u` instead of GNU `--undefined=` for broad compatibility
+            // (e.g. zig rejects the GNU form).
             if args.bare_linker() {
-                command.arg("-Clink-arg=--undefined=AUDITABLE_VERSION_INFO");
+                command.arg("-Clink-arg=-u");
+                command.arg("-Clink-arg=AUDITABLE_VERSION_INFO");
             } else {
-                command.arg("-Clink-arg=-Wl,--undefined=AUDITABLE_VERSION_INFO");
+                command.arg("-Clink-arg=-Wl,-u,AUDITABLE_VERSION_INFO");
             }
         }
         Some(command)
