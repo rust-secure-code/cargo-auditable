@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     binary_file, collect_audit_data,
-    platform_detection::{is_apple, is_msvc, is_wasm},
+    platform_detection::{is_apple, is_msvc, is_wasm, is_x86},
     rustc_arguments::{self, should_embed_audit_data},
     target_info,
 };
@@ -134,7 +134,14 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
                 command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
             }
         } else if is_msvc(&target_info) {
-            command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
+            // On x86 MSVC, the `object` crate's CoffI386 mangling adds a `_`
+            // prefix to global symbols, so the linker must reference the
+            // decorated name.
+            if is_x86(&target_info) {
+                command.arg("-Clink-arg=/INCLUDE:_AUDITABLE_VERSION_INFO");
+            } else {
+                command.arg("-Clink-arg=/INCLUDE:AUDITABLE_VERSION_INFO");
+            }
         } else if is_wasm(&target_info) {
             // We don't emit the symbol name in WASM, so nothing to do
         } else {
