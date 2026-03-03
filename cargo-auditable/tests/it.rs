@@ -585,3 +585,28 @@ fn test_proc_macro_inner(sbom: bool) {
         .expect("Could not find 'syn' in the embedded dependency list!");
     assert_eq!(syn_info.kind, DependencyKind::Build);
 }
+
+#[test]
+fn test_bare_linker() {
+    test_bare_linker_inner(false);
+    test_bare_linker_inner(true);
+}
+fn test_bare_linker_inner(sbom: bool) {
+    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
+    let workspace_cargo_toml =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/bare_linker/Cargo.toml");
+
+    // The motivating example is https://github.com/EFForg/rayhunter/blob/main/.cargo/config.toml
+    // There doesn't seem to be a way to build with a bare linker for GNU targets, only Apple and Musl,
+    // so this tests really only does anything on those.
+
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    // bare_linker should only depend on itself
+    let bare_linker_bin = &bins.get("bare_linker").unwrap()[0];
+    let dep_info = get_dependency_info(bare_linker_bin);
+    eprintln!("{bare_linker_bin} dependency info: {dep_info:?}");
+    assert!(dep_info.packages.len() == 1);
+    assert!(dep_info.packages.iter().any(|p| p.name == "bare_linker"));
+}
