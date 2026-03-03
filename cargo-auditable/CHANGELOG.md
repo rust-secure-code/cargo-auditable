@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - On Unix, use `-u` linker flag instead of `--undefined` for broader compatibility. Most notably fixes compatibility with the Zig toolchain linker, making `cargo zigbuild` work with `cargo auditable`.
 
+### Fixed
+
+ - Fixed build failures for bare linker configurations on Apple platforms, and added test for bare linker configurations for Apple and linux-musl.
+
 ## [0.7.2] - 2025-11-09
 
 ### Changed
