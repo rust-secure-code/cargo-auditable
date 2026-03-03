@@ -592,15 +592,22 @@ fn test_bare_linker() {
     test_bare_linker_inner(true);
 }
 fn test_bare_linker_inner(sbom: bool) {
-    // Path to workspace fixture Cargo.toml. See that file for overview of workspace members and their dependencies.
-    let workspace_cargo_toml =
+    // Path to workspace fixture Cargo.toml
+    let cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/bare_linker/Cargo.toml");
-
     // The motivating example is https://github.com/EFForg/rayhunter/blob/main/.cargo/config.toml
+    // and the config file fixture is based on that.
     // There doesn't seem to be a way to build with a bare linker for GNU targets, only Apple and Musl,
     // so this tests really only does anything on those.
+    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/bare_linker/.cargo/config.toml");
 
-    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    let bins = run_cargo_auditable(
+        cargo_toml,
+        &["--config", config_path.to_str().unwrap()],
+        &[],
+        sbom,
+    );
     eprintln!("Test fixture binary map: {bins:?}");
 
     // bare_linker should only depend on itself
