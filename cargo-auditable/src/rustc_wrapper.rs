@@ -128,7 +128,8 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
         // Prevent the symbol from being removed as unused by the linker
         if is_apple(&target_info) {
             if args.bare_linker() {
-                command.arg("-Clink-arg=-u,_AUDITABLE_VERSION_INFO");
+                command.arg("-Clink-arg=-u");
+                command.arg("-Clink-arg=_AUDITABLE_VERSION_INFO");
             } else {
                 command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
             }
