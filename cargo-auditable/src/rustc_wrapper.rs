@@ -129,6 +129,7 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
         if is_apple(&target_info) {
             if args.bare_linker() {
                 command.arg("-Clink-arg=-u,_AUDITABLE_VERSION_INFO");
+                panic!("Apple codepath reached, CI should fail");
             } else {
                 command.arg("-Clink-arg=-Wl,-u,_AUDITABLE_VERSION_INFO");
             }
@@ -143,6 +144,7 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
             if args.bare_linker() {
                 command.arg("-Clink-arg=-u");
                 command.arg("-Clink-arg=AUDITABLE_VERSION_INFO");
+                panic!("POSIX codepath reached, CI should fail");
             } else {
                 command.arg("-Clink-arg=-Wl,-u,AUDITABLE_VERSION_INFO");
             }
