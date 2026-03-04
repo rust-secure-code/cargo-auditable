@@ -6,26 +6,48 @@ on:
     branches: master
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        platform:
-          - windows-latest
-        toolchain:
-          - stable
-    runs-on: ${{ matrix.platform }}
+  test-x86_64-pc-windows-msvc:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: stable
           profile: minimal
           override: true
           targets: "wasm32-unknown-unknown"
-      - name: "Test on the native x86_64-pc-windows-mscv"
+      - name: "Test on the native x86_64-pc-windows-msvc"
         run: cargo test --all-features --workspace
+
+  test-x86_64-pc-windows-gnu:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          targets: "wasm32-unknown-unknown"
       - name: "Test when cross-compiling to x86_64-pc-windows-gnu"
         env:
           AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
+        run: cargo test --all-features --workspace
+
+  test-i686-pc-windows-msvc:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          targets: "wasm32-unknown-unknown,i686-pc-windows-msvc"
+      - name: "Test when cross-compiling to i686-pc-windows-msvc"
+        env:
+          AUDITABLE_TEST_TARGET: "i686-pc-windows-msvc"
         run: cargo test --all-features --workspace

@@ -31,3 +31,16 @@ rustflags = ["-C", "target-feature=+crt-static"]
 [target.x86_64-unknown-linux-musl]
 linker = "rust-lld"
 rustflags = ["-C", "target-feature=+crt-static"]
+
+# === Not included in the original Rayhunter example ===
+
+# this tests for https://github.com/rust-lang/rust/issues/96498
+[target.i686-pc-windows-msvc]
+linker = "rust-lld"
+
+# this Just Works so we might as well see if it keeps working
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld"
+
+# GNU targets generally don't work with bare linkers; not even rayhunter uses it there.
+# So we're not testing windows-gnu or linux-gnu
