@@ -6,7 +6,7 @@ on:
     branches: master
 
 jobs:
-  test-native:
+  test-x86_64-pc-windows-msvc:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +19,7 @@ jobs:
       - name: "Test on the native x86_64-pc-windows-msvc"
         run: cargo test --all-features --workspace
 
-  test-cross-gnu:
+  test-x86_64-pc-windows-gnu:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
@@ -34,7 +34,7 @@ jobs:
           AUDITABLE_TEST_TARGET: "x86_64-pc-windows-gnu"
         run: cargo test --all-features --workspace
 
-  test-cross-i686-msvc:
+  test-i686-pc-windows-msvc:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
