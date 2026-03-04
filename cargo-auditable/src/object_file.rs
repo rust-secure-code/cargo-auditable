@@ -323,6 +323,28 @@ windows
     }
 
     #[test]
+    fn test_create_object_file_windows_msvc_i686() {
+        let rustc_output = br#"debug_assertions
+target_arch="x86"
+target_endian="little"
+target_env="msvc"
+target_family="windows"
+target_feature="fxsr"
+target_feature="sse"
+target_feature="sse2"
+target_os="windows"
+target_pointer_width="32"
+target_vendor="pc"
+windows
+"#;
+        let target_triple = "i686-pc-windows-msvc";
+        let target_info = parse_rustc_target_info(rustc_output);
+        let result = create_object_file(&target_info, target_triple).unwrap();
+        assert_eq!(result.format(), BinaryFormat::Coff);
+        assert_eq!(result.architecture(), Architecture::I386);
+    }
+
+    #[test]
     fn test_create_object_file_windows_gnu() {
         let rustc_output = br#"debug_assertions
 target_arch="x86_64"
