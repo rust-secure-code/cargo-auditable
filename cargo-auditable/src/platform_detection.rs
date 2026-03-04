@@ -22,6 +22,10 @@ pub fn is_32bit(target_info: &RustcTargetInfo) -> bool {
     key_equals(target_info, "target_pointer_width", "32")
 }
 
+pub fn is_x86(target_info: &RustcTargetInfo) -> bool {
+    key_equals(target_info, "target_arch", "x86")
+}
+
 fn key_equals(target_info: &RustcTargetInfo, key: &str, value: &str) -> bool {
     target_info.get(key).map(|s| s.as_str()) == Some(value)
 }
