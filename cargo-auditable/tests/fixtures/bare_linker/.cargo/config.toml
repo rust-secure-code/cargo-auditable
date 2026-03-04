@@ -35,5 +35,5 @@ rustflags = ["-C", "target-feature=+crt-static"]
 # Not included in the original Rayhunter example, this tests for
 # https://github.com/rust-lang/rust/issues/96498
 
-[target.i686-pc-windows-msvc]
+[target.'cfg(windows)']
 linker = "rust-lld"
