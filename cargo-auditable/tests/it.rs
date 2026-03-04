@@ -596,9 +596,11 @@ fn test_bare_linker_inner(sbom: bool) {
     let cargo_toml =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/bare_linker/Cargo.toml");
     // The motivating example is https://github.com/EFForg/rayhunter/blob/main/.cargo/config.toml
-    // and the config file fixture is based on that.
-    // There doesn't seem to be a way to build with a bare linker for GNU targets, only Apple and Musl,
-    // so this tests really only does anything on those.
+    // and the config file fixture is based on that, with some additions.
+    //
+    // The config file doesn't specify a bare linker for all targets;
+    // e.g. GNU doesn't seem to support using a bare linker at all.
+    // See the config file for the exact list of targets where this is tested.
     let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/bare_linker/.cargo/config.toml");
 
