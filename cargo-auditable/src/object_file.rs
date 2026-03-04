@@ -181,6 +181,44 @@ fn create_object_file(
         abi_version,
         e_flags,
     };
+
+    // Add the COFF `@feat.00` symbol used to communicate linker feature flags.
+    //
+    // When linking with /SAFESEH on x86, lld requires that all linker inputs be marked as safe
+    // exception handling compatible. Our metadata objects masquerade as regular COFF objects and
+    // are treated as linker inputs, so they need the flag too.
+    //
+    // This implementation mirrors the rustc's metadata object generation:
+    // <https://github.com/rust-lang/rust/blob/b90dc1e597db0bbc0cab0eccb39747b1a9d7e607/compiler/rustc_codegen_ssa/src/back/metadata.rs#L224-L252>
+    //
+    // See also:
+    //
+    // - <https://github.com/rust-lang/rust/issues/96498>
+    // - <https://learn.microsoft.com/en-us/windows/win32/debug/pe-format>
+    if binary_format == BinaryFormat::Coff {
+        // Disable mangling so the "@feat.00" symbol name is written verbatim.
+        // CoffI386 mangling adds a `_` prefix which would break this special symbol.
+        let original_mangling = file.mangling();
+        file.set_mangling(write::Mangling::None);
+
+        let mut feature: u64 = 0;
+        if architecture == Architecture::I386 {
+            feature |= 1; // IMAGE_FILE_SAFE_EXCEPTION_HANDLER
+        }
+        file.add_symbol(Symbol {
+            name: b"@feat.00".to_vec(),
+            value: feature,
+            size: 0,
+            kind: SymbolKind::Data,
+            scope: SymbolScope::Compilation,
+            weak: false,
+            section: SymbolSection::Absolute,
+            flags: SymbolFlags::None,
+        });
+
+        file.set_mangling(original_mangling);
+    }
+
     Some(file)
 }
 
@@ -342,6 +380,65 @@ windows
         let result = create_object_file(&target_info, target_triple).unwrap();
         assert_eq!(result.format(), BinaryFormat::Coff);
         assert_eq!(result.architecture(), Architecture::I386);
+    }
+
+    /// Verify that i686 COFF metadata objects contain an absolute `@feat.00` symbol with
+    /// `IMAGE_FILE_SAFE_EXCEPTION_HANDLER` (bit 0) set.
+    ///
+    /// See <https://github.com/rust-lang/rust/issues/96498>
+    #[test]
+    fn test_create_metadata_file_windows_msvc_i686_has_feat00() {
+        let rustc_output = br#"debug_assertions
+target_arch="x86"
+target_endian="little"
+target_env="msvc"
+target_family="windows"
+target_feature="fxsr"
+target_feature="sse"
+target_feature="sse2"
+target_os="windows"
+target_pointer_width="32"
+target_vendor="pc"
+windows
+"#;
+        let target_triple = "i686-pc-windows-msvc";
+        let target_info = parse_rustc_target_info(rustc_output);
+        let contents = b"test audit data";
+        let result = create_metadata_file(
+            &target_info,
+            target_triple,
+            contents,
+            "AUDITABLE_VERSION_INFO",
+        )
+        .expect("should produce an object file for i686-pc-windows-msvc");
+
+        // Parse the COFF symbol table and verify `@feat.00` has value bit0=1 and absolute section.
+        let symtab_ptr = u32::from_le_bytes(result[8..12].try_into().unwrap()) as usize;
+        let sym_count = u32::from_le_bytes(result[12..16].try_into().unwrap()) as usize;
+        let symbol_size = 18;
+
+        let feat = (0..sym_count).find_map(|i| {
+            let start = symtab_ptr + i * symbol_size;
+            let end = start + symbol_size;
+            let entry = result.get(start..end)?;
+            if &entry[0..8] != b"@feat.00" {
+                return None;
+            }
+            let value = u32::from_le_bytes(entry[8..12].try_into().unwrap());
+            let section_number = i16::from_le_bytes(entry[12..14].try_into().unwrap());
+            Some((value, section_number))
+        });
+
+        let (value, section_number) = feat.expect("COFF object for i686 must contain @feat.00");
+        assert_eq!(
+            value & 1,
+            1,
+            "@feat.00 must set IMAGE_FILE_SAFE_EXCEPTION_HANDLER on i686"
+        );
+        assert_eq!(
+            section_number, -1,
+            "@feat.00 must be an absolute COFF symbol (section number -1)"
+        );
     }
 
     #[test]
