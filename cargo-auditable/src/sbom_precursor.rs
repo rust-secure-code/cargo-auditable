@@ -186,12 +186,10 @@ fn parse_fully_qualified_package_id(id: &str) -> (String, Version, Source) {
         // Strip the optional `?query` first; accept `\` for Windows local paths.
         let path = url.split_once('?').map(|(p, _)| p).unwrap_or(url);
         let name = path
-            .split('/')
-            .next_back()
-            .unwrap()
-            .split('\\')
-            .next_back()
-            .unwrap();
+            .rsplit(['/', '\\'])
+            .next()
+            .filter(|segment| !segment.is_empty())
+            .expect("Package ID URL to end with a package name");
         (
             name.to_string(),
             semver::Version::parse(rest).expect("Version to be valid SemVer"),
