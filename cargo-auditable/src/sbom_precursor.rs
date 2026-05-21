@@ -149,8 +149,11 @@ const CRATES_IO_INDEX: &str = "https://github.com/rust-lang/crates.io-index";
 /// proto := "http" | "git" | "file" | ...
 /// ```
 /// where:
-/// - the name is always present except when the kind is `path` and the last segment of the path doesn't match the name
-/// - the query string is only present for git dependencies (which we can ignore since we don't record git information)
+/// - the `[ name "@" ]` segment is elided when the crate name equals the URL's last path
+///   segment (i.e. for `path` deps where the directory name matches, and `git` deps where
+///   the repo name matches)
+/// - the query string is only present for git dependencies (which we can ignore since we don't
+///   record git information)
 fn parse_fully_qualified_package_id(id: &str) -> (String, Version, Source) {
     let (kind, rest) = id.split_once('+').expect("Package ID to have a kind");
     let (url, rest) = rest
@@ -164,39 +167,114 @@ fn parse_fully_qualified_package_id(id: &str) -> (String, Version, Source) {
         _ => Source::Other(kind.to_string()),
     };
 
-    if source == Source::Local {
-        // For local packages, the name might be in the suffix after '#' if it has
-        // a diferent name than the last segment of the path.
-        if let Some((name, version)) = rest.split_once('@') {
-            (
-                name.to_string(),
-                semver::Version::parse(version).expect("Version to be valid SemVer"),
-                source,
-            )
-        } else {
-            // If no name is specified, use the last segment of the path as the name
-            let name = url
-                .split('/')
-                .next_back()
-                .unwrap()
-                .split('\\')
-                .next_back()
-                .unwrap();
-            (
-                name.to_string(),
-                semver::Version::parse(rest).expect("Version to be valid SemVer"),
-                source,
-            )
-        }
-    } else {
-        // For other sources, the name and version are after the '#', separated by '@'
-        let (name, version) = rest
-            .split_once('@')
-            .expect("Package ID to have a name and version");
+    // `rest` is usually `name@version`, but cargo elides `name@` when the crate name
+    // equals the URL's last path segment. This applies to `path` deps and to git deps
+    // pointing at a repo whose name matches the crate (e.g. top-level `rayon`); sub-crates
+    // in the same repo still carry the name explicitly.
+    //
+    //   path+file:///abs/path/sample-package#0.1.0
+    //   git+https://github.com/rayon-rs/rayon?branch=foo#1.11.0
+    //   git+https://github.com/rayon-rs/rayon?branch=foo#rayon-core@1.13.0
+    if let Some((name, version)) = rest.split_once('@') {
         (
             name.to_string(),
             semver::Version::parse(version).expect("Version to be valid SemVer"),
             source,
         )
+    } else {
+        // Recover the elided name from the URL's last path segment.
+        // Strip the optional `?query` first; accept `\` for Windows local paths.
+        let path = url.split_once('?').map(|(p, _)| p).unwrap_or(url);
+        let name = path
+            .rsplit(['/', '\\'])
+            .next()
+            .filter(|segment| !segment.is_empty())
+            .expect("Package ID URL to end with a package name");
+        (
+            name.to_string(),
+            semver::Version::parse(rest).expect("Version to be valid SemVer"),
+            source,
+        )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_id(id: &str, expected_name: &str, expected_version: &str, expected_source: Source) {
+        let (name, version, source) = parse_fully_qualified_package_id(id);
+        assert_eq!(name, expected_name, "name mismatch for {id}");
+        assert_eq!(
+            version.to_string(),
+            expected_version,
+            "version mismatch for {id}"
+        );
+        assert_eq!(source, expected_source, "source mismatch for {id}");
+    }
+
+    #[test]
+    fn registry_with_name() {
+        assert_id(
+            "registry+https://github.com/rust-lang/crates.io-index#zerocopy@0.8.16",
+            "zerocopy",
+            "0.8.16",
+            Source::CratesIo,
+        );
+    }
+
+    #[test]
+    fn path_with_elided_name() {
+        // Directory name matches crate name, so cargo elides `name@`.
+        assert_id(
+            "path+file:///tmp/sample-package#0.1.0",
+            "sample-package",
+            "0.1.0",
+            Source::Local,
+        );
+    }
+
+    #[test]
+    fn path_with_explicit_name() {
+        // Directory name differs from crate name, so cargo emits `name@`.
+        assert_id(
+            "path+file:///tmp/some-dir#different-name@0.1.0",
+            "different-name",
+            "0.1.0",
+            Source::Local,
+        );
+    }
+
+    #[test]
+    fn git_with_explicit_name() {
+        // Sub-crate inside a git repo: name is present.
+        assert_id(
+            "git+https://github.com/rayon-rs/rayon?branch=main#rayon-core@1.13.0",
+            "rayon-core",
+            "1.13.0",
+            Source::Git,
+        );
+    }
+
+    #[test]
+    fn git_with_elided_name() {
+        // Crate name matches the repo's last path segment, so cargo elides
+        // `name@`. Regression test: this used to panic.
+        assert_id(
+            "git+https://github.com/rayon-rs/rayon?branch=main#1.11.0",
+            "rayon",
+            "1.11.0",
+            Source::Git,
+        );
+    }
+
+    #[test]
+    fn git_with_elided_name_no_query() {
+        assert_id(
+            "git+https://github.com/rayon-rs/rayon#1.11.0",
+            "rayon",
+            "1.11.0",
+            Source::Git,
+        );
     }
 }
