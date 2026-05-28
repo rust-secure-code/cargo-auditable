@@ -45,6 +45,8 @@ Microsoft uses `cargo auditable` internally and previously maintained the [data 
 
 Multiple Linux distributions build their Rust packages with `cargo auditable`: [Alpine Linux](https://www.alpinelinux.org/), [NixOS](https://nixos.org/), [openSUSE](https://www.opensuse.org/), [Void Linux](https://voidlinux.org/), [Chimera Linux](https://chimera-linux.org/) and [Wolfi OS](https://wolfi.dev). If you install packages from their repositories, you can audit them!
 
+Ubuntu 26.04 enables it [for select packages](https://documentation.ubuntu.com/release-notes/26.04/changes-since-previous-interim/#rust-cargo-auditable) and lets others [opt in](https://documentation.ubuntu.com/project/contributors/language-specific/rust/cargo-auditable/), including in [PPAs](https://documentation.ubuntu.com/launchpad/user/reference/packaging/ppas/ppa/).
+
 [Chainguard](https://chainguard.dev/) includes `cargo auditable` in their [rust base container](https://images.chainguard.dev/directory/image/rust/overview), with a default `cargo` wrapper to always call `cargo auditable`, so that Rust applications built using this container are auditable by default.
 
 ## FAQ
