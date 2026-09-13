@@ -71,20 +71,29 @@ fn macho_build_version(info: &RustcTargetInfo) -> Option<write::MachOBuildVersio
     let target_os = info.get("target_os").map(String::as_str);
     let target_abi = info.get("target_abi").map(String::as_str);
     let platform = match (target_os, target_abi) {
+        // macOS is the one Apple OS with no ABI variants — every `*-apple-darwin`
+        // target reports an empty `target_abi` — so it is unambiguous even when the
+        // key is missing entirely, which is what a pre-1.75-ish rustc gives us.
         (Some("macos"), _) => object::macho::PLATFORM_MACOS,
+        // For every other Apple OS the ABI is precisely what separates device from
+        // simulator from Mac Catalyst, so an ABSENT `target_abi` is not "device" —
+        // it is "unknown", and must fall through to emitting nothing.
         (Some("ios"), Some("macabi")) => object::macho::PLATFORM_MACCATALYST,
         (Some("ios"), Some("sim")) => object::macho::PLATFORM_IOSSIMULATOR,
-        (Some("ios"), _) => object::macho::PLATFORM_IOS,
+        (Some("ios"), Some(_)) => object::macho::PLATFORM_IOS,
         (Some("tvos"), Some("sim")) => object::macho::PLATFORM_TVOSSIMULATOR,
-        (Some("tvos"), _) => object::macho::PLATFORM_TVOS,
+        (Some("tvos"), Some(_)) => object::macho::PLATFORM_TVOS,
         (Some("watchos"), Some("sim")) => object::macho::PLATFORM_WATCHOSSIMULATOR,
-        (Some("watchos"), _) => object::macho::PLATFORM_WATCHOS,
+        (Some("watchos"), Some(_)) => object::macho::PLATFORM_WATCHOS,
         (Some("visionos"), Some("sim")) => object::macho::PLATFORM_XROSSIMULATOR,
-        (Some("visionos"), _) => object::macho::PLATFORM_XROS,
-        // An Apple target we do not recognise, most likely one added after this
-        // was written. Emit nothing rather than assert a platform we cannot
-        // verify: the warning is the current behaviour and is recoverable, a
-        // wrong platform in the load command is neither.
+        (Some("visionos"), Some(_)) => object::macho::PLATFORM_XROS,
+        // An Apple target we cannot identify: either an OS added after this was
+        // written, or a device-family target built by a compiler too old to
+        // report `target_abi`. Emit nothing rather than assert a platform we
+        // cannot verify — the warning is the current behaviour and is
+        // recoverable, whereas a WRONG platform is a hard link failure
+        // (`ld: ... has platform iOS, which is different from target platform
+        // macCatalyst`).
         _ => return None,
     };
     let mut build_version = write::MachOBuildVersion::default();
@@ -327,16 +336,19 @@ mod tests {
     fn test_macho_platform_detection() {
         use object::macho;
 
+        // Device targets report an EMPTY `target_abi`, which is what rustc
+        // actually emits (`aarch64-apple-ios` -> `target_abi=""`). A MISSING key
+        // is a different case entirely and is covered by its own test below.
         let cases = [
-            (("macos", None), macho::PLATFORM_MACOS),
-            (("ios", None), macho::PLATFORM_IOS),
+            (("macos", Some("")), macho::PLATFORM_MACOS),
+            (("ios", Some("")), macho::PLATFORM_IOS),
             (("ios", Some("sim")), macho::PLATFORM_IOSSIMULATOR),
             (("ios", Some("macabi")), macho::PLATFORM_MACCATALYST),
-            (("tvos", None), macho::PLATFORM_TVOS),
+            (("tvos", Some("")), macho::PLATFORM_TVOS),
             (("tvos", Some("sim")), macho::PLATFORM_TVOSSIMULATOR),
-            (("watchos", None), macho::PLATFORM_WATCHOS),
+            (("watchos", Some("")), macho::PLATFORM_WATCHOS),
             (("watchos", Some("sim")), macho::PLATFORM_WATCHOSSIMULATOR),
-            (("visionos", None), macho::PLATFORM_XROS),
+            (("visionos", Some("")), macho::PLATFORM_XROS),
             (("visionos", Some("sim")), macho::PLATFORM_XROSSIMULATOR),
         ];
         for ((target_os, target_abi), expected) in cases {
@@ -365,6 +377,50 @@ mod tests {
     #[test]
     fn test_macho_build_version_absent_for_unknown_platform() {
         assert!(macho_build_version(&apple_target_info("futureos", None)).is_none());
+    }
+
+    /// Regression: a compiler too old to report `target_abi` must NOT be treated
+    /// as "device". rustc 1.74 omits the key entirely for every Apple target —
+    /// verified against a real 1.74.0 toolchain — so `x86_64-apple-ios-macabi`
+    /// and `aarch64-apple-ios-sim` arrive indistinguishable from device iOS.
+    /// Guessing `PLATFORM_IOS` there is not a cosmetic error: the linker rejects
+    /// the mismatch outright (`has platform iOS, which is different from target
+    /// platform macCatalyst`), turning today's harmless warning into a build
+    /// failure. Emit nothing instead.
+    #[test]
+    fn test_macho_build_version_absent_when_target_abi_is_unavailable() {
+        for os in ["ios", "tvos", "watchos", "visionos"] {
+            assert!(
+                macho_build_version(&apple_target_info(os, None)).is_none(),
+                "{os} without target_abi must not be assumed to be a device target"
+            );
+        }
+    }
+
+    /// ...but macOS is still identifiable without `target_abi`, because it is the
+    /// one Apple OS with no ABI variants (every `*-apple-darwin` target reports an
+    /// empty `target_abi`). Requiring the key here would silently drop the load
+    /// command on the most common platform whenever an older compiler is wrapped.
+    #[test]
+    fn test_macho_build_version_present_for_macos_without_target_abi() {
+        assert_eq!(
+            macho_build_version(&apple_target_info("macos", None))
+                .expect("macOS is unambiguous without target_abi")
+                .platform,
+            object::macho::PLATFORM_MACOS
+        );
+    }
+
+    /// Device targets report an EMPTY `target_abi`, not a missing one — that is
+    /// what distinguishes them from the old-compiler case above.
+    #[test]
+    fn test_macho_build_version_empty_target_abi_is_a_device_target() {
+        assert_eq!(
+            macho_build_version(&apple_target_info("ios", Some("")))
+                .expect("empty target_abi is a device target")
+                .platform,
+            object::macho::PLATFORM_IOS
+        );
     }
 
     #[test]
