@@ -67,7 +67,7 @@ pub fn create_metadata_file(
 /// minimum OS version it does not actually require risks conflicting with the
 /// deployment target of the binary it is linked into. rustc omits the SDK version for
 /// the same reason.
-fn macho_build_version(info: &RustcTargetInfo) -> write::MachOBuildVersion {
+fn macho_build_version(info: &RustcTargetInfo) -> Option<write::MachOBuildVersion> {
     let target_os = info.get("target_os").map(String::as_str);
     let target_abi = info.get("target_abi").map(String::as_str);
     let platform = match (target_os, target_abi) {
@@ -81,14 +81,15 @@ fn macho_build_version(info: &RustcTargetInfo) -> write::MachOBuildVersion {
         (Some("watchos"), _) => object::macho::PLATFORM_WATCHOS,
         (Some("visionos"), Some("sim")) => object::macho::PLATFORM_XROSSIMULATOR,
         (Some("visionos"), _) => object::macho::PLATFORM_XROS,
-        // Not a platform we recognise. macOS is the same assumption `ld` makes on
-        // its own, so this is no worse than the current behaviour and still gives
-        // the linker a load command to read.
-        _ => object::macho::PLATFORM_MACOS,
+        // An Apple target we do not recognise, most likely one added after this
+        // was written. Emit nothing rather than assert a platform we cannot
+        // verify: the warning is the current behaviour and is recoverable, a
+        // wrong platform in the load command is neither.
+        _ => return None,
     };
     let mut build_version = write::MachOBuildVersion::default();
     build_version.platform = platform;
-    build_version
+    Some(build_version)
 }
 
 fn create_object_file(
@@ -142,7 +143,9 @@ fn create_object_file(
 
     let mut file = write::Object::new(binary_format, architecture, endianness);
     if binary_format == BinaryFormat::MachO {
-        file.set_macho_build_version(macho_build_version(info));
+        if let Some(build_version) = macho_build_version(info) {
+            file.set_macho_build_version(build_version);
+        }
     }
     let e_flags = match architecture {
         Architecture::Mips => {
@@ -339,7 +342,7 @@ mod tests {
         for ((target_os, target_abi), expected) in cases {
             let info = apple_target_info(target_os, target_abi);
             assert_eq!(
-                macho_build_version(&info).platform,
+                macho_build_version(&info).expect("known platform").platform,
                 expected,
                 "target_os={target_os} target_abi={target_abi:?}"
             );
@@ -351,9 +354,17 @@ mod tests {
     /// conflict with the deployment target of the binary it is linked into.
     #[test]
     fn test_macho_build_version_leaves_minos_and_sdk_unset() {
-        let version = macho_build_version(&apple_target_info("macos", None));
+        let version =
+            macho_build_version(&apple_target_info("macos", None)).expect("known platform");
         assert_eq!(version.minos, 0);
         assert_eq!(version.sdk, 0);
+    }
+
+    /// An Apple target we do not recognise gets no load command at all, rather
+    /// than a platform we cannot verify.
+    #[test]
+    fn test_macho_build_version_absent_for_unknown_platform() {
+        assert!(macho_build_version(&apple_target_info("futureos", None)).is_none());
     }
 
     #[test]
