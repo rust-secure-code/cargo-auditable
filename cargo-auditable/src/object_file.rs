@@ -47,6 +47,50 @@ pub fn create_metadata_file(
     Some(file.write().unwrap())
 }
 
+/// Mach-O object files are expected to carry an `LC_BUILD_VERSION` load command
+/// describing the platform they were built for. Without it Apple's `ld` has nothing
+/// to read the platform from, so it guesses and reports the guess on stderr:
+///
+/// ```text
+/// ld: no platform load command found in '..._audit_data.o', assuming: macOS
+/// ```
+///
+/// Since Rust 1.97 the compiler surfaces linker output through the `linker_messages`
+/// lint, which makes that message visible on every `cargo auditable build` on macOS.
+///
+/// rustc emits the load command for the same reason, in the file this module is
+/// adapted from: see `macho_object_build_version_for_target` in
+/// `compiler/rustc_codegen_ssa/src/back/metadata.rs`.
+///
+/// `minos` and `sdk` are deliberately left at zero. This object carries only the
+/// dependency list and no code, so it constrains nothing at runtime, and declaring a
+/// minimum OS version it does not actually require risks conflicting with the
+/// deployment target of the binary it is linked into. rustc omits the SDK version for
+/// the same reason.
+fn macho_build_version(info: &RustcTargetInfo) -> write::MachOBuildVersion {
+    let target_os = info.get("target_os").map(String::as_str);
+    let target_abi = info.get("target_abi").map(String::as_str);
+    let platform = match (target_os, target_abi) {
+        (Some("macos"), _) => object::macho::PLATFORM_MACOS,
+        (Some("ios"), Some("macabi")) => object::macho::PLATFORM_MACCATALYST,
+        (Some("ios"), Some("sim")) => object::macho::PLATFORM_IOSSIMULATOR,
+        (Some("ios"), _) => object::macho::PLATFORM_IOS,
+        (Some("tvos"), Some("sim")) => object::macho::PLATFORM_TVOSSIMULATOR,
+        (Some("tvos"), _) => object::macho::PLATFORM_TVOS,
+        (Some("watchos"), Some("sim")) => object::macho::PLATFORM_WATCHOSSIMULATOR,
+        (Some("watchos"), _) => object::macho::PLATFORM_WATCHOS,
+        (Some("visionos"), Some("sim")) => object::macho::PLATFORM_XROSSIMULATOR,
+        (Some("visionos"), _) => object::macho::PLATFORM_XROS,
+        // Not a platform we recognise. macOS is the same assumption `ld` makes on
+        // its own, so this is no worse than the current behaviour and still gives
+        // the linker a load command to read.
+        _ => object::macho::PLATFORM_MACOS,
+    };
+    let mut build_version = write::MachOBuildVersion::default();
+    build_version.platform = platform;
+    build_version
+}
+
 fn create_object_file(
     info: &RustcTargetInfo,
     target_triple: &str,
@@ -97,6 +141,9 @@ fn create_object_file(
     };
 
     let mut file = write::Object::new(binary_format, architecture, endianness);
+    if binary_format == BinaryFormat::MachO {
+        file.set_macho_build_version(macho_build_version(info));
+    }
     let e_flags = match architecture {
         Architecture::Mips => {
             // the original code matches on info we don't have to support pre-1999 MIPS variants:
@@ -261,6 +308,53 @@ mod tests {
 
     use super::*;
     use crate::target_info::parse_rustc_target_info;
+
+    fn apple_target_info(target_os: &str, target_abi: Option<&str>) -> RustcTargetInfo {
+        let mut info = HashMap::from([
+            ("target_vendor".to_owned(), "apple".to_owned()),
+            ("target_os".to_owned(), target_os.to_owned()),
+        ]);
+        if let Some(abi) = target_abi {
+            info.insert("target_abi".to_owned(), abi.to_owned());
+        }
+        info
+    }
+
+    #[test]
+    fn test_macho_platform_detection() {
+        use object::macho;
+
+        let cases = [
+            (("macos", None), macho::PLATFORM_MACOS),
+            (("ios", None), macho::PLATFORM_IOS),
+            (("ios", Some("sim")), macho::PLATFORM_IOSSIMULATOR),
+            (("ios", Some("macabi")), macho::PLATFORM_MACCATALYST),
+            (("tvos", None), macho::PLATFORM_TVOS),
+            (("tvos", Some("sim")), macho::PLATFORM_TVOSSIMULATOR),
+            (("watchos", None), macho::PLATFORM_WATCHOS),
+            (("watchos", Some("sim")), macho::PLATFORM_WATCHOSSIMULATOR),
+            (("visionos", None), macho::PLATFORM_XROS),
+            (("visionos", Some("sim")), macho::PLATFORM_XROSSIMULATOR),
+        ];
+        for ((target_os, target_abi), expected) in cases {
+            let info = apple_target_info(target_os, target_abi);
+            assert_eq!(
+                macho_build_version(&info).platform,
+                expected,
+                "target_os={target_os} target_abi={target_abi:?}"
+            );
+        }
+    }
+
+    /// The minimum OS version and SDK version are deliberately left unset: this
+    /// object carries no code, so declaring a minimum it does not require could
+    /// conflict with the deployment target of the binary it is linked into.
+    #[test]
+    fn test_macho_build_version_leaves_minos_and_sdk_unset() {
+        let version = macho_build_version(&apple_target_info("macos", None));
+        assert_eq!(version.minos, 0);
+        assert_eq!(version.sdk, 0);
+    }
 
     #[test]
     fn test_riscv_abi_detection() {
