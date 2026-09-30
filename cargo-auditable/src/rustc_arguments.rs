@@ -198,6 +198,52 @@ mod tests {
     }
 
     #[test]
+    fn detect_bare_linker_from_flavor() {
+        let cases = [
+            ("gcc", false),
+            ("gnu-cc", false),
+            ("gnu-lld-cc", false),
+            ("darwin-cc", false),
+            ("darwin-lld-cc", false),
+            ("wasm-lld-cc", false),
+            ("unix-cc", false),
+            ("ld", true),
+            ("ld.lld", true),
+            ("ld64.lld", true),
+            ("lld-link", true),
+            ("wasm-ld", true),
+            ("msvc", true),
+            ("gnu", true),
+            ("gnu-lld", true),
+            ("darwin", true),
+            ("darwin-lld", true),
+            ("wasm-lld", true),
+            ("unix", true),
+            ("msvc-lld", true),
+            ("bpf", true),
+            ("llbc", true),
+            ("ptx", true),
+        ];
+        for (flavor, expected) in cases {
+            // Both joined and separate forms of -C must behave the same way.
+            for raw_args in [
+                vec![OsString::from(format!("-Clinker-flavor={flavor}"))],
+                vec!["-C".into(), format!("linker-flavor={flavor}").into()],
+            ] {
+                let args = RustcArgs::from_vec(raw_args).unwrap();
+                assert_eq!(args.bare_linker(), Some(expected), "flavor: {flavor}");
+            }
+        }
+    }
+
+    #[test]
+    fn bare_linker_unspecified() {
+        let raw_args = vec!["-C".into(), "link-arg=-fuse-ld=lld".into()];
+        let args = RustcArgs::from_vec(raw_args).unwrap();
+        assert_eq!(args.bare_linker(), None);
+    }
+
+    #[test]
     fn multiple_codegen_options() {
         let raw_rustc_args = vec!["-Clinker=clang", "-C", "link-arg=-fuse-ld=/usr/bin/mold"];
         let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
