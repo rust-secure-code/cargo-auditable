@@ -7,8 +7,9 @@ use std::{
 use crate::{
     binary_file, collect_audit_data,
     platform_detection::{is_32bit_x86, is_apple, is_msvc, is_wasm},
-    rustc_arguments::{self, should_embed_audit_data, RustcArgs},
+    rustc_arguments::{self, linker_flavor_is_bare, should_embed_audit_data, RustcArgs},
     target_info::{self, rustc_host_target_triple},
+    target_json::rustc_target_json,
 };
 
 pub fn main(rustc_path: &OsStr) {
@@ -44,9 +45,14 @@ fn rustc_command(rustc_path: &OsStr) -> Command {
     command
 }
 
-fn bare_linker(args: RustcArgs) -> bool {
-    args.bare_linker().unwrap_or(false)
-    // TODO: honor platform defaults
+fn bare_linker(rustc_path: &OsStr, target_triple: &str, args: RustcArgs) -> bool {
+    if let Some(explicit_arg) = args.bare_linker() {
+        explicit_arg
+    } else if let Ok(target_json) = rustc_target_json(rustc_path, target_triple) {
+        linker_flavor_is_bare(&target_json.linker_flavor)
+    } else {
+        false // bare linker configurations are rare
+    }
 }
 
 fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
@@ -116,7 +122,7 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
         command.arg(linker_command);
         // Prevent the symbol from being removed as unused by the linker
         if is_apple(&target_info) {
-            if bare_linker(args) {
+            if bare_linker(rustc_path, &target_triple, args) {
                 command.arg("-Clink-arg=-u");
                 command.arg("-Clink-arg=_AUDITABLE_VERSION_INFO");
             } else {
@@ -137,7 +143,7 @@ fn rustc_command_with_audit_data(rustc_path: &OsStr) -> Option<Command> {
             // Unrecognized platform, assume it to be unix-like.
             // Use POSIX `-u` instead of GNU `--undefined=` for broad compatibility
             // (e.g. zig rejects the GNU form).
-            if bare_linker(args) {
+            if bare_linker(rustc_path, &target_triple, args) {
                 command.arg("-Clink-arg=-u");
                 command.arg("-Clink-arg=AUDITABLE_VERSION_INFO");
             } else {

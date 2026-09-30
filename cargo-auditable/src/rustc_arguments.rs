@@ -54,7 +54,7 @@ impl RustcArgs {
         // flavor flag takes priority
         if let Some(flavor_flag) = flavor_flag {
             let flavor = flavor_flag.strip_prefix("linker-flavor=").unwrap();
-            Some(!flavor.ends_with("cc"))
+            Some(linker_flavor_is_bare(flavor))
         // if flavor is not passed explicitly, it is guessed from the linker
         } else if let Some(linker_flag) = linker_flag {
             let linker = linker_flag.strip_prefix("linker=").unwrap();
@@ -63,6 +63,12 @@ impl RustcArgs {
             None
         }
     }
+}
+
+/// Checks if the specified linker flavor is bare (args passed directly to the linker)
+/// or if we go through a C compiler first (and have to prefix linker args with -Wl)
+pub fn linker_flavor_is_bare(flavor: &str) -> bool {
+    !flavor.ends_with("cc")
 }
 
 impl RustcArgs {
