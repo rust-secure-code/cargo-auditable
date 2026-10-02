@@ -44,8 +44,7 @@ pub fn rustc_host_target_triple(rustc_path: &OsStr) -> String {
         .stdout
         .lines()
         .map(|l| l.unwrap())
-        .find(|l| l.starts_with("host: "))
-        .map(|l| l[6..].to_string())
+        .find_map(|l| l.strip_prefix("host: ").map(str::to_owned))
         .expect("Failed to parse rustc output to determine the current platform. Please report this bug!")
 }
 
