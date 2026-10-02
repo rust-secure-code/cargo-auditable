@@ -37,28 +37,38 @@ impl RustcArgs {
         result
     }
 
+    /// This function can tell you if a bare linker is in use based on rustc arguments.
+    /// Returns None if it wasn't explicitly specified in the arguments.
+    ///
     /// Normally `rustc` uses a C compiler such as `cc` or `clang` as linker,
     /// and arguments to the actual linker need to be passed prefixed with `-Wl,`.
-    /// But it is possible to configure Cargo and rustc to call a linker directly,
-    /// and the breakage it causes is subtle enough that people just roll with it
-    /// and complain when cargo-auditable doesn't support this configuration:
-    /// <https://github.com/rust-secure-code/cargo-auditable/issues/202>
+    /// But it is possible to configure Cargo and rustc to call a linker directly.
     ///
-    /// This function can tell you if a bare linker is in use
-    /// and whether you need to prepend `-Wl,` or not.
-    ///
-    /// Such setups are exceptionally rare and frankly it's a misconfiguration
-    /// that will break more than just `cargo auditable`, but I am feeling generous.
-    pub fn bare_linker(&self) -> bool {
+    /// This function does **not** take the target defaults into account.
+    pub fn bare_linker(&self) -> Option<bool> {
+        let flavor_flag = self
+            .codegen
+            .iter()
+            .find(|s| s.starts_with("linker-flavor="));
         let linker_flag = self.codegen.iter().find(|s| s.starts_with("linker="));
-        if let Some(linker_flag) = linker_flag {
+        // flavor flag takes priority
+        if let Some(flavor_flag) = flavor_flag {
+            let flavor = flavor_flag.strip_prefix("linker-flavor=").unwrap();
+            Some(linker_flavor_is_bare(flavor))
+        // if flavor is not passed explicitly, it is guessed from the linker
+        } else if let Some(linker_flag) = linker_flag {
             let linker = linker_flag.strip_prefix("linker=").unwrap();
-            if linker.ends_with("ld") {
-                return true;
-            }
+            Some(linker.ends_with("ld") || linker.ends_with("link"))
+        } else {
+            None
         }
-        false
     }
+}
+
+/// Checks if the specified linker flavor is bare (args passed directly to the linker)
+/// or if we go through a C compiler first (and have to prefix linker args with -Wl)
+pub fn linker_flavor_is_bare(flavor: &str) -> bool {
+    !flavor.ends_with("cc")
 }
 
 impl RustcArgs {
@@ -190,7 +200,53 @@ mod tests {
         let raw_rustc_args = vec!["-C", "linker=rust-lld"];
         let raw_rustc_args: Vec<OsString> = raw_rustc_args.into_iter().map(|s| s.into()).collect();
         let args = RustcArgs::from_vec(raw_rustc_args).unwrap();
-        assert!(args.bare_linker());
+        assert!(args.bare_linker().unwrap());
+    }
+
+    #[test]
+    fn detect_bare_linker_from_flavor() {
+        let cases = [
+            ("gcc", false),
+            ("gnu-cc", false),
+            ("gnu-lld-cc", false),
+            ("darwin-cc", false),
+            ("darwin-lld-cc", false),
+            ("wasm-lld-cc", false),
+            ("unix-cc", false),
+            ("ld", true),
+            ("ld.lld", true),
+            ("ld64.lld", true),
+            ("lld-link", true),
+            ("wasm-ld", true),
+            ("msvc", true),
+            ("gnu", true),
+            ("gnu-lld", true),
+            ("darwin", true),
+            ("darwin-lld", true),
+            ("wasm-lld", true),
+            ("unix", true),
+            ("msvc-lld", true),
+            ("bpf", true),
+            ("llbc", true),
+            ("ptx", true),
+        ];
+        for (flavor, expected) in cases {
+            // Both joined and separate forms of -C must behave the same way.
+            for raw_args in [
+                vec![OsString::from(format!("-Clinker-flavor={flavor}"))],
+                vec!["-C".into(), format!("linker-flavor={flavor}").into()],
+            ] {
+                let args = RustcArgs::from_vec(raw_args).unwrap();
+                assert_eq!(args.bare_linker(), Some(expected), "flavor: {flavor}");
+            }
+        }
+    }
+
+    #[test]
+    fn bare_linker_unspecified() {
+        let raw_args = vec!["-C".into(), "link-arg=-fuse-ld=lld".into()];
+        let args = RustcArgs::from_vec(raw_args).unwrap();
+        assert_eq!(args.bare_linker(), None);
     }
 
     #[test]
@@ -207,6 +263,6 @@ mod tests {
 
         assert_eq!(args.codegen, expected);
 
-        assert!(!args.bare_linker());
+        assert!(!args.bare_linker().unwrap());
     }
 }

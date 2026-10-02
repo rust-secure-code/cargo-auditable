@@ -1,10 +1,10 @@
-use std::{ffi::OsStr, io::BufRead};
+use std::{ffi::OsStr, io::BufRead, process::Command};
 
 pub type RustcTargetInfo = std::collections::HashMap<String, String>;
 
 pub fn rustc_target_info(rustc_path: &OsStr, target_triple: &str) -> RustcTargetInfo {
     // this is hand-rolled because the relevant piece of Cargo is hideously complex for some reason
-    parse_rustc_target_info(&std::process::Command::new(rustc_path)
+    parse_rustc_target_info(&Command::new(rustc_path)
         .arg("--print=cfg")
         .arg(format!("--target={target_triple}")) //not being parsed by the shell, so not a vulnerability
         .output()
@@ -33,6 +33,19 @@ pub(crate) fn parse_rustc_target_info(rustc_output: &[u8]) -> RustcTargetInfo {
             }
         })
         .collect()
+}
+
+/// Returns the default target triple for the rustc we're running
+pub fn rustc_host_target_triple(rustc_path: &OsStr) -> String {
+    Command::new(rustc_path)
+        .arg("-vV")
+        .output()
+        .expect("Failed to invoke rustc! Is it in your $PATH?")
+        .stdout
+        .lines()
+        .map(|l| l.unwrap())
+        .find_map(|l| l.strip_prefix("host: ").map(str::to_owned))
+        .expect("Failed to parse rustc output to determine the current platform. Please report this bug!")
 }
 
 #[cfg(test)]
