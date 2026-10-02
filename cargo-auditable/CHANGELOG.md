@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.7] - 2026-10-02
+
+### Added
+
+ - The default linker flavor for a platform is now quieried and respected. This adds support for certain bare-metal targets such as thumbv8m.main-none-eabi that use the linker directly, without a C compiler wrapper.
+
+### Fixed
+
+ - The `-C linker-flavor` rustc flag is now respected. This fixed builds for projects that explicitly override it.
+
 ## [0.7.6] - 2026-09-13
 
 ### Fixed
