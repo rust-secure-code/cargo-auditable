@@ -97,7 +97,7 @@ You can find more info about parsing it [here](PARSING.md).
 
 ### What about embedded platforms?
 
-Embedded platforms where you cannot spare a byte should not add anything in the executable. Instead they should record the hash of every executable in a database and associate the hash with its Cargo.lock, compiler and LLVM version, build date, etc. This would make for an excellent Cargo wrapper or plugin. Since that can be done in a 5-line shell script, writing that tool is left as an exercise to the reader.
+The audit data is embedded in the firmware image, but is not flashed onto the space-constrained microcontroller. This keeps the image auditable without wasting precious ROM.
 
 ### Does this impact reproducible builds?
 
