@@ -587,6 +587,48 @@ fn test_proc_macro_inner(sbom: bool) {
 }
 
 #[test]
+fn test_proc_macro_with_test_target() {
+    test_proc_macro_with_test_target_inner(false);
+    test_proc_macro_with_test_target_inner(true);
+}
+
+fn test_proc_macro_with_test_target_inner(sbom: bool) {
+    // The proc macro crate has an integration test target, so it has more than one target.
+    // It must still be recorded as a build-time-only dependency.
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/proc_macro_dependency/Cargo.toml");
+    let bins = run_cargo_auditable(workspace_cargo_toml, &[], &[], sbom);
+    eprintln!("Proc macro with test target binary map: {bins:?}");
+
+    let binary = &bins.get("app").unwrap()[0];
+    let dep_info = get_dependency_info(binary);
+    eprintln!("{binary} dependency info: {dep_info:?}");
+
+    let derive_info = dep_info
+        .packages
+        .iter()
+        .find(|p| p.name == "derive")
+        .expect("Could not find 'derive' in the embedded dependency list!");
+    assert_eq!(derive_info.kind, DependencyKind::Build);
+
+    // Dependencies only reachable through the proc macro are also build-time-only.
+    let macro_only_dep_info = dep_info
+        .packages
+        .iter()
+        .find(|p| p.name == "macro_only_dep")
+        .expect("Could not find 'macro_only_dep' in the embedded dependency list!");
+    assert_eq!(macro_only_dep_info.kind, DependencyKind::Build);
+
+    // A dependency used by both the app and the proc macro remains a runtime dependency.
+    let shared_info = dep_info
+        .packages
+        .iter()
+        .find(|p| p.name == "shared")
+        .expect("Could not find 'shared' in the embedded dependency list!");
+    assert_eq!(shared_info.kind, DependencyKind::Runtime);
+}
+
+#[test]
 fn test_bare_linker() {
     test_bare_linker_inner(false);
     test_bare_linker_inner(true);

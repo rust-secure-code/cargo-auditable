@@ -237,12 +237,13 @@ fn proc_macro_packages(metadata: &cargo_metadata::Metadata) -> HashSet<&str> {
         .packages
         .iter()
         .filter_map(|pkg| {
-            // As of Rust 1.88 a single crate cannot be both a proc macro and something else.
-            // Checking that length is 1 is purely to hedge against support for it being added in the future.
-            if pkg.targets.len() == 1
-                && pkg.targets[0].kind.len() == 1
-                && pkg.targets[0].kind[0] == TargetKind::ProcMacro
-            {
+            // As of Rust 1.100 a single crate cannot be both a proc macro and something else.
+            // There may be extra targets such as tests or a build script, so we ignore those.
+            let is_proc_macro = pkg
+                .targets
+                .iter()
+                .any(|target| target.kind.len() == 1 && target.kind[0] == TargetKind::ProcMacro);
+            if is_proc_macro {
                 Some(pkg.id.repr.as_str())
             } else {
                 None
