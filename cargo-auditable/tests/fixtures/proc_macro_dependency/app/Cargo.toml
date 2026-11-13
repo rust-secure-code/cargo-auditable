@@ -1,0 +1,8 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+derive = { path = "../derive" }
+shared = { path = "../shared" }
