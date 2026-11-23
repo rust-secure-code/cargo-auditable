@@ -1,6 +1,6 @@
 //! Parses rustc arguments to extract the info not provided via environment variables.
 
-use std::{ffi::OsString, path::PathBuf};
+use std::{error::Error, ffi::OsString, fs, io, path::PathBuf};
 
 // We use pico-args because we only need to extract a few specific arguments out of a larger set,
 // and other parsers (rustc's `getopts`, cargo's `clap`) make that difficult.
@@ -101,9 +101,34 @@ impl RustcArgs {
     }
 }
 
-pub fn parse_args() -> Result<RustcArgs, pico_args::Error> {
-    let raw_args: Vec<OsString> = std::env::args_os().skip(2).collect();
-    RustcArgs::from_vec(raw_args)
+pub fn parse_args() -> Result<RustcArgs, Box<dyn Error>> {
+    let raw_args = expand_argfiles(std::env::args_os().skip(2))?;
+    Ok(RustcArgs::from_vec(raw_args)?)
+}
+
+/// Expands `@path` argfiles like rustc does. Cargo uses them when the command line is too long.
+/// `@shell:path` is left as is, since rustc only reads it with `-Zshell-argfiles`.
+fn expand_argfiles(raw_args: impl IntoIterator<Item = OsString>) -> io::Result<Vec<OsString>> {
+    let mut expanded = Vec::new();
+    for arg in raw_args {
+        let argfile = arg
+            .to_str()
+            .and_then(|s| s.strip_prefix('@'))
+            .filter(|path| !path.starts_with("shell:"));
+        match argfile {
+            Some(path) => {
+                let contents = fs::read_to_string(path).map_err(|err| {
+                    io::Error::new(
+                        err.kind(),
+                        format!("failed to read rustc argument file {path}: {err}"),
+                    )
+                })?;
+                expanded.extend(contents.lines().map(OsString::from));
+            }
+            None => expanded.push(arg),
+        }
+    }
+    Ok(expanded)
 }
 
 pub fn should_embed_audit_data(args: &RustcArgs) -> bool {
@@ -264,5 +289,12 @@ mod tests {
         assert_eq!(args.codegen, expected);
 
         assert!(!args.bare_linker().unwrap());
+    }
+
+    #[test]
+    fn shell_argfile_is_not_expanded() {
+        // Users can pass `-Zshell-argfiles @shell:file` to rustc via RUSTFLAGS
+        let raw_args = vec![OsString::from("@shell:missing-file")];
+        assert_eq!(expand_argfiles(raw_args.clone()).unwrap(), raw_args);
     }
 }
