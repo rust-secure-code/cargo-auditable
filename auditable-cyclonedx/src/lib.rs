@@ -118,13 +118,21 @@ fn purl(pkg: &auditable_serde::Package) -> String {
     // (but percent-encoding is underspecified and not interoperable anyway,
     // see e.g. https://github.com/package-url/purl-spec/pull/261)
     let mut purl = format!("pkg:cargo/{}@{}", pkg.name, pkg.version);
-    purl.push_str(match &pkg.source {
-        Source::CratesIo => "", // this is the default, nothing to qualify
-        Source::Git => "&vcs_url=redacted",
-        Source::Local => "&download_url=redacted",
-        Source::Registry => "&repository_url=redacted",
-        Source::Other(_) => "&download_url=redacted",
+    // Qualifiers are delimited from the version by `?`, and from each other by `&`.
+    // Getting the leading `?` wrong makes PURL parsers treat the qualifier as part of the version.
+    let qualifier = match &pkg.source {
+        Source::CratesIo => None, // this is the default, nothing to qualify
+        Source::Git => Some(("vcs_url", "redacted")),
+        Source::Local => Some(("download_url", "redacted")),
+        Source::Registry => Some(("repository_url", "redacted")),
+        Source::Other(_) => Some(("download_url", "redacted")),
         unknown => panic!("Unknown source: {unknown:?}"),
-    });
+    };
+    if let Some((key, value)) = qualifier {
+        purl.push('?');
+        purl.push_str(key);
+        purl.push('=');
+        purl.push_str(value);
+    }
     purl
 }
