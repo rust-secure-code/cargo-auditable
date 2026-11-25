@@ -63,6 +63,13 @@ pub struct VersionInfo {
     ///
     /// May still include slightly more dependencies than are actually used, especially in workspaces.
     ///
+    /// ## 2
+    ///
+    /// Same as 1, but correctly records proc-macro crates that have targets other than the proc macro itself
+    /// (such as tests, examples or a build script) as build-time dependencies.
+    /// Format 1 only recognized proc-macro crates consisting of a single target,
+    /// so a proc macro shipping tests or examples was mistaken for a runtime dependency.
+    ///
     /// ## 8
     ///
     /// Generated using Cargo's [SBOM precursor](https://doc.rust-lang.org/cargo/reference/unstable.html#sbom) as the data source.
