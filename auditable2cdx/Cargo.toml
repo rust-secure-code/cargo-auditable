@@ -1,6 +1,6 @@
 [package]
 name = "auditable2cdx"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Sergey \"Shnatsel\" Davidoff <shnatsel@gmail.com>"]
 license = "MIT OR Apache-2.0"
@@ -11,7 +11,7 @@ description = "Command-line tool to recover `cargo auditable` data in CycloneDX 
 
 [dependencies]
 auditable-info = {version = "0.10.0", path = "../auditable-info"}
-auditable-cyclonedx = {version = "0.2.0", path = "../auditable-cyclonedx"}
+auditable-cyclonedx = {version = "0.2.1", path = "../auditable-cyclonedx"}
 serde_json = {version = "1.0.114", features = ["preserve_order"] } # the feature is needed for workarounds module only
 
 [package.metadata.dist]
