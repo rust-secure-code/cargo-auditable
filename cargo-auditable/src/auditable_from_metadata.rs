@@ -221,7 +221,7 @@ pub fn encode_audit_data(
     }
     Ok(VersionInfo {
         packages,
-        format: 1,
+        format: 2,
     })
 }
 
