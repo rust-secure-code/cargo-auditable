@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8] - 2026-11-25
+
+### Fixed
+
+ - Fixed audit data not being embedded on Windows on Rust 1.100 or later in large projects due to Cargo running into command-line argument length limit and passing arguments as an argfile.
+ - Fixed proc macros with additional targets (tests, examples) being incorrectly treated as runtime dependencies, when not using `-Z sbom`. Data with this fix is written as format revision 2.
+
 ## [0.7.7] - 2026-10-02
 
 ### Added
