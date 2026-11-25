@@ -487,6 +487,32 @@ fn test_custom_rustc_path_inner(sbom: bool) {
 }
 
 #[test]
+fn test_rustc_arguments_in_argfile() {
+    test_rustc_arguments_in_argfile_inner(false);
+    test_rustc_arguments_in_argfile_inner(true);
+}
+fn test_rustc_arguments_in_argfile_inner(sbom: bool) {
+    // Makes Cargo pass the rustc arguments in an `@argfile`, as it does for long command lines
+    let workspace_cargo_toml = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/rustc_args_in_argfile/Cargo.toml");
+    let bins = run_cargo_auditable(
+        workspace_cargo_toml,
+        &[],
+        &[("__CARGO_TEST_FORCE_ARGFILE", OsStr::new("1"))],
+        sbom,
+    );
+    eprintln!("Test fixture binary map: {bins:?}");
+
+    let bin = &bins.get("rustc_args_in_argfile").unwrap()[0];
+    let dep_info = get_dependency_info(bin);
+    eprintln!("{bin} dependency info: {dep_info:?}");
+    assert!(dep_info
+        .packages
+        .iter()
+        .any(|p| p.name == "rustc_args_in_argfile"));
+}
+
+#[test]
 fn test_workspace_member_version_info() {
     // Test that `/path/to/cargo-auditable rustc -vV works when compiling a workspace member
     //
